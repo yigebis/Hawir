@@ -136,6 +136,7 @@ func (uuc *UserUseCase) VerifyEmail(email, token string) (int, error) {
 
 func (uuc *UserUseCase) LoginByEmail(*Domain.EmailCredential) (string, string, int, error) {
 	panic("unimplemented")
+	//gjgk
 }
 func (uuc *UserUseCase) LoginByPhone(*Domain.PhoneCredential) (string, string, int, error) {
 	panic("unimplemented")
