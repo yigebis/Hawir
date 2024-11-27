@@ -23,7 +23,7 @@ func NewUserController(u UseCase.IUserUseCase, ts UseCase.ITokenService) *UserCo
 }
 
 func (uc *UserController) Register(ctx *gin.Context) {
-	user := Domain.User{}
+	user := Domain.User{} // Creating a new user object that is empty
 
 	err := ctx.ShouldBindJSON(&user)
 	if err != nil {
@@ -108,5 +108,29 @@ func (c *UserController) LoginByEmail(ctx *gin.Context) {
 }
 
 func (uc *UserController) LoginByPhoneNumber(ctx *gin.Context) {
-	panic("unimplemented")
+	credential := Domain.PhoneCredential{}
+
+	err := ctx.ShouldBindJSON(&credential) // read the data from the request
+	if err != nil {
+		ctx.JSON(400, gin.H{"error" : "Invalid request payload"})
+		return
+	}
+
+	var token, refresher string
+	var code int
+	if credential.PhoneNumber != "" && credential.Password != "" {
+		token, refresher, code, err = uc.UserUseCase.LoginByPhone(&credential)
+	} else {
+		ctx.JSON(code, gin.H{"error" : "email and password are required"})
+		return
+	}
+
+	if err != nil {
+		ctx.JSON(code, gin.H{"error" : err.Error()})
+	}
+
+	ctx.JSON(code, gin.H{
+		"token" : token, 
+		"refresher" : refresher,
+	})
 }
