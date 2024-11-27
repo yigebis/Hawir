@@ -29,7 +29,7 @@ func NewUserController(u UseCase.IUserUseCase, ts UseCase.ITokenService, oauthSe
 }
 
 func (uc *UserController) Register(ctx *gin.Context) {
-	user := Domain.User{}
+	user := Domain.User{} // Creating a new user object that is empty
 
 	err := ctx.ShouldBindJSON(&user)
 	if err != nil {
