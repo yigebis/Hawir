@@ -136,7 +136,7 @@ func (uuc *UserUseCase) VerifyEmail(email, token string) (int, error) {
 
 /* returns token, refresh token, status code, and error */
 func (uuc *UserUseCase) LoginByEmail(emailCredential *Domain.EmailCredential) (string, string, int, error) {
-	user, err := uuc.UserRepo.GetUserByEmail(emailCredential.Email)
+	user, err := uuc.UserRepo.GetUserByEmail(emailCredential.Email)	 // getting the user email credential from userRepo
 
 	if err != nil{ // if user doesnt exist
 		statusCode, err := uuc.ErrorService.InvalidEmailPassword()
@@ -164,8 +164,33 @@ func (uuc *UserUseCase) LoginByEmail(emailCredential *Domain.EmailCredential) (s
 	return accessToken, "", 0, nil
 }
 
-func (uuc *UserUseCase) LoginByPhone(*Domain.PhoneCredential) (string, string, int, error) {
-	panic("unimplemented")
+/* returns token, refresh token, status code, and error */
+func (uuc *UserUseCase) LoginByPhone(phoneCredential *Domain.PhoneCredential) (string, string, int, error) {
+	user, err := uuc.UserRepo.GetUserByPhoneNumber(phoneCredential.PhoneNumber) // getting the user info from userRepo using phoneNumber
+
+	if err != nil{ // if user doesnt exist in userRepo
+		statusCode, err := uuc.ErrorService.InvalidEmailPassword()
+		return "", "", statusCode, err
+	}
+
+	if uuc.PasswordService.VerifyPassword(user.Password, phoneCredential.Password) != nil { // Invalid password
+		statusCode, err := uuc.ErrorService.InvalidEmailPassword()
+		return "", "", statusCode, err
+	}
+
+	// creating an accessToken for user
+	seconds, _ := strconv.Atoi(uuc.TokenExpiry)
+	expDuration := time.Now().Add(time.Second * time.Duration(seconds)).Unix()
+	accessToken, err := uuc.TokenService.GenerateToken(user.ID.Hex(), user.FirstName, expDuration)
+	
+	if err != nil {
+		statusCode, err := uuc.ErrorService.InternalServer()
+		return "", "", statusCode, err
+	}
+
+	// creating a refreshToken
+
+	return accessToken, "", 0, nil
 }
 func (uuc *UserUseCase) Login(user *Domain.User, password string) (string, string, int, error) {
 	panic("unimplemented")
