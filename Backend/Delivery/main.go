@@ -55,16 +55,32 @@ func main() {
 	jwtSecret := os.Getenv("JWT_SECRET")
 	ps := Infrastructure.NewPasswordService()
 	ts := Infrastructure.NewTokenService(jwtSecret)
+	timeService := Infrastructure.NewTimeService()
 	ms := Infrastructure.NewMailService(os.Getenv("SENDER_EMAIL"), os.Getenv("EMAIL_PASSWORD"), os.Getenv("FROM"))
 	es := Error.NewErrorService()
 
-	ex := os.Getenv("EMAIL_EXPIRY")
-	tx := os.Getenv("TOKEN_EXPIRY")
+	email_duration := os.Getenv("EMAIL_EXPIRY")
+	token_duration := os.Getenv("TOKEN_EXPIRY")
+	refresher_duration := os.Getenv("REFRESHER_EXPIRY")
 
-	uuc := UseCase.NewUserUseCase(ur, ps, ts, ms, es, ex, tx)
+	ex := timeService.GetDuration(email_duration)
+	tx := timeService.GetDuration(token_duration)
+	rx := timeService.GetDuration(refresher_duration)
+
+	if ex == -1 || tx == -1 || rx == -1 {
+		log.Fatal("error parsing time duration")
+	}
+
+	oauthState := os.Getenv("OAUTH_STATE_STRING")
+	oauthClientID := os.Getenv("OAUTH_CLIENT_ID")
+	oauthClientSecret := os.Getenv("OAUTH_CLIENT_SECRET")
+
+	oauthService := Infrastructure.NewOAuth(oauthState, oauthClientID, oauthClientSecret)
+
+	uuc := UseCase.NewUserUseCase(ur, ps, ts, ms, es, ex, tx, rx)
 
 	// setting up the controllers
-	user_controller := Controller.NewUserController(uuc, ts)
+	user_controller := Controller.NewUserController(uuc, ts, oauthService)
 
 	// setting up the router
 	router := Router.NewRouter(user_controller)

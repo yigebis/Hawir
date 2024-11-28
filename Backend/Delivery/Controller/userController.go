@@ -2,7 +2,11 @@ package Controller
 
 import (
 	"Hawir/Domain"
+	"Hawir/Infrastructure"
 	"Hawir/UseCase"
+	"context"
+	"encoding/json"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -12,13 +16,15 @@ type UserController struct {
 	UserUseCase  UseCase.IUserUseCase
 	V            *validator.Validate
 	TokenService UseCase.ITokenService
+	OAuthService *Infrastructure.OAuth
 }
 
-func NewUserController(u UseCase.IUserUseCase, ts UseCase.ITokenService) *UserController {
+func NewUserController(u UseCase.IUserUseCase, ts UseCase.ITokenService, oauthService *Infrastructure.OAuth) *UserController {
 	return &UserController{
 		UserUseCase:  u,
 		V:            validator.New(),
 		TokenService: ts,
+		OAuthService: oauthService,
 	}
 }
 
@@ -77,7 +83,7 @@ func (uc *UserController) VerifyEmail(ctx *gin.Context) {
 	ctx.JSON(code, gin.H{"message": "email verified successfully"})
 }
 
-func (c *UserController) LoginByEmail(ctx *gin.Context) {
+func (uc *UserController) LoginByEmail(ctx *gin.Context) {
 	credential := Domain.EmailCredential{}
 	err := ctx.ShouldBindJSON(&credential)
 
@@ -90,7 +96,7 @@ func (c *UserController) LoginByEmail(ctx *gin.Context) {
 	var code int
 
 	if credential.Email != "" && credential.Password != "" {
-		token, refresher, code, err = c.UserUseCase.LoginByEmail(&credential)
+		token, refresher, code, err = uc.UserUseCase.LoginByEmail(&credential)
 	} else {
 		ctx.JSON(code, gin.H{"error": "email and password are required"})
 		return
@@ -109,28 +115,97 @@ func (c *UserController) LoginByEmail(ctx *gin.Context) {
 
 func (uc *UserController) LoginByPhoneNumber(ctx *gin.Context) {
 	credential := Domain.PhoneCredential{}
+	err := ctx.ShouldBindJSON(&credential)
 
-	err := ctx.ShouldBindJSON(&credential) // read the data from the request
 	if err != nil {
-		ctx.JSON(400, gin.H{"error" : "Invalid request payload"})
+		ctx.JSON(400, gin.H{"error": "invalid request payload"})
 		return
 	}
 
 	var token, refresher string
 	var code int
+
 	if credential.PhoneNumber != "" && credential.Password != "" {
 		token, refresher, code, err = uc.UserUseCase.LoginByPhone(&credential)
 	} else {
-		ctx.JSON(code, gin.H{"error" : "email and password are required"})
+		ctx.JSON(code, gin.H{"error": "email and password are required"})
 		return
 	}
 
 	if err != nil {
-		ctx.JSON(code, gin.H{"error" : err.Error()})
+		ctx.JSON(code, gin.H{"error": err.Error()})
+		return
 	}
 
 	ctx.JSON(code, gin.H{
-		"token" : token, 
-		"refresher" : refresher,
+		"token":     token,
+		"refresher": refresher,
 	})
+}
+
+func (uc *UserController) LoginWithGoogle(ctx *gin.Context) {
+	// Redirect to google login page
+	url := uc.OAuthService.GetOAuthURL()
+	ctx.Redirect(http.StatusTemporaryRedirect, url)
+}
+
+func (uc *UserController) GoogleCallback(ctx *gin.Context) {
+	// in the callback, we get the code and state
+
+	// Check if the state is the one we stored as statestring, preventing attacks
+	state := ctx.Query("state")
+	if state != uc.OAuthService.OAuthState {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid OAuth state"})
+		return
+	}
+
+	// Get the code and check if it's empty
+	code := ctx.Query("code")
+	if code == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "code not found"})
+		return
+	}
+
+	// Exchange code for token, the token is different from our tokens, it's google's service token
+	// we are requesting that token to access its oauth service
+	token, err := uc.OAuthService.OAuthConfig.Exchange(context.Background(), code)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to exchange token"})
+		return
+	}
+
+	// Fetch user info
+	client := uc.OAuthService.OAuthConfig.Client(context.Background(), token)
+	resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch user info"})
+		return
+	}
+
+	defer resp.Body.Close()
+
+	//changing the response body to a map
+	var userInfo map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&userInfo); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to decode user info"})
+		return
+	}
+
+	// transforming into Domain.User format
+	var user = &Domain.User{}
+	user.Email = userInfo["email"].(string)
+	user.FirstName = userInfo["given_name"].(string)
+	user.LastName = userInfo["family_name"].(string)
+
+	accessToken, refresherToken, statusCode, err := uc.UserUseCase.LoginByAuth(user)
+	if err != nil {
+		ctx.JSON(statusCode, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(statusCode, gin.H{
+		"access_token":    accessToken,
+		"refresher_token": refresherToken,
+	})
+
 }

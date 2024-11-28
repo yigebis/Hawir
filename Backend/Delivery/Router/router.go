@@ -24,6 +24,8 @@ func (r *Router) Run() {
 	router.POST("/login/email", r.UserController.LoginByEmail)
 	router.POST("/login/phone_number", r.UserController.LoginByPhoneNumber)
 	router.GET("/verify", r.UserController.VerifyEmail)
+	router.GET("/auth/with/google", r.UserController.LoginWithGoogle) //redirects to google login page
+	router.GET("/auth/callback", r.UserController.GoogleCallback)     //user already agreed to give his info so google will redirect to this endpoint
 
 	router.Run()
 }

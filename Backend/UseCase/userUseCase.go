@@ -3,7 +3,6 @@ package UseCase
 import (
 	"Hawir/Domain"
 	"fmt"
-	"strconv"
 	"time"
 )
 
@@ -14,11 +13,12 @@ type UserUseCase struct {
 	MailService     IMailService
 	ErrorService    IErrorService
 
-	EmailExpiry string
-	TokenExpiry string
+	EmailExpiry     int64
+	TokenExpiry     int64
+	RefresherExpiry int64
 }
 
-func NewUserUseCase(ur IUserRepository, ps IPasswordService, ts ITokenService, ms IMailService, es IErrorService, ex, tx string) IUserUseCase {
+func NewUserUseCase(ur IUserRepository, ps IPasswordService, ts ITokenService, ms IMailService, es IErrorService, ex, tx, rx int64) IUserUseCase {
 	return &UserUseCase{
 		UserRepo:        ur,
 		PasswordService: ps,
@@ -27,6 +27,7 @@ func NewUserUseCase(ur IUserRepository, ps IPasswordService, ts ITokenService, m
 		ErrorService:    es,
 		EmailExpiry:     ex,
 		TokenExpiry:     tx,
+		RefresherExpiry: rx,
 	}
 }
 
@@ -80,12 +81,8 @@ func (uuc *UserUseCase) Register(user *Domain.User) (int, error) {
 		return uuc.ErrorService.InternalServer()
 	}
 
-	//set the expiry time for accepting email verification
-	seconds, _ := strconv.Atoi(uuc.EmailExpiry)
-	expiryDuration := time.Now().Add(time.Second * time.Duration(seconds)).Unix()
-
 	// send verification email
-	token, err := uuc.TokenService.GenerateEmailToken(user.Email, expiryDuration)
+	token, err := uuc.TokenService.GenerateEmailToken(user.Email, uuc.EmailExpiry)
 	if err != nil {
 		fmt.Println("token_mail")
 		return uuc.ErrorService.InternalServer()
@@ -136,62 +133,82 @@ func (uuc *UserUseCase) VerifyEmail(email, token string) (int, error) {
 
 /* returns token, refresh token, status code, and error */
 func (uuc *UserUseCase) LoginByEmail(emailCredential *Domain.EmailCredential) (string, string, int, error) {
-	user, err := uuc.UserRepo.GetUserByEmail(emailCredential.Email)	 // getting the user email credential from userRepo
+	user, err := uuc.UserRepo.GetUserByEmail(emailCredential.Email) // getting the user email credential from userRepo
 
-	if err != nil{ // if user doesnt exist
+	if err != nil { // if user doesnt exist
 		statusCode, err := uuc.ErrorService.InvalidEmailPassword()
 		return "", "", statusCode, err
 	}
 
-	if uuc.PasswordService.VerifyPassword(user.Password, emailCredential.Password) != nil { // invalid password
-		statusCode, err := uuc.ErrorService.InvalidEmailPassword()
-		return "", "", statusCode, err
-	}
-
-	// creating an accessToken
-	seconds, _ := strconv.Atoi(uuc.TokenExpiry)
-	expDuration := time.Now().Add(time.Second * time.Duration(seconds)).Unix()
-	accessToken, err := uuc.TokenService.GenerateToken(user.ID.Hex(), user.FirstName, expDuration)
-
-	if err != nil {
-		statusCode, err := uuc.ErrorService.InternalServer()
-		return "", "", statusCode, err
-	}
-
-	// creating a refreshToken
-	// seconds, _ =strconv.Atoi(uuc.)
-
-	return accessToken, "", 0, nil
+	return uuc.Login(user, emailCredential.Password)
 }
 
 /* returns token, refresh token, status code, and error */
 func (uuc *UserUseCase) LoginByPhone(phoneCredential *Domain.PhoneCredential) (string, string, int, error) {
 	user, err := uuc.UserRepo.GetUserByPhoneNumber(phoneCredential.PhoneNumber) // getting the user info from userRepo using phoneNumber
 
-	if err != nil{ // if user doesnt exist in userRepo
+	if err != nil { // if user doesnt exist in userRepo
 		statusCode, err := uuc.ErrorService.InvalidEmailPassword()
 		return "", "", statusCode, err
 	}
 
-	if uuc.PasswordService.VerifyPassword(user.Password, phoneCredential.Password) != nil { // Invalid password
+	return uuc.Login(user, phoneCredential.Password)
+}
+
+// helper function for avoiding redundant codes in LoginByPhone and LoginByEmail
+func (uuc *UserUseCase) Login(user *Domain.User, password string) (string, string, int, error) {
+	if uuc.PasswordService.VerifyPassword(user.Password, password) != nil { // invalid password
 		statusCode, err := uuc.ErrorService.InvalidEmailPassword()
 		return "", "", statusCode, err
 	}
 
-	// creating an accessToken for user
-	seconds, _ := strconv.Atoi(uuc.TokenExpiry)
-	expDuration := time.Now().Add(time.Second * time.Duration(seconds)).Unix()
-	accessToken, err := uuc.TokenService.GenerateToken(user.ID.Hex(), user.FirstName, expDuration)
-	
+	// creating an accessToken
+	accessToken, err := uuc.TokenService.GenerateToken(user.ID.Hex(), user.FirstName, uuc.TokenExpiry)
+
 	if err != nil {
 		statusCode, err := uuc.ErrorService.InternalServer()
 		return "", "", statusCode, err
 	}
 
 	// creating a refreshToken
+	refresherToken, err := uuc.TokenService.GenerateToken(user.ID.Hex(), user.FirstName, uuc.RefresherExpiry)
 
-	return accessToken, "", 0, nil
+	if err != nil {
+		statusCode, err := uuc.ErrorService.InternalServer()
+		return "", "", statusCode, err
+	}
+
+	code, err := uuc.ErrorService.NoError()
+	return accessToken, refresherToken, code, err
 }
-func (uuc *UserUseCase) Login(user *Domain.User, password string) (string, string, int, error) {
-	panic("unimplemented")
+
+func (uuc *UserUseCase) LoginByAuth(user *Domain.User) (string, string, int, error) {
+	//check if the email exists
+	_, err := uuc.UserRepo.GetUserByEmail(user.Email)
+
+	//if the email does not exist, register the user
+	if err != nil {
+		createErr := uuc.UserRepo.CreateUser(user)
+		if createErr != nil {
+			code, err := uuc.ErrorService.InternalServer()
+			return "", "", code, err
+		}
+	}
+
+	//create an access token
+	accessToken, err := uuc.TokenService.GenerateToken(user.ID.Hex(), user.FirstName, uuc.TokenExpiry)
+	if err != nil {
+		code, err := uuc.ErrorService.InternalServer()
+		return "", "", code, err
+	}
+
+	//create a refresher token
+	refresherToken, err := uuc.TokenService.GenerateToken(user.ID.Hex(), user.FirstName, uuc.RefresherExpiry)
+	if err != nil {
+		code, err := uuc.ErrorService.InternalServer()
+		return "", "", code, err
+	}
+
+	code, err := uuc.ErrorService.NoError()
+	return accessToken, refresherToken, code, err
 }
