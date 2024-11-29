@@ -21,9 +21,8 @@ var ErrNotVerified = errors.New("unverified user")
 var ErrSamePassword = errors.New("old and new password should be different")
 var ErrNotAuthorized = errors.New("unauthorized")
 
-var ErrLectureNotFound = errors.New("not found")
-var ErrTopicExists = errors.New("topic already exists")
-var ErrTopicNotExists = errors.New("topic doesn't exist")
+var ErrPasswordTooShort = errors.New("password should be at least 8 characters")
+var ErrMissingValidPasswordChar = errors.New("password should contain at least one uppercase, one lowercase, one number, and one special character")
 
 type Error struct{}
 
@@ -79,14 +78,10 @@ func (e *Error) NotAuthorized() (int, error) {
 	return http.StatusUnauthorized, ErrNotAuthorized
 }
 
-func (e *Error) LectureNotFound() (int, error) {
-	return http.StatusNotFound, ErrLectureNotFound
+func (e *Error) PasswordTooShort() (int, error) {
+	return http.StatusBadRequest, ErrPasswordTooShort
 }
 
-func (e *Error) TopicExists() (int, error) {
-	return http.StatusFound, ErrTopicExists
-}
-
-func (e *Error) TopicNotExists() (int, error) {
-	return http.StatusNotFound, ErrTopicNotExists
+func (e *Error) MissingValidPasswordChar() (int, error) {
+	return http.StatusBadRequest, ErrMissingValidPasswordChar
 }

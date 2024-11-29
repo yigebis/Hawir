@@ -23,6 +23,7 @@ type IUserRepository interface {
 type IPasswordService interface {
 	HashPassword(password string) (string, error)
 	VerifyPassword(hashedPassword, plainPassword string) error
+	ValidatePassword(password string) (int, error)
 }
 
 type ITokenService interface {
