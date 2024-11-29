@@ -53,11 +53,11 @@ func main() {
 	ur := Repository.NewUserRepository(user_context, user_collection)
 
 	jwtSecret := os.Getenv("JWT_SECRET")
-	ps := Infrastructure.NewPasswordService()
+	es := Error.NewErrorService()
+	ps := Infrastructure.NewPasswordService(es)
 	ts := Infrastructure.NewTokenService(jwtSecret)
 	timeService := Infrastructure.NewTimeService()
 	ms := Infrastructure.NewMailService(os.Getenv("SENDER_EMAIL"), os.Getenv("EMAIL_PASSWORD"), os.Getenv("FROM"))
-	es := Error.NewErrorService()
 
 	email_duration := os.Getenv("EMAIL_EXPIRY")
 	token_duration := os.Getenv("TOKEN_EXPIRY")
@@ -80,7 +80,7 @@ func main() {
 	uuc := UseCase.NewUserUseCase(ur, ps, ts, ms, es, ex, tx, rx)
 
 	// setting up the controllers
-	user_controller := Controller.NewUserController(uuc, ts, oauthService)
+	user_controller := Controller.NewUserController(uuc, ts, oauthService, ps)
 
 	// setting up the router
 	router := Router.NewRouter(user_controller)

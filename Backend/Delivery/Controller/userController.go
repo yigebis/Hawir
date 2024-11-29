@@ -13,18 +13,20 @@ import (
 )
 
 type UserController struct {
-	UserUseCase  UseCase.IUserUseCase
-	V            *validator.Validate
-	TokenService UseCase.ITokenService
-	OAuthService *Infrastructure.OAuth
+	UserUseCase     UseCase.IUserUseCase
+	V               *validator.Validate
+	TokenService    UseCase.ITokenService
+	OAuthService    *Infrastructure.OAuth
+	PasswordService UseCase.IPasswordService
 }
 
-func NewUserController(u UseCase.IUserUseCase, ts UseCase.ITokenService, oauthService *Infrastructure.OAuth) *UserController {
+func NewUserController(u UseCase.IUserUseCase, ts UseCase.ITokenService, oauthService *Infrastructure.OAuth, ps UseCase.IPasswordService) *UserController {
 	return &UserController{
-		UserUseCase:  u,
-		V:            validator.New(),
-		TokenService: ts,
-		OAuthService: oauthService,
+		UserUseCase:     u,
+		V:               validator.New(),
+		TokenService:    ts,
+		OAuthService:    oauthService,
+		PasswordService: ps,
 	}
 }
 
@@ -44,6 +46,13 @@ func (uc *UserController) Register(ctx *gin.Context) {
 		return
 	}
 
+	//validate password
+	statusCode, err := uc.PasswordService.ValidatePassword(user.Password)
+	if err != nil {
+		ctx.JSON(statusCode, gin.H{"error": err.Error()})
+		return
+	}
+
 	//validate login preference
 	if user.LoginPreference == "email" && user.Email == "" {
 		ctx.JSON(400, gin.H{"error": "email is required"})
@@ -59,14 +68,14 @@ func (uc *UserController) Register(ctx *gin.Context) {
 		ctx.JSON(400, gin.H{"error": "both email and phone number aren't allowed at registration time"})
 		return
 	}
-	code, err := uc.UserUseCase.Register(&user)
+	statusCode, err = uc.UserUseCase.Register(&user)
 
 	if err != nil {
-		ctx.JSON(code, gin.H{"error": err.Error()})
+		ctx.JSON(statusCode, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(code, gin.H{"message": "registration successful. Verification has been sent to the Email"})
+	ctx.JSON(statusCode, gin.H{"message": "registration successful. Verification has been sent to the Email"})
 }
 
 func (uc *UserController) VerifyEmail(ctx *gin.Context) {
@@ -91,6 +100,9 @@ func (uc *UserController) LoginByEmail(ctx *gin.Context) {
 		ctx.JSON(400, gin.H{"error": "invalid request payload"})
 		return
 	}
+
+	//validate email and password existence
+	uc.V.Struct(credential)
 
 	var token, refresher string
 	var code int
@@ -121,6 +133,9 @@ func (uc *UserController) LoginByPhoneNumber(ctx *gin.Context) {
 		ctx.JSON(400, gin.H{"error": "invalid request payload"})
 		return
 	}
+
+	//validate phone number and password existence
+	uc.V.Struct(credential)
 
 	var token, refresher string
 	var code int
@@ -207,5 +222,4 @@ func (uc *UserController) GoogleCallback(ctx *gin.Context) {
 		"access_token":    accessToken,
 		"refresher_token": refresherToken,
 	})
-
 }

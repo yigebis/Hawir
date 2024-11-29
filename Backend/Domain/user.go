@@ -13,7 +13,7 @@ type User struct {
 	LoginPreference   string             `json:"login_preference" bson:"login_preference" validate:"required"`
 	Email             string             `json:"email" bson:"email" validate:"email"`
 	PhoneNumber       string             `json:"phone_number" bson:"phone_number"`
-	Password          string             `json:"password" bson:"password" validate:"required,min=8"`
+	Password          string             `json:"password" bson:"password" validate:"required"`
 	ProfilePhoto      string             `json:"profile_photo" bson:"profile_photo"`
 	RegistrationDate  time.Time          `json:"registration_date" bson:"registration_date"`
 	Verified          bool               `json:"verified" bson:"verified"`
@@ -21,13 +21,13 @@ type User struct {
 }
 
 type EmailCredential struct {
-	Email    string `json:"email" bson:"email"`
-	Password string `json:"password" bson:"password"`
+	Email    string `json:"email" bson:"email" validate:"required,email"`
+	Password string `json:"password" bson:"password" validate:"required"`
 }
 
 type PhoneCredential struct {
-	PhoneNumber string `json:"phone_number" bson:"phone_number"`
-	Password    string `json:"password" bson:"password"`
+	PhoneNumber string `json:"phone_number" bson:"phone_number" validate:"required"`
+	Password    string `json:"password" bson:"password" validate:"required"`
 }
 
 type ChangeCredential struct {

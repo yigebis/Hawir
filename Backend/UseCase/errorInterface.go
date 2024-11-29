@@ -14,8 +14,6 @@ type IErrorService interface {
 	NotVerified() (int, error)
 	SamePassword() (int, error)
 	NotAuthorized() (int, error)
-
-	LectureNotFound() (int, error)
-	TopicExists() (int, error)
-	TopicNotExists() (int, error)
+	PasswordTooShort() (int, error)
+	MissingValidPasswordChar() (int, error)
 }
