@@ -31,10 +31,42 @@ func (ms *MailService) SendVerificationEmail(to, token string) error {
 	m.SetHeader("To", to)
 	m.SetHeader("Subject", "Verify your Email")
 
-	bodyMessage := "Please follow this link to verify your email\n"
-	bodyLink := fmt.Sprintf(ms.WebsiteDomainName+"/verify?email=%s&token=%s", to, token)
-	body := bodyMessage + bodyLink
-	m.SetBody("text/plain", body)
+	verifyLink := fmt.Sprintf(ms.WebsiteDomainName+"/verify?email=%s&token=%s", to, token)
+	rejectLink := fmt.Sprintf(ms.WebsiteDomainName+"/email/reject?email=%s&token=%s", to, token)
+
+	body := fmt.Sprintf(`
+	<!DOCTYPE html>
+	<html>
+	<head>
+		<style>
+			.button {
+				display: inline-block;
+				padding: 10px 20px;
+				font-size: 16px;
+				color: #fff;  /* Set text color to white */
+				background-color: #007BFF;  /* Verify button color */
+				border: none;
+				border-radius: 5px;
+				text-decoration: none;  /* Remove underline */
+				margin: 5px;
+				cursor: pointer;
+			}
+			.button.reject {
+				background-color: #dc3545;  /* Reject button color */
+			}
+		</style>
+	</head>
+	<body>
+		<p>Please verify your email by clicking the button below:</p>
+		<a style="color: #fff; text-decoration: none; font-weight: bold;" href="%s" class="button">Verify Email</a>
+		<br><br>
+		<p>If you did not request this, you can reject the verification by clicking the button below:</p>
+		<a style="color: #fff; text-decoration: none; font-weight: bold;" href="%s" class="button reject">Reject Email</a>
+	</body>
+	</html>
+	`, verifyLink, rejectLink)
+
+	m.SetBody("text/html", body)
 
 	host := "smtp.gmail.com"
 	port := 587

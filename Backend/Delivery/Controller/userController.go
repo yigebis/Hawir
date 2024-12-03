@@ -13,21 +13,21 @@ import (
 )
 
 type UserController struct {
-	UserUseCase     UseCase.IUserUseCase
-	V               *validator.Validate
-	TokenService    UseCase.ITokenService
-	OAuthService    *Infrastructure.OAuth
-	PasswordService UseCase.IPasswordService
+	UserUseCase       UseCase.IUserUseCase
+	V                 *validator.Validate
+	TokenService      UseCase.ITokenService
+	OAuthService      *Infrastructure.OAuth
+	PasswordService   UseCase.IPasswordService
 	ValidationService *Infrastructure.ValidationService
 }
 
 func NewUserController(u UseCase.IUserUseCase, ts UseCase.ITokenService, oauthService *Infrastructure.OAuth, ps UseCase.IPasswordService, vs *Infrastructure.ValidationService) *UserController {
 	return &UserController{
-		UserUseCase:     u,
-		V:               validator.New(),
-		TokenService:    ts,
-		OAuthService:    oauthService,
-		PasswordService: ps,
+		UserUseCase:       u,
+		V:                 validator.New(),
+		TokenService:      ts,
+		OAuthService:      oauthService,
+		PasswordService:   ps,
 		ValidationService: vs,
 	}
 }
@@ -49,7 +49,7 @@ func (uc *UserController) Register(ctx *gin.Context) {
 	}
 
 	//validate password
-	statusCode, err := uc.PasswordService.ValidatePassword(user.Password)
+	statusCode, err := uc.ValidationService.ValidatePassword(user.Password)
 	if err != nil {
 		ctx.JSON(statusCode, gin.H{"error": err.Error()})
 		return
@@ -61,20 +61,22 @@ func (uc *UserController) Register(ctx *gin.Context) {
 		return
 	}
 
-	if user.LoginPreference == "phone_number" && user.PhoneNumber == "" {
-		ctx.JSON(400, gin.H{"error": "phone is required"})
-		return
+	if user.LoginPreference == "phone_number" {
+		if user.PhoneNumber == "" {
+			ctx.JSON(400, gin.H{"error": "phone is required"})
+			return
+		}
+
+		statusCode, err = uc.ValidationService.PhoneValidation(user.PhoneNumber) // calls the phoneValidation method and gets the status code and err
+		if err != nil {
+			ctx.JSON(statusCode, gin.H{"error": err.Error()})
+			return
+		}
 	}
 
 	if user.Email != "" && user.PhoneNumber != "" {
 		ctx.JSON(400, gin.H{"error": "both email and phone number aren't allowed at registration time"})
 		return
-	}
-
-	statusCode, err = uc.ValidationService.PhoneValidation(user.PhoneNumber) // calls the phoneValidation method and gets the status code and err
-	if err != nil{
-		ctx.JSON(statusCode, gin.H{"error": err})
-		return 
 	}
 
 	statusCode, err = uc.UserUseCase.Register(&user) // registers the data

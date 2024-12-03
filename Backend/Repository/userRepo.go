@@ -37,7 +37,7 @@ func (ur *UserRepository) GetUserByEmail(email string) (*Domain.User, error) {
 	err := ur.Collection.FindOne(ur.DbCtx, filter).Decode(&user)
 
 	if err != nil {
-		fmt.Println(err.Error())
+		// fmt.Println(err.Error())
 		return nil, err
 	}
 

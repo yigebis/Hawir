@@ -225,6 +225,15 @@ func (uuc *UserUseCase) LoginByAuth(user *Domain.User) (string, string, int, err
 
 	//if the email does not exist, register the user
 	if err != nil {
+		//this can be the case that a user doesn't exist in the database so create the user
+
+		//verify the user
+		user.Verified = true
+
+		//set the registration date
+		user.RegistrationDate = time.Now()
+
+		//store the user in the database
 		createErr := uuc.UserRepo.CreateUser(user)
 		if createErr != nil {
 			code, err := uuc.ErrorService.InternalServer()
