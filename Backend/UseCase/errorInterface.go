@@ -16,4 +16,5 @@ type IErrorService interface {
 	NotAuthorized() (int, error)
 	PasswordTooShort() (int, error)
 	MissingValidPasswordChar() (int, error)
+	InvalidPhoneNumber() (int, error)
 }
