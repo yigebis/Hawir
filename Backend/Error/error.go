@@ -24,6 +24,8 @@ var ErrNotAuthorized = errors.New("unauthorized")
 var ErrPasswordTooShort = errors.New("password should be at least 8 characters")
 var ErrMissingValidPasswordChar = errors.New("password should contain at least one uppercase, one lowercase, one number, and one special character")
 
+var ErrInvalidPhoneNumber = errors.New("invalid Phone Number")
+
 type Error struct{}
 
 func NewErrorService() UseCase.IErrorService {
@@ -84,4 +86,8 @@ func (e *Error) PasswordTooShort() (int, error) {
 
 func (e *Error) MissingValidPasswordChar() (int, error) {
 	return http.StatusBadRequest, ErrMissingValidPasswordChar
+}
+
+func (e *Error) InvalidPhoneNumber() (int, error){
+	return http.StatusBadRequest, ErrInvalidPhoneNumber
 }
