@@ -18,15 +18,17 @@ type UserController struct {
 	TokenService    UseCase.ITokenService
 	OAuthService    *Infrastructure.OAuth
 	PasswordService UseCase.IPasswordService
+	ValidationService *Infrastructure.ValidationService
 }
 
-func NewUserController(u UseCase.IUserUseCase, ts UseCase.ITokenService, oauthService *Infrastructure.OAuth, ps UseCase.IPasswordService) *UserController {
+func NewUserController(u UseCase.IUserUseCase, ts UseCase.ITokenService, oauthService *Infrastructure.OAuth, ps UseCase.IPasswordService, vs *Infrastructure.ValidationService) *UserController {
 	return &UserController{
 		UserUseCase:     u,
 		V:               validator.New(),
 		TokenService:    ts,
 		OAuthService:    oauthService,
 		PasswordService: ps,
+		ValidationService: vs,
 	}
 }
 
@@ -68,7 +70,14 @@ func (uc *UserController) Register(ctx *gin.Context) {
 		ctx.JSON(400, gin.H{"error": "both email and phone number aren't allowed at registration time"})
 		return
 	}
-	statusCode, err = uc.UserUseCase.Register(&user)
+
+	statusCode, err = uc.ValidationService.PhoneValidation(user.PhoneNumber) // calls the phoneValidation method and gets the status code and err
+	if err != nil{
+		ctx.JSON(statusCode, gin.H{"error": err})
+		return 
+	}
+
+	statusCode, err = uc.UserUseCase.Register(&user) // registers the data
 
 	if err != nil {
 		ctx.JSON(statusCode, gin.H{"error": err.Error()})
