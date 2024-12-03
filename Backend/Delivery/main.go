@@ -13,8 +13,8 @@ import (
 	"log"
 	"os"
 
-	//comment it for production
-	//"github.com/joho/godotenv"
+	// comment it for production
+	// "github.com/joho/godotenv"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -35,7 +35,7 @@ func main() {
 	password := os.Getenv("MONGO_PASSWORD")
 	uri := "mongodb+srv://" + username + ":" + password + "@cluster0.isgee.mongodb.net/"
 
-	fmt.Print(uri)
+	// fmt.Print(uri)
 
 	clientOptions := options.Client().ApplyURI(uri)
 	client, err := mongo.Connect(context.TODO(), clientOptions)
@@ -63,6 +63,7 @@ func main() {
 	ts := Infrastructure.NewTokenService(jwtSecret)
 	timeService := Infrastructure.NewTimeService()
 	ms := Infrastructure.NewMailService(os.Getenv("SENDER_EMAIL"), os.Getenv("EMAIL_PASSWORD"), os.Getenv("FROM"), websiteDomainName)
+	vs := Infrastructure.NewValidationService(es)
 
 	email_duration := os.Getenv("EMAIL_EXPIRY")
 	token_duration := os.Getenv("TOKEN_EXPIRY")
@@ -85,7 +86,7 @@ func main() {
 	uuc := UseCase.NewUserUseCase(ur, ps, ts, ms, es, ex, tx, rx)
 
 	// setting up the controllers
-	user_controller := Controller.NewUserController(uuc, ts, oauthService, ps)
+	user_controller := Controller.NewUserController(uuc, ts, oauthService, ps, vs)
 
 	// setting up the router
 	router := Router.NewRouter(user_controller)
