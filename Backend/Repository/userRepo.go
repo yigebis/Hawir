@@ -66,3 +66,9 @@ func (ur *UserRepository) VerifyUser(user *Domain.User) error {
 	fmt.Println(err)
 	return err
 }
+
+func (ur *UserRepository) DeleteUserByEmail(email string) error {
+	filter := bson.M{"email": email}
+	_, err := ur.Collection.DeleteOne(ur.DbCtx, filter)
+	return err
+}

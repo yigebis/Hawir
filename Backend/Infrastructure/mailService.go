@@ -9,16 +9,18 @@ import (
 )
 
 type MailService struct {
-	Sender   string //eg. yigerem4@gmail.com
-	Password string
-	From     string //eg. Hawir.com
+	Sender            string //eg. yigerem4@gmail.com
+	Password          string
+	From              string //eg. Hawir.com
+	WebsiteDomainName string
 }
 
-func NewMailService(sender, password, from string) UseCase.IMailService {
+func NewMailService(sender, password, from, websiteDomainName string) UseCase.IMailService {
 	return &MailService{
-		Sender:   sender,
-		Password: password,
-		From:     from,
+		Sender:            sender,
+		Password:          password,
+		From:              from,
+		WebsiteDomainName: websiteDomainName,
 	}
 }
 
@@ -30,7 +32,7 @@ func (ms *MailService) SendVerificationEmail(to, token string) error {
 	m.SetHeader("Subject", "Verify your Email")
 
 	bodyMessage := "Please follow this link to verify your email\n"
-	bodyLink := fmt.Sprintf("http://localhost:8080/verify?email=%s&token=%s", to, token)
+	bodyLink := fmt.Sprintf(ms.WebsiteDomainName+"/verify?email=%s&token=%s", to, token)
 	body := bodyMessage + bodyLink
 	m.SetBody("text/plain", body)
 

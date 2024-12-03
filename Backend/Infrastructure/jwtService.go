@@ -3,6 +3,7 @@ package Infrastructure
 import (
 	"Hawir/Error"
 	"Hawir/UseCase"
+	"time"
 
 	"github.com/dgrijalva/jwt-go"
 )
@@ -18,9 +19,9 @@ func NewTokenService(jwtSecret string) UseCase.ITokenService {
 // GenerateToken implements UseCase.ITokenService.
 func (ts *TokenService) GenerateToken(id string, firstName string, expiryDuration int64) (string, error) {
 	claims := jwt.MapClaims{
-		"id":             id,
-		"first_name":     firstName,
-		"expiryDuration": expiryDuration,
+		"id":         id,
+		"first_name": firstName,
+		"exp":        expiryDuration,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -35,8 +36,8 @@ func (ts *TokenService) GenerateToken(id string, firstName string, expiryDuratio
 
 func (ts *TokenService) GenerateEmailToken(email string, expiryDuration int64) (string, error) {
 	claims := jwt.MapClaims{
-		"email":          email,
-		"expiryDuration": expiryDuration,
+		"email": email,
+		"exp":   expiryDuration,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -57,10 +58,20 @@ func (ts *TokenService) ValidateToken(tokenString string) (map[string]interface{
 	if err != nil {
 		return nil, err
 	}
+
 	claims, ok := token.Claims.(*jwt.MapClaims)
-	if ok && token.Valid {
-		return *claims, nil
+
+	if !ok || !token.Valid {
+		return nil, Error.ErrInvalidToken
 	}
 
-	return nil, Error.ErrInvalidToken
+	//check if the token is not expired
+	claimsMap := *claims
+	expirationTime := time.Unix(int64(claimsMap["exp"].(float64)), 0)
+
+	if time.Now().After(expirationTime) {
+		return nil, Error.ErrInvalidToken
+	}
+
+	return claimsMap, nil
 }

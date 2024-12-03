@@ -92,6 +92,20 @@ func (uc *UserController) VerifyEmail(ctx *gin.Context) {
 	ctx.JSON(code, gin.H{"message": "email verified successfully"})
 }
 
+func (uc *UserController) RejectEmail(ctx *gin.Context) {
+	email := ctx.Query("email")
+	token := ctx.Query("token")
+
+	code, err := uc.UserUseCase.RejectEmail(email, token)
+
+	if err != nil {
+		ctx.JSON(code, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(code, gin.H{"message": "email verification rejected successfully"})
+}
+
 func (uc *UserController) LoginByEmail(ctx *gin.Context) {
 	credential := Domain.EmailCredential{}
 	err := ctx.ShouldBindJSON(&credential)

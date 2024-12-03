@@ -13,16 +13,21 @@ import (
 	"log"
 	"os"
 
+	//comment it for production
 	"github.com/joho/godotenv"
+
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func main() {
+	//comment it for production
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("error loading .env file")
 	}
 
+	// domain name of the website
+	websiteDomainName := os.Getenv("WEBSITE_DOMAIN_NAME")
 	// setting up the usecase
 
 	//user usecase
@@ -57,7 +62,7 @@ func main() {
 	ps := Infrastructure.NewPasswordService(es)
 	ts := Infrastructure.NewTokenService(jwtSecret)
 	timeService := Infrastructure.NewTimeService()
-	ms := Infrastructure.NewMailService(os.Getenv("SENDER_EMAIL"), os.Getenv("EMAIL_PASSWORD"), os.Getenv("FROM"))
+	ms := Infrastructure.NewMailService(os.Getenv("SENDER_EMAIL"), os.Getenv("EMAIL_PASSWORD"), os.Getenv("FROM"), websiteDomainName)
 
 	email_duration := os.Getenv("EMAIL_EXPIRY")
 	token_duration := os.Getenv("TOKEN_EXPIRY")
@@ -75,7 +80,7 @@ func main() {
 	oauthClientID := os.Getenv("OAUTH_CLIENT_ID")
 	oauthClientSecret := os.Getenv("OAUTH_CLIENT_SECRET")
 
-	oauthService := Infrastructure.NewOAuth(oauthState, oauthClientID, oauthClientSecret)
+	oauthService := Infrastructure.NewOAuth(oauthState, oauthClientID, oauthClientSecret, websiteDomainName)
 
 	uuc := UseCase.NewUserUseCase(ur, ps, ts, ms, es, ex, tx, rx)
 

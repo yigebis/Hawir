@@ -131,6 +131,37 @@ func (uuc *UserUseCase) VerifyEmail(email, token string) (int, error) {
 	return uuc.ErrorService.NoError()
 }
 
+// RejectEmail rejects the email verification if the user decides not to verify the email
+func (uuc *UserUseCase) RejectEmail(email, token string) (int, error) {
+	// verify the token and the email
+	claims, err := uuc.TokenService.ValidateToken(token)
+	if err != nil {
+		return uuc.ErrorService.InvalidToken()
+	}
+
+	if claims["email"] != email {
+		return uuc.ErrorService.InvalidToken()
+	}
+
+	// check if the user is already verified
+	user, err := uuc.UserRepo.GetUserByEmail(email)
+	if err != nil {
+		return uuc.ErrorService.InternalServer()
+	}
+
+	if user.Verified {
+		return uuc.ErrorService.UserExists()
+	}
+
+	// delete the user from the database
+	err = uuc.UserRepo.DeleteUserByEmail(user.Email)
+	if err != nil {
+		return uuc.ErrorService.InternalServer()
+	}
+
+	return uuc.ErrorService.NoError()
+}
+
 /* returns token, refresh token, status code, and error */
 func (uuc *UserUseCase) LoginByEmail(emailCredential *Domain.EmailCredential) (string, string, int, error) {
 	user, err := uuc.UserRepo.GetUserByEmail(emailCredential.Email) // getting the user email credential from userRepo
@@ -157,6 +188,12 @@ func (uuc *UserUseCase) LoginByPhone(phoneCredential *Domain.PhoneCredential) (s
 
 // helper function for avoiding redundant codes in LoginByPhone and LoginByEmail
 func (uuc *UserUseCase) Login(user *Domain.User, password string) (string, string, int, error) {
+
+	if !(user.Verified) { // if user is not verified
+		statusCode, err := uuc.ErrorService.PendingVerification()
+		return "", "", statusCode, err
+	}
+
 	if uuc.PasswordService.VerifyPassword(user.Password, password) != nil { // invalid password
 		statusCode, err := uuc.ErrorService.InvalidEmailPassword()
 		return "", "", statusCode, err
