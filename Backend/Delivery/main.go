@@ -14,7 +14,7 @@ import (
 	"os"
 
 	//comment it for production
-	"github.com/joho/godotenv"
+	//"github.com/joho/godotenv"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -22,9 +22,9 @@ import (
 
 func main() {
 	//comment it for production
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("error loading .env file")
-	}
+	// if err := godotenv.Load(); err != nil {
+	// 	log.Fatal("error loading .env file")
+	// }
 
 	// domain name of the website
 	websiteDomainName := os.Getenv("WEBSITE_DOMAIN_NAME")
