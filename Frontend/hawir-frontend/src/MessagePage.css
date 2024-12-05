@@ -2,13 +2,13 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh; /* Ensure the card is centered vertically */
+  min-height: 100vh;
   padding: 1rem;
-  background-color: #f9f9f9; /* Subtle background for the page */
+  background-color: #f9f9f9; 
 }
 
 .message-card-content {
-  width: 300px;
+  width: 400px;
   padding: 1.5rem;
   border-radius: 10px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -24,9 +24,9 @@
 }
 
 .message-card-content.error {
-  color: #721c24;
+  /* color: #721c24;
   background-color: #f8d7da;
-  border-left: 5px solid #dc3545;
+  border-left: 5px solid #dc3545; */
 }
 
 .message-card-content.info {
@@ -50,3 +50,15 @@
 .message-card-content button:hover {
   background-color: #0056b3;
 }
+
+
+.message-card-content.error {
+  color: #ff4d4d;
+}
+
+.error-image {
+  max-width: 300px;
+  margin: 0 auto;
+  display: block;
+}
+

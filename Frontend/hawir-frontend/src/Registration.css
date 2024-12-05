@@ -81,6 +81,22 @@ form {
   box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
 }
 
+.phone-number-group {
+  display: flex;
+  align-items: center;
+}
+
+.country-code {
+  width: 20%;
+  padding: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+  background: #f5f5f5;
+  border: 1px solid #ccc;
+  border-radius: 5px 0 0 5px;
+}
+
 .form-checkbox {
   display: flex;
   align-items: center;
