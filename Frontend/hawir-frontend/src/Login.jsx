@@ -23,6 +23,8 @@ const Login = () => {
   // State for server response or error
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [phoneError, setPhoneError] = useState("");
+
 
   // Handle input change
   const handleChange = (e) => {
@@ -74,10 +76,6 @@ const Login = () => {
         <h1>HAWIR</h1>
       </div>
       <h2>Welcome Back to Hawir!</h2>
-      <div className="message">
-        {message && <Message type="success" text={message} />}
-        <div>{error && <p className="error-message">{error}</p>}</div>
-      </div>
       <form className="login-form" onSubmit={handleLogin}>
         <div className="form-group">
           <label htmlFor="loginPreference">Login Preference</label>
@@ -110,20 +108,45 @@ const Login = () => {
         )}
 
         {formData.loginPreference === "phone_number" && (
-          <div className="form-group">
-            <label htmlFor="phoneNumber">Phone Number</label>
+          <div className="form-group phone-number-group">
             <input
-              className="form-control"
+              type="text"
+              value="+251"
+              disabled
+              className="country-code "
+            />
+            <input
+              className={`form-control phone-input ${
+                phoneError ? "input-error" : ""
+              }`} // Add error styling dynamically
               type="tel"
               id="phoneNumber"
               name="phoneNumber"
+              placeholder="XXXXXXXXX"
               value={formData.phoneNumber}
-              onChange={handleChange}
-              placeholder="Enter your phone number"
+              onChange={(e) => {
+                const value = e.target.value;
+                if (!/^\d*$/.test(value)) {
+                  setPhoneError("Only numeric values are allowed.");
+                } else if (
+                  value.length >= 1 &&
+                  !["9", "7"].includes(value[0])
+                ) {
+                  setPhoneError("Phone number must start with 9 or 7.");
+                } else if (value.length !== 9) {
+                  setPhoneError("Phone number must be exactly 9 digits.");
+                } else {
+                  setPhoneError(""); // Clear the phone-specific error
+                }
+                if (/^\d*$/.test(value) && value.length <= 9) {
+                  setFormData({ ...formData, phoneNumber: value });
+                }
+              }}
               required
             />
           </div>
         )}
+        {phoneError && <p className="error-message">{phoneError}</p>}
 
         <div className="form-group">
           <label htmlFor="password">Password</label>
@@ -169,6 +192,10 @@ const Login = () => {
         <button type="submit" className="sign-in-btn">
           Sign in
         </button>
+        <div className="message">
+          {message && <Message type="success" text={message} />}
+          <div>{error && <p className="error-message">{error}</p>}</div>
+        </div>
 
         <div className="forgot-password">
           <a href="#">Forgot your password?</a>
