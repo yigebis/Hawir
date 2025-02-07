@@ -1,0 +1,29 @@
+package Domain
+
+import (
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
+
+type Travel struct {
+	ID                primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	StartLocation     string             `json:"start_location" bson:"start_location" validate:"required"`
+	PickupLocations   []string           `json:"pickup_locations" bson:"pickup_locations" validate:"required"`
+	Destination       string             `json:"destination" bson:"destination" validate:"required"`
+	PlannedStartTime  time.Time          `json:"planned_start_time" bsong:"planned_start_time" validate:"required"`
+	ActualStartTime   time.Time          `json:"actual_start_time" bson:"actual_start_time"`
+	EstArrivalTime    time.Time          `json:"est_arrival_time" bson:"est_arrival_time"`
+	ActualArrivalTime time.Time          `json:"actual_arrival_time" bson:"actual_arrival_time"`
+	Price             float64            `json:"price" bson:"price" validate:"required"`
+	Notice            string             `json:"notice" bson:"notice" validate:"required"`
+	AgencyId          string             `json:"agency_id" bson:"agency_id" validate:"required"` // how do i make this a foreign key??
+	Seats             []bool             `json:"seats" bson:"seats"`
+	ReservedCount     int64              `json:"reserved_count" bson:"reserved_count"` // needs to be less than or equal to the seats lenght
+	BusRef            string             `json:"bus_ref" bson:"bus_ref" validate:"required"`
+	HasPayBack        bool               `json:"has_pay_back" bson:"has_pay_back" validate:"required"`
+	DriverName        string             `json:"driver_name" bson:"driver_name" validate:"required"`
+	AvgRating         float64            `json:"avg_rating" bson:"avg_rating"`
+	PostTime          time.Time          `json:"post_time" bson:"post_time" validate:"required"`
+	LastModTime       time.Time          `json:"last_mod_time" bson:"last_mod_time"`
+}
