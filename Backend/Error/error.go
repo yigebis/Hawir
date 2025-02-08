@@ -26,6 +26,9 @@ var ErrMissingValidPasswordChar = errors.New("password should contain at least o
 
 var ErrInvalidPhoneNumber = errors.New("invalid Phone Number")
 
+// Travel errors
+var ErrTravelNotFound = errors.New("travel not found")
+
 type Error struct{}
 
 func NewErrorService() UseCase.IErrorService {
@@ -88,6 +91,11 @@ func (e *Error) MissingValidPasswordChar() (int, error) {
 	return http.StatusBadRequest, ErrMissingValidPasswordChar
 }
 
-func (e *Error) InvalidPhoneNumber() (int, error){
+func (e *Error) InvalidPhoneNumber() (int, error) {
 	return http.StatusBadRequest, ErrInvalidPhoneNumber
+}
+
+// Travel errors
+func (e *Error) TravelNotFound() (int, error) {
+	return http.StatusNotFound, ErrTravelNotFound
 }
