@@ -27,3 +27,5 @@ type Travel struct {
 	PostTime          time.Time          `json:"post_time" bson:"post_time" validate:"required"`
 	LastModTime       time.Time          `json:"last_mod_time" bson:"last_mod_time"`
 }
+
+// will there be other things done in here?
