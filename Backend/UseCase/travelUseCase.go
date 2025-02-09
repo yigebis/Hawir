@@ -18,6 +18,17 @@ func NewTravelUseCase(travelRepo ITravelRepository, errorService IErrorService) 
 
 func (tuc *TravelUseCase) CreateTravel(travel *Domain.Travel) (int, error) {
 	//do some validations here
+	if travel.AgencyId != "" { // what do we do with the agency ID
+		
+	}
+
+	// if travel.Destination == "" {
+
+	// } i dont think we need to check the destinations
+
+	if travel.DriverName != "" {
+		// what do we do with the driver name
+	}
 	//John the implementer
 
 	err := tuc.TravelRepo.CreateTravel(travel)
@@ -30,6 +41,9 @@ func (tuc *TravelUseCase) CreateTravel(travel *Domain.Travel) (int, error) {
 // editing a travel
 func (tuc *TravelUseCase) EditTravel(travel *Domain.Travel) (int, error) {
 	//do some validations here
+	if travel.AgencyId != "" { }// what do we do with the agency ID
+	if travel.Destination != "" { }// what do we do with the destination	
+	if travel.DriverName != "" { }// what do we do with the driver name	
 	//John the implementer
 
 	err := tuc.TravelRepo.EditTravel(travel)
