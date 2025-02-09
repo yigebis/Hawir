@@ -17,4 +17,7 @@ type IErrorService interface {
 	PasswordTooShort() (int, error)
 	MissingValidPasswordChar() (int, error)
 	InvalidPhoneNumber() (int, error)
+
+	// Travel errors
+	TravelNotFound() (int, error)
 }
