@@ -1,9 +1,9 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Login from "./Login";
-import Registration from "./Registration";
-import MessagePage from "./MessagePage";
-import Home from "./Home";
+import Login from "./Pages/Login";
+import Registration from "./Pages/Registration";
+import MessagePage from "./Pages/MessagePage";
+import Home from "./Pages/Home";
 // import Dashboard from "./Dashboard"; // Example: A protected route after login
 
 const App = () => {
