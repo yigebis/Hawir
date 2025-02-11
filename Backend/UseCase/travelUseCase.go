@@ -1,4 +1,4 @@
-package UseCase
+	package UseCase
 
 import (
 	"Hawir/Domain"
@@ -29,7 +29,6 @@ func (tuc *TravelUseCase) CreateTravel(travel *Domain.Travel) (int, error) {
 	if travel.DriverName != "" {
 		// what do we do with the driver name
 	}
-	//John the implementer
 
 	err := tuc.TravelRepo.CreateTravel(travel)
 	if err != nil {
@@ -44,7 +43,6 @@ func (tuc *TravelUseCase) EditTravel(travel *Domain.Travel) (int, error) {
 	if travel.AgencyId != "" { }// what do we do with the agency ID
 	if travel.Destination != "" { }// what do we do with the destination	
 	if travel.DriverName != "" { }// what do we do with the driver name	
-	//John the implementer
 
 	err := tuc.TravelRepo.EditTravel(travel)
 	if err != nil {
@@ -55,8 +53,13 @@ func (tuc *TravelUseCase) EditTravel(travel *Domain.Travel) (int, error) {
 
 // viewing a travel by id
 func (tuc *TravelUseCase) ViewTravelById(id string) (*Domain.Travel, int, error) {
-	panic("unimplemented")
-	//John the implementer
+	travel, err := tuc.TravelRepo.ViewTravelById(id)
+	if err != nil {
+		statusCode, err := tuc.ErrorService.TravelNotFound()
+		return nil , statusCode, err
+	}
+	statusCode, err := tuc.ErrorService.NoError()
+	return travel, statusCode, err
 }
 
 // viewing travels by agency id
