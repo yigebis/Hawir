@@ -39,6 +39,8 @@ func (r *Router) Run() {
 	router.GET("/email/reject", r.UserController.RejectEmail)
 	router.GET("/auth/with/google", r.UserController.LoginWithGoogle) // Redirects to Google login page
 	router.GET("/auth/callback", r.UserController.GoogleCallback)     // Handles Google callback
+	// router.GET("/api/travel/id/:id", r.TravelController.GetTravelByID)
+
 
 	router.POST("/travel/create")
 	router.POST("/travel/edit")

@@ -35,15 +35,39 @@ func (tr *TravelRepository) CreateTravel(travel *Domain.Travel) error {
 
 func (tr *TravelRepository) EditTravel(travel *Domain.Travel) error {
 	// we need to find the travel by id and update it
-	// we need to return an error if the travel is not found
+	// convert ID to ObjectID
+	objId, err := primitive.ObjectIDFromHex(travel.ID.Hex())
+	if err != nil {
+		return err
+	}
+	// create a filter for the update
+	filter := bson.M{"_id":objId}
+
+	update := bson.M {"$set": travel}
+	// update the travel
+	result, err := tr.Collection.UpdateOne(tr.DbCtx, filter, update)
 	// we need to return an error if the update fails
+	if err != nil {
+		return err
+	}
+	// we need to return an error if the travel is not found
+	if result.ModifiedCount == 0 {
+		return ErrorService.TravelNotFound()
+	}
 	return nil
 }
 
 func (tr *TravelRepository) ViewTravelById(id string) (*Domain.Travel, error) {
 	// we need to find the travel by id
+	var travel Domain.Travel
+	filter := bson.M{"_id": id}
+
+	err := tr.Collection.FindOne(tr.DbCtx, filter).Decode(&travel)
+	if err != nil {
+		return nil, err
+	}
 	// we need to return an error if the travel is not found
-	return nil, nil
+	return &travel, nil
 }
 
 func (tr *TravelRepository) ViewTravelsByAgencyId(agencyId string) (*[]Domain.Travel, error) {

@@ -1,4 +1,4 @@
-package UseCase
+	package UseCase
 
 import (
 	"Hawir/Domain"
@@ -18,7 +18,17 @@ func NewTravelUseCase(travelRepo ITravelRepository, errorService IErrorService) 
 
 func (tuc *TravelUseCase) CreateTravel(travel *Domain.Travel) (int, error) {
 	//do some validations here
-	//John the implementer
+	if travel.AgencyId != "" { // what do we do with the agency ID
+		
+	}
+
+	// if travel.Destination == "" {
+
+	// } i dont think we need to check the destinations
+
+	if travel.DriverName != "" {
+		// what do we do with the driver name
+	}
 
 	err := tuc.TravelRepo.CreateTravel(travel)
 	if err != nil {
@@ -30,7 +40,9 @@ func (tuc *TravelUseCase) CreateTravel(travel *Domain.Travel) (int, error) {
 // editing a travel
 func (tuc *TravelUseCase) EditTravel(travel *Domain.Travel) (int, error) {
 	//do some validations here
-	//John the implementer
+	if travel.AgencyId != "" { }// what do we do with the agency ID
+	if travel.Destination != "" { }// what do we do with the destination	
+	if travel.DriverName != "" { }// what do we do with the driver name	
 
 	err := tuc.TravelRepo.EditTravel(travel)
 	if err != nil {
@@ -41,8 +53,13 @@ func (tuc *TravelUseCase) EditTravel(travel *Domain.Travel) (int, error) {
 
 // viewing a travel by id
 func (tuc *TravelUseCase) ViewTravelById(id string) (*Domain.Travel, int, error) {
-	panic("unimplemented")
-	//John the implementer
+	travel, err := tuc.TravelRepo.ViewTravelById(id)
+	if err != nil {
+		statusCode, err := tuc.ErrorService.TravelNotFound()
+		return nil , statusCode, err
+	}
+	statusCode, err := tuc.ErrorService.NoError()
+	return travel, statusCode, err
 }
 
 // viewing travels by agency id
