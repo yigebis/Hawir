@@ -3,6 +3,7 @@ package Repository
 import (
 	"Hawir/Domain"
 	"Hawir/UseCase"
+	"errors"
 	"fmt"
 	"time"
 
@@ -41,9 +42,9 @@ func (tr *TravelRepository) EditTravel(travel *Domain.Travel) error {
 		return err
 	}
 	// create a filter for the update
-	filter := bson.M{"_id":objId}
+	filter := bson.M{"_id": objId}
 
-	update := bson.M {"$set": travel}
+	update := bson.M{"$set": travel}
 	// update the travel
 	result, err := tr.Collection.UpdateOne(tr.DbCtx, filter, update)
 	// we need to return an error if the update fails
@@ -52,7 +53,7 @@ func (tr *TravelRepository) EditTravel(travel *Domain.Travel) error {
 	}
 	// we need to return an error if the travel is not found
 	if result.ModifiedCount == 0 {
-		return ErrorService.TravelNotFound()
+		return errors.New("travel not found")
 	}
 	return nil
 }
