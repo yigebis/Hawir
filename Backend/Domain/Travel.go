@@ -23,12 +23,12 @@ type Travel struct {
 	DriverName        string             `json:"driver_name" bson:"driver_name" validate:"required"`
 	PostTime          time.Time          `json:"post_time" bson:"post_time" validate:"required"`
 	LastModTime       time.Time          `json:"last_mod_time" bson:"last_mod_time"`
+	Status            string             `json:"status" bson:"status"`
 }
 
 type TravelStats struct {
 	Seats         []bool  `json:"seats" bson:"seats"`
 	ReservedCount int64   `json:"reserved_count" bson:"reserved_count"`
 	AvgRating     float64 `json:"avg_rating" bson:"avg_rating"`
+	RatedBy       int64   `json:"rated_by" bson:"rated_by"`
 }
-
-// will there be other things done in here?

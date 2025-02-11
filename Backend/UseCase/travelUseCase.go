@@ -46,7 +46,7 @@ func (tuc *TravelUseCase) ViewTravelById(id string) (*Domain.Travel, int, error)
 }
 
 // viewing travels by agency id
-func (tuc *TravelUseCase) ViewTravelsByAgencyId(agencyId string) ([]Domain.Travel, int, error) {
+func (tuc *TravelUseCase) ViewTravelsByAgencyId(agencyId string) (*[]Domain.Travel, int, error) {
 	travels, err := tuc.TravelRepo.ViewTravelsByAgencyId(agencyId)
 	if err != nil {
 		statusCode, err := tuc.ErrorService.TravelNotFound()
@@ -58,11 +58,35 @@ func (tuc *TravelUseCase) ViewTravelsByAgencyId(agencyId string) ([]Domain.Trave
 }
 
 // searching for travels
-func (tuc *TravelUseCase) SearchTravel(travel *Domain.Travel) ([]Domain.Travel, int, error) {
-	panic("unimplemented")
+func (tuc *TravelUseCase) SearchTravel(searchParams *Domain.SearchParams) (*[]Domain.Travel, int, error) {
+	// var searchMap = make(map[string]interface{})
+
+	// if travel.StartLocation != "" {
+	// 	searchMap["start_location"] = travel.StartLocation
+	// }
+	// if travel.AgencyId != "" {
+	// 	searchMap["agency_id"] = travel.AgencyId
+	// }
+	// if travel.Destination != "" {
+	// 	searchMap["destination"] = travel.Destination
+	// }
+
+	travels, err := tuc.TravelRepo.SearchTravel(searchParams)
+	if err != nil {
+		code, err := tuc.ErrorService.TravelNotFound()
+		return nil, code, err
+	}
+
+	code, err := tuc.ErrorService.NoError()
+	return travels, code, err
 }
 
 // cancelling a travel (agency side)
-func (tuc *TravelUseCase) CancelTravel(travel *Domain.Travel) (int, error) {
-	panic("unimplemented")
+func (tuc *TravelUseCase) CancelTravel(travelID string) (int, error) {
+	err := tuc.TravelRepo.EditTravelStatus(travelID, "cancelled")
+	if err != nil {
+		return tuc.ErrorService.TravelNotFound()
+	}
+
+	return tuc.ErrorService.NoError()
 }
