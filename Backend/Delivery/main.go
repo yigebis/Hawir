@@ -28,6 +28,7 @@ func main() {
 
 	// domain name of the website
 	websiteDomainName := os.Getenv("WEBSITE_DOMAIN_NAME")
+
 	// setting up the usecase
 
 	//user usecase
@@ -52,10 +53,13 @@ func main() {
 
 	fmt.Println("Connected to db!")
 	user_collection := client.Database("Hawir").Collection("users")
+	travel_collection := client.Database("Hawir").Collection("travels")
 
 	user_context := context.TODO()
+	travel_context := context.TODO()
 
 	ur := Repository.NewUserRepository(user_context, user_collection)
+	tr := Repository.NewTravelRepository(travel_context, travel_collection)
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	es := Error.NewErrorService()
@@ -84,11 +88,13 @@ func main() {
 	oauthService := Infrastructure.NewOAuth(oauthState, oauthClientID, oauthClientSecret, websiteDomainName)
 
 	uuc := UseCase.NewUserUseCase(ur, ps, ts, ms, es, ex, tx, rx)
+	tuc := UseCase.NewTravelUseCase(tr, es)
 
 	// setting up the controllers
 	user_controller := Controller.NewUserController(uuc, ts, oauthService, ps, vs)
-
+	travel_controller := Controller.NewTravelController(tuc)
 	// setting up the router
-	router := Router.NewRouter(user_controller)
+
+	router := Router.NewRouter(user_controller, travel_controller)
 	router.Run()
 }

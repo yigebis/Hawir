@@ -8,13 +8,15 @@ import (
 )
 
 type Router struct {
-	UserController *Controller.UserController
-	JWTSigner      string
+	UserController   *Controller.UserController
+	TravelController *Controller.TravelController
+	JWTSigner        string
 }
 
-func NewRouter(uc *Controller.UserController) *Router {
+func NewRouter(uc *Controller.UserController, tc *Controller.TravelController) *Router {
 	return &Router{
-		UserController: uc,
+		UserController:   uc,
+		TravelController: tc,
 	}
 }
 
@@ -41,12 +43,12 @@ func (r *Router) Run() {
 	router.GET("/auth/callback", r.UserController.GoogleCallback)     // Handles Google callback
 	// router.GET("/api/travel/id/:id", r.TravelController.GetTravelByID)
 
-
 	router.POST("/travel/create")
 	router.POST("/travel/edit")
 	router.GET("/travel/:id")
 	router.GET("/travels/:agencyID")
 	router.GET("/travels")
+	router.POST("/travel/cancel/:id")
 
 	router.Run()
 }
