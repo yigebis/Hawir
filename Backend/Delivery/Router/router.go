@@ -23,11 +23,11 @@ func (r *Router) Run() {
 
 	// Apply CORS middleware before defining routes
 	config := cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "https://hawir.netlify.app"},                   // Frontend URL
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}, // HTTP methods to allow
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"}, // Headers to allow
-		ExposeHeaders:    []string{"Content-Length"},                          // Headers to expose to frontend
-		AllowCredentials: true,                                                // Allow cookies or authentication headers
+		AllowOrigins:     []string{"http://localhost:5173", "https://hawir.netlify.app"}, // Frontend URL
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},            // HTTP methods to allow
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},            // Headers to allow
+		ExposeHeaders:    []string{"Content-Length"},                                     // Headers to expose to frontend
+		AllowCredentials: true,                                                           // Allow cookies or authentication headers
 	}
 	router.Use(cors.New(config))
 
@@ -41,6 +41,12 @@ func (r *Router) Run() {
 	router.GET("/auth/callback", r.UserController.GoogleCallback)     // Handles Google callback
 	// router.GET("/api/travel/id/:id", r.TravelController.GetTravelByID)
 
+
+	router.POST("/travel/create")
+	router.POST("/travel/edit")
+	router.GET("/travel/:id")
+	router.GET("/travels/:agencyID")
+	router.GET("/travels")
 
 	router.Run()
 }

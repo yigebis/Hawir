@@ -16,6 +16,8 @@ type ITravelUseCase interface {
 type ITravelRepository interface {
 	CreateTravel(travel *Domain.Travel) error
 	EditTravel(travel *Domain.Travel) error
+	EditTravelStatus(travelID, status string) error
 	ViewTravelById(id string) (*Domain.Travel, error)
-	ViewTravelsByAgencyId(agencyId string) ([]Domain.Travel, error)
+	ViewTravelsByAgencyId(agencyId string) (*[]Domain.Travel, error)
+	SearchTravel(searchParams *Domain.SearchParams) (*[]Domain.Travel, error)
 }
