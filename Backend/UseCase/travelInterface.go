@@ -8,9 +8,9 @@ type ITravelUseCase interface {
 	CreateTravel(travel *Domain.Travel) (int, error)
 	EditTravel(travel *Domain.Travel) (int, error)
 	ViewTravelById(id string) (*Domain.Travel, int, error)
-	ViewTravelsByAgencyId(agencyId string) ([]Domain.Travel, int, error)
-	// SearchTravel(travel *Domain.Travel) ([]Domain.Travel, int, error)
-	// CancelTravel(travel *Domain.Travel) (int, error)
+	ViewTravelsByAgencyId(agencyId string) (*[]Domain.Travel, int, error)
+	SearchTravel(travel *Domain.SearchParams) (*[]Domain.Travel, int, error)
+	CancelTravel(travelID string) (int, error)
 }
 
 type ITravelRepository interface {
