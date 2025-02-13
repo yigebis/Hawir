@@ -86,10 +86,16 @@ func (tr *TravelRepository) EditTravel(travel *Domain.Travel) error {
 
 func (tr *TravelRepository) ViewTravelById(id string) (*Domain.Travel, error) {
 	// we need to find the travel by id
-	var travel Domain.Travel
-	filter := bson.M{"_id": id}
+	// Convert the string ID to ObjectID
+	objId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, errors.New("invalid travel ID format")
+	}
 
-	err := tr.Collection.FindOne(tr.DbCtx, filter).Decode(&travel)
+	filter := bson.M{"_id": objId}
+
+	var travel Domain.Travel
+	err = tr.Collection.FindOne(tr.DbCtx, filter).Decode(&travel)
 	if err != nil {
 		return nil, err
 	}
