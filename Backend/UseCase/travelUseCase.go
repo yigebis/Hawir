@@ -2,6 +2,7 @@ package UseCase
 
 import (
 	"Hawir/Domain"
+	"fmt"
 )
 
 type TravelUseCase struct {
@@ -31,6 +32,7 @@ func (tuc *TravelUseCase) CreateTravel(travel *Domain.Travel) (int, error) {
 	}
 
 	err := tuc.TravelRepo.CreateTravel(travel)
+	fmt.Println("after!")
 	if err != nil {
 		return tuc.ErrorService.InternalServer()
 	}

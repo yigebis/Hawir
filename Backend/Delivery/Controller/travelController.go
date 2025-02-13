@@ -31,11 +31,11 @@ func (tc *TravelController) CreateTravel(ctx *gin.Context) {
 		return
 	}
 
-	err = tc.V.Struct(travel)
-	if err != nil {
-		ctx.JSON(400, gin.H{"error": "invalid request payload"})
-		return
-	}
+	// err = tc.V.Struct(travel)
+	// if err != nil {
+	// 	ctx.JSON(400, gin.H{"error": "invalid request payload"})
+	// 	return
+	// }
 
 	statusCode, err := tc.TravelUseCase.CreateTravel(&travel)
 	if err != nil {
@@ -50,7 +50,7 @@ func (tc *TravelController) EditTravel(ctx *gin.Context) {
 	// EditTravel edits a travel
 	travel := Domain.Travel{}
 
-	err := ctx.ShouldBindBodyWithJSON(&travel)
+	err := ctx.ShouldBindJSON(&travel)
 	if err != nil {
 		ctx.JSON(400, gin.H{"error": "invalid request payload"})
 		return
@@ -58,7 +58,7 @@ func (tc *TravelController) EditTravel(ctx *gin.Context) {
 
 	err = tc.V.Struct(travel) // i dont really know what this does!!
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": "invalid request payload"})
+		ctx.JSON(400, gin.H{"error": "invalid request payload", "details": err.Error()})
 		return
 	}
 

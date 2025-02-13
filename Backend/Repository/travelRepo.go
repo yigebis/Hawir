@@ -27,6 +27,7 @@ func NewTravelRepository(dbCtx context.Context, collection *mongo.Collection) Us
 }
 
 func (tr *TravelRepository) CreateTravel(travel *Domain.Travel) error {
+	fmt.Println("inside repo!")
 	_, err := tr.Collection.InsertOne(tr.DbCtx, travel)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -41,10 +42,34 @@ func (tr *TravelRepository) EditTravel(travel *Domain.Travel) error {
 	if err != nil {
 		return err
 	}
-	// create a filter for the update
+
+	// Create a filter to locate the document
 	filter := bson.M{"_id": objId}
 
-	update := bson.M{"$set": travel}
+	// Build the update document explicitly, excluding the _id field.
+	// Also, update the last_mod_time to the current time.
+	updateData := bson.M{
+		"agency_id":          travel.AgencyId,
+		"start_location":     travel.StartLocation,
+		"pickup_locations":   travel.PickupLocations,
+		"destination":        travel.Destination,
+		"planned_start_time": travel.PlannedStartTime,
+		"actual_start_time":  travel.ActualStartTime,
+		"est_arrival_time":   travel.EstArrivalTime,
+		"actual_arrival_time": travel.ActualArrivalTime,
+		"price":              travel.Price,
+		"notice":             travel.Notice,
+		"bus_ref":            travel.BusRef,
+		"has_pay_back":       travel.HasPayBack,
+		"driver_name":        travel.DriverName,
+		"post_time":          travel.PostTime,
+		// Automatically set last_mod_time to now on update
+		"last_mod_time": time.Now(),
+		"status":        travel.Status,
+	}
+
+	update := bson.M{"$set": updateData}
+
 	// update the travel
 	result, err := tr.Collection.UpdateOne(tr.DbCtx, filter, update)
 	// we need to return an error if the update fails
@@ -52,9 +77,10 @@ func (tr *TravelRepository) EditTravel(travel *Domain.Travel) error {
 		return err
 	}
 	// we need to return an error if the travel is not found
-	if result.ModifiedCount == 0 {
+	if result.MatchedCount == 0 {
 		return errors.New("travel not found")
 	}
+
 	return nil
 }
 

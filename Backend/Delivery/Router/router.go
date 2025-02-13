@@ -43,12 +43,12 @@ func (r *Router) Run() {
 	router.GET("/auth/callback", r.UserController.GoogleCallback)     // Handles Google callback
 	// router.GET("/api/travel/id/:id", r.TravelController.GetTravelByID)
 
-	router.POST("/travel/create")
-	router.POST("/travel/edit")
-	router.GET("/travel/:id")
-	router.GET("/travels/:agencyID")
+	router.POST("/travel/create", r.TravelController.CreateTravel)
+	router.POST("/travel/edit", r.TravelController.EditTravel)
+	router.GET("/travel/:id", r.TravelController.ViewTravelById)
+	router.GET("/travels/:agencyID", r.TravelController.ViewTravelsByAgencyId)
 	router.GET("/travels")
-	router.POST("/travel/cancel/:id")
+	router.POST("/travel/cancel/:id", r.TravelController.CancelTravel)
 
 	router.Run()
 }

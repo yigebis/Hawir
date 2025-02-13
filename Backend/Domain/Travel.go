@@ -19,7 +19,7 @@ type Travel struct {
 	Price             float64            `json:"price" bson:"price" validate:"required"`
 	Notice            string             `json:"notice" bson:"notice" validate:"required"`
 	BusRef            string             `json:"bus_ref" bson:"bus_ref" validate:"required"`
-	HasPayBack        bool               `json:"has_pay_back" bson:"has_pay_back" validate:"required"`
+	HasPayBack        bool               `json:"has_pay_back" bson:"has_pay_back"`
 	DriverName        string             `json:"driver_name" bson:"driver_name" validate:"required"`
 	PostTime          time.Time          `json:"post_time" bson:"post_time" validate:"required"`
 	LastModTime       time.Time          `json:"last_mod_time" bson:"last_mod_time"`
