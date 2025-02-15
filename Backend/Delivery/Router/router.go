@@ -10,13 +10,15 @@ import (
 type Router struct {
 	UserController   *Controller.UserController
 	TravelController *Controller.TravelController
+	AdminController  *Controller.AdminController
 	JWTSigner        string
 }
 
-func NewRouter(uc *Controller.UserController, tc *Controller.TravelController) *Router {
+func NewRouter(uc *Controller.UserController, tc *Controller.TravelController, ac *Controller.AdminController) *Router {
 	return &Router{
 		UserController:   uc,
 		TravelController: tc,
+		AdminController:  ac,
 	}
 }
 
@@ -43,12 +45,18 @@ func (r *Router) Run() {
 	router.GET("/auth/callback", r.UserController.GoogleCallback)     // Handles Google callback
 	// router.GET("/api/travel/id/:id", r.TravelController.GetTravelByID)
 
-	router.POST("/travel/create")
-	router.POST("/travel/edit")
-	router.GET("/travel/:id")
-	router.GET("/travels/:agencyID")
-	router.GET("/travels")
-	router.POST("/travel/cancel/:id")
+	router.POST("/travel/create", r.TravelController.CreateTravel)
+	router.POST("/travel/edit", r.TravelController.EditTravel)
+	router.GET("/travel/:id", r.TravelController.ViewTravelById)
+	router.GET("/travels/:agencyID", r.TravelController.ViewTravelsByAgencyId)
+	router.POST("/travel/cancel/:id", r.TravelController.CancelTravel)
+
+	//admin-side endpoints
+	router.POST("/agency/add", r.AdminController.AddAgency)
+	router.POST("/agency/delete/:id", r.AdminController.DeleteAgency)
+	router.POST("/agency/edit", r.AdminController.EditAgency)
+	router.POST("/agency/:id", r.AdminController.GetAgency)
+	router.POST("/agency/all", r.AdminController.GetAllAgencies)
 
 	router.Run()
 }

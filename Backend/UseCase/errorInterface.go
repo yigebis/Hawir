@@ -20,4 +20,7 @@ type IErrorService interface {
 
 	// Travel errors
 	TravelNotFound() (int, error)
+
+	// Agency errors
+	AgencyNotFound() (int, error)
 }

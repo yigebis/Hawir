@@ -14,7 +14,7 @@ import (
 	"os"
 
 	// comment it for production
-	// "github.com/joho/godotenv"
+	"github.com/joho/godotenv"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -22,9 +22,9 @@ import (
 
 func main() {
 	//comment it for production
-	// if err := godotenv.Load(); err != nil {
-	// 	log.Fatal("error loading .env file")
-	// }
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("error loading .env file")
+	}
 
 	// domain name of the website
 	websiteDomainName := os.Getenv("WEBSITE_DOMAIN_NAME")
@@ -54,12 +54,15 @@ func main() {
 	fmt.Println("Connected to db!")
 	user_collection := client.Database("Hawir").Collection("users")
 	travel_collection := client.Database("Hawir").Collection("travels")
+	agency_collection := client.Database("Hawir").Collection("agencies")
 
 	user_context := context.TODO()
 	travel_context := context.TODO()
+	agency_context := context.TODO()
 
 	ur := Repository.NewUserRepository(user_context, user_collection)
 	tr := Repository.NewTravelRepository(travel_context, travel_collection)
+	ar := Repository.NewAdminRepository(agency_context, agency_collection)
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	es := Error.NewErrorService()
@@ -89,12 +92,14 @@ func main() {
 
 	uuc := UseCase.NewUserUseCase(ur, ps, ts, ms, es, ex, tx, rx)
 	tuc := UseCase.NewTravelUseCase(tr, es)
+	auc := UseCase.NewAdminUseCase(ar, ps, es)
 
 	// setting up the controllers
 	user_controller := Controller.NewUserController(uuc, ts, oauthService, ps, vs)
 	travel_controller := Controller.NewTravelController(tuc)
+	admin_controller := Controller.NewAdminController(auc)
 	// setting up the router
 
-	router := Router.NewRouter(user_controller, travel_controller)
+	router := Router.NewRouter(user_controller, travel_controller, admin_controller)
 	router.Run()
 }
