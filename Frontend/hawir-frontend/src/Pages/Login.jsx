@@ -2,125 +2,83 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Message from "./MessagePage";
 import axios from "axios";
-import "./Registration.css";
+import "../Styles/Login.css";
 import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import icons from react-icons
-import googleIcon from "./assets/Google_Icons-09-512.png";
-import hawirLogo from "./assets/logo.jpg";
+import googleIcon from "../assets/Google_Icons-09-512.png";
+import hawirLogo from "../assets/logo.jpg";
 
-const Registration = () => {
+const Login = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    loginPreference: "email",
     email: "",
     phoneNumber: "",
     password: "",
-    loginPreference: "email",
-    receiveUpdates: false,
   });
 
+  // State to toggle password visibility
   const [showPassword, setShowPassword] = useState(false);
+
+  // State for server response or error
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [phoneError, setPhoneError] = useState("");
 
+  // Handle input change
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === "checkbox" ? checked : value,
-    });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = async (e) => {
+  // Handle form submission
+  const handleLogin = async (e) => {
     e.preventDefault();
 
-    const payload = {
-      first_name: formData.firstName,
-      last_name: formData.lastName,
-      email: formData.loginPreference === "email" ? formData.email : "",
-      phone_number:
-        formData.loginPreference === "phone_number" ? formData.phoneNumber : "",
-      password: formData.password,
-      login_preference: formData.loginPreference,
-      receive_updates: formData.receiveUpdates,
-    };
+    const payload =
+      formData.loginPreference === "email"
+        ? { email: formData.email, password: formData.password }
+        : { phone_number: formData.phoneNumber, password: formData.password };
+
+    const endpoint =
+      formData.loginPreference === "email"
+        ? "https://hawir-rv5k.onrender.com/api/login/email"
+        : "https://hawir-rv5k.onrender.com/api/login/phone";
 
     try {
-      const response = await axios.post(
-        "https://hawir-rv5k.onrender.com/api/register",
-        payload,
-        { headers: { "Content-Type": "application/json" } }
-      );
-
-      navigate("/message", {
-        state: { type: "success", text: response.data.message },
+      const response = await axios.post(endpoint, payload, {
+        headers: { "Content-Type": "application/json" },
       });
+
+      // Redirect to MessagePage with a success message
+      console.log("Token:", response.data.token); // Token can be used for further actions
+      // <Link to={"/message"}></Link>;
+      navigate("/");
     } catch (err) {
       if (err.response) {
         const status = err.response.status;
         const errorMessage =
           err.response.data?.error || "Unexpected server error";
 
-        if (status === 409 || status === 400) {
-          setError(errorMessage);
-        } else if (status === 500) {
-          navigate("/message", {
-            state: { type: "error", text: err.response.data.message },
-          });
-        } else {
-          setError(errorMessage);
-        }
-      } else if (err.request) {
-        console.error("No response:", err.request);
-        setError("Network error or server unreachable.");
-      } else {
         console.error("Error:", err.message);
-        setError("An unexpected error occurred. Please try again.");
+        setError(errorMessage);
       }
       setMessage("");
     }
   };
 
   return (
-    <div className="registration-container">
+    <div className="login-container">
       <div className="logo">
         <img src={hawirLogo} alt="Hawir Logo" />
         <h1>HAWIR</h1>
       </div>
-      <h2>Welcome Aboard! Register Now</h2>
-
-      <form className="registration-form" onSubmit={handleSubmit}>
+      <h2>Welcome Back to Hawir!</h2>
+      <form className="login-form" onSubmit={handleLogin}>
         <div className="form-group">
-          <label htmlFor="firstName">First Name</label>
-          <input
-            className="form-control"
-            type="text"
-            id="firstName"
-            name="firstName"
-            placeholder="Alemu"
-            value={formData.firstName}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="lastName">Last Name</label>
-          <input
-            className="form-control"
-            type="text"
-            id="lastName"
-            name="lastName"
-            placeholder="Kifle"
-            value={formData.lastName}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label>Registration Preference</label>
+          <label htmlFor="loginPreference">Login Preference</label>
           <select
+            id="loginPreference"
             className="form-control"
             name="loginPreference"
             value={formData.loginPreference}
@@ -130,6 +88,7 @@ const Registration = () => {
             <option value="phone_number">Phone Number</option>
           </select>
         </div>
+
         {formData.loginPreference === "email" && (
           <div className="form-group">
             <label htmlFor="email">Email</label>
@@ -138,13 +97,14 @@ const Registration = () => {
               type="email"
               id="email"
               name="email"
-              placeholder="your@email.com"
               value={formData.email}
               onChange={handleChange}
+              placeholder="Enter your email"
               required
             />
           </div>
         )}
+
         {formData.loginPreference === "phone_number" && (
           <div className="form-group phone-number-group">
             <input
@@ -221,25 +181,24 @@ const Registration = () => {
             </button>
           </div>
         </div>
-        <div className="form-checkbox">
-          <input
-            type="checkbox"
-            id="receiveUpdates"
-            name="receiveUpdates"
-            checked={formData.receiveUpdates}
-            onChange={handleChange}
-          />
-          <label htmlFor="receiveUpdates">
-            I want to receive updates via email.
-          </label>
+
+        <div className="form-remember">
+          <input type="checkbox" id="remember" />
+          <label htmlFor="remember">Remember me</label>
         </div>
-        <button type="submit" className="sign-up-btn">
-          Sign up
+
+        <button type="submit" className="sign-in-btn">
+          Sign in
         </button>
         <div className="message">
           {message && <Message type="success" text={message} />}
           <div>{error && <p className="error-message">{error}</p>}</div>
         </div>
+
+        <div className="forgot-password">
+          <a href="#">Forgot your password?</a>
+        </div>
+
         <div className="divider">or</div>
         <button
           type="button"
@@ -252,12 +211,12 @@ const Registration = () => {
           <img src={googleIcon} alt="Google Icon" />
           Sign in with Google
         </button>
-        <div className="signin-link">
-          Already have an account? <Link to="/login">Sign in </Link>
+        <div className="signup-link">
+          Don’t have an account? <Link to="/register">Sign up</Link>
         </div>
       </form>
     </div>
   );
 };
 
-export default Registration;
+export default Login;

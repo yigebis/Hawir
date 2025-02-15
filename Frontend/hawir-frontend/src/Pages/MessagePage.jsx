@@ -1,8 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
-import "./MessagePage.css";
+import "../Styles/MessagePage.css";
 import { useLocation, useNavigate } from "react-router-dom";
-import error500 from "./assets/InternalServerError.png";
+import error500 from "../assets/InternalServerError.png";
 
 const MessageCard = () => {
   const location = useLocation();
