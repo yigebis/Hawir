@@ -3,6 +3,7 @@ package Controller
 import (
 	"Hawir/Domain"
 	"Hawir/UseCase"
+	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -50,7 +51,7 @@ func (tc *TravelController) EditTravel(ctx *gin.Context) {
 	// EditTravel edits a travel
 	travel := Domain.Travel{}
 
-	err := ctx.ShouldBindBodyWithJSON(&travel)
+	err := ctx.ShouldBindJSON(&travel)
 	if err != nil {
 		ctx.JSON(400, gin.H{"error": "invalid request payload"})
 		return
@@ -58,7 +59,7 @@ func (tc *TravelController) EditTravel(ctx *gin.Context) {
 
 	err = tc.V.Struct(travel) // i dont really know what this does!!
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": "invalid request payload"})
+		ctx.JSON(400, gin.H{"error": "invalid request payload", "details": err.Error()})
 		return
 	}
 
@@ -74,6 +75,11 @@ func (tc *TravelController) EditTravel(ctx *gin.Context) {
 func (tc *TravelController) ViewTravelById(ctx *gin.Context) {
 	// ViewTravelById views a travel by id
 	id := ctx.Param("id")
+
+	if id == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "missing travel ID"})
+		return
+	}
 
 	travel, statusCode, err := tc.TravelUseCase.ViewTravelById(id)
 	if err != nil {
