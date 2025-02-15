@@ -58,5 +58,6 @@ func (r *Router) Run() {
 	router.POST("/agency/:id", r.AdminController.GetAgency)
 	router.POST("/agency/all", r.AdminController.GetAllAgencies)
 
+
 	router.Run()
 }
