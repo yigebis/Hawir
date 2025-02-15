@@ -93,13 +93,15 @@ func main() {
 	uuc := UseCase.NewUserUseCase(ur, ps, ts, ms, es, ex, tx, rx)
 	tuc := UseCase.NewTravelUseCase(tr, es)
 	auc := UseCase.NewAdminUseCase(ar, ps, es)
+	buc := UseCase.NewBookingUseCase()
 
 	// setting up the controllers
 	user_controller := Controller.NewUserController(uuc, ts, oauthService, ps, vs)
 	travel_controller := Controller.NewTravelController(tuc)
 	admin_controller := Controller.NewAdminController(auc)
+	booking_controller := Controller.NewBookingController(buc)
 	// setting up the router
 
-	router := Router.NewRouter(user_controller, travel_controller, admin_controller)
+	router := Router.NewRouter(user_controller, travel_controller, admin_controller, booking_controller, jwtSecret)
 	router.Run()
 }

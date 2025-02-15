@@ -8,17 +8,20 @@ import (
 )
 
 type Router struct {
-	UserController   *Controller.UserController
-	TravelController *Controller.TravelController
-	AdminController  *Controller.AdminController
-	JWTSigner        string
+	UserController    *Controller.UserController
+	TravelController  *Controller.TravelController
+	AdminController   *Controller.AdminController
+	BookingController *Controller.BookingController
+	JWTSigner         string
 }
 
-func NewRouter(uc *Controller.UserController, tc *Controller.TravelController, ac *Controller.AdminController) *Router {
+func NewRouter(uc *Controller.UserController, tc *Controller.TravelController, ac *Controller.AdminController, bc *Controller.BookingController, jwtSigner string) *Router {
 	return &Router{
-		UserController:   uc,
-		TravelController: tc,
-		AdminController:  ac,
+		UserController:    uc,
+		TravelController:  tc,
+		AdminController:   ac,
+		BookingController: bc,
+		JWTSigner:         jwtSigner,
 	}
 }
 
@@ -45,11 +48,11 @@ func (r *Router) Run() {
 	router.GET("/auth/callback", r.UserController.GoogleCallback)     // Handles Google callback
 	// router.GET("/api/travel/id/:id", r.TravelController.GetTravelByID)
 
-	router.POST("/travel/create", r.TravelController.CreateTravel)
-	router.POST("/travel/edit", r.TravelController.EditTravel)
-	router.GET("/travel/:id", r.TravelController.ViewTravelById)
-	router.GET("/travels/:agencyID", r.TravelController.ViewTravelsByAgencyId)
-	router.POST("/travel/cancel/:id", r.TravelController.CancelTravel)
+	router.POST("/travel/create", r.TravelController.CreateTravel)             //agency authorization
+	router.POST("/travel/edit", r.TravelController.EditTravel)                 //agency authorization
+	router.GET("/travel/:id", r.TravelController.ViewTravelById)               //no authorization
+	router.GET("/travels/:agencyID", r.TravelController.ViewTravelsByAgencyId) //no authorization
+	router.POST("/travel/cancel/:id", r.TravelController.CancelTravel)         //agency authorization
 
 	//admin-side endpoints
 	router.POST("/agency/add", r.AdminController.AddAgency)
@@ -57,6 +60,15 @@ func (r *Router) Run() {
 	router.POST("/agency/edit", r.AdminController.EditAgency)
 	router.POST("/agency/:id", r.AdminController.GetAgency)
 	router.POST("/agency/all", r.AdminController.GetAllAgencies)
+
+	//booking endpoints
+	router.POST("/booking/seat/choose")
+	router.POST("/booking/seat/change")
+	router.POST("/booking/add")
+	router.POST("/booking/edit")
+	router.POST("/booking/cancel")
+	router.POST("/booking/:id")
+	router.POST("/booking/all")
 
 	router.Run()
 }
