@@ -10,13 +10,15 @@ import (
 type Router struct {
 	UserController   *Controller.UserController
 	TravelController *Controller.TravelController
+	AdminController  *Controller.AdminController
 	JWTSigner        string
 }
 
-func NewRouter(uc *Controller.UserController, tc *Controller.TravelController) *Router {
+func NewRouter(uc *Controller.UserController, tc *Controller.TravelController, ac *Controller.AdminController) *Router {
 	return &Router{
 		UserController:   uc,
 		TravelController: tc,
+		AdminController:  ac,
 	}
 }
 
@@ -47,8 +49,15 @@ func (r *Router) Run() {
 	router.POST("/travel/edit", r.TravelController.EditTravel)
 	router.GET("/travel/:id", r.TravelController.ViewTravelById)
 	router.GET("/travels/:agencyID", r.TravelController.ViewTravelsByAgencyId)
-	router.GET("/travels")
 	router.POST("/travel/cancel/:id", r.TravelController.CancelTravel)
+
+	//admin-side endpoints
+	router.POST("/agency/add", r.AdminController.AddAgency)
+	router.POST("/agency/delete/:id", r.AdminController.DeleteAgency)
+	router.POST("/agency/edit", r.AdminController.EditAgency)
+	router.POST("/agency/:id", r.AdminController.GetAgency)
+	router.POST("/agency/all", r.AdminController.GetAllAgencies)
+
 
 	router.Run()
 }
