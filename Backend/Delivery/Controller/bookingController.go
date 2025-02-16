@@ -6,15 +6,18 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 )
 
 type BookingController struct {
 	BookingUseCase UseCase.IBookingUseCase
+	V *validator.Validate
 }
 
 func NewBookingController(buc UseCase.IBookingUseCase) *BookingController {
 	return &BookingController{
 		BookingUseCase: buc,
+		V: validator.New(),
 	}
 }
 
@@ -45,7 +48,27 @@ func (bc *BookingController) ChangeSeat(ctx *gin.Context) {
 }
 
 func (bc *BookingController) EditBook(ctx *gin.Context) {
+	booking := Domain.Booking{}
 
+	err := ctx.ShouldBindJSON(&booking)
+	if err != nil {
+		ctx.JSON(400, gin.H{"error" : "invalid request payload"})
+		return
+	}
+
+	err = bc.V.Struct(booking)
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": "invalid request payload", "details": err.Error()})
+		return
+	}
+
+	statusCode, err := bc.BookingUseCase.EditBook(&booking)
+	if err != nil {
+		ctx.JSON(statusCode, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(statusCode, gin.H{"message": "booking edited successfully"})
 }
 
 func (bc *BookingController) CancelBook(ctx *gin.Context) {

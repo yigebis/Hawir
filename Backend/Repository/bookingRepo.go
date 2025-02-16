@@ -59,7 +59,37 @@ func (b *BookingRepository) ChooseSeat(seatNo int, travelerID string, travelID s
 
 // EditBook implements UseCase.IBookingRepository.
 func (b *BookingRepository) EditBook(booking *Domain.Booking) error {
-	panic("unimplemented")
+	objId, err := primitive.ObjectIDFromHex(booking.ID.Hex())
+	if err != nil {
+		return err
+	}
+
+	filter := bson.M{"_id": objId}
+
+	updateData := bson.M{
+		"travel_id":      booking.TravelID,
+		"traveler_id":    booking.TravelerID,
+		"seat_no":        booking.SeatNo,
+		"trip_Type":      booking.TripType,
+		"start_location": booking.StartLocation,
+		"payment_type":   booking.PaymentType,
+		"payment_ref":    booking.PaymentRef,
+		"book_time":      booking.BookTime,
+		"pay_time":       booking.PayTime,
+	}
+
+	update := bson.M{"$set": updateData}
+
+	result, err:= b.Collection.UpdateOne(b.DbCtx, filter, update)
+	if err != nil {
+		return err
+	}
+
+	if result.MatchedCount == 0 {
+		return errors.New("booking not found")
+	}
+
+	return nil
 }
 
 // GetAllBookings implements UseCase.IBookingRepository.
