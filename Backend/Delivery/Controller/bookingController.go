@@ -88,7 +88,20 @@ func (bc *BookingController) CancelBook(ctx *gin.Context) {
 }
 
 func (bc *BookingController) GetBooking(ctx *gin.Context) {
+	bookingId := ctx.Param("id")
 
+	if bookingId == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "missing booking ID"})
+		return
+	}
+
+	booking, statusCode, err := bc.BookingUseCase.GetBooking(bookingId)
+	if err != nil {
+		ctx.JSON(statusCode, gin.H{"error" : err.Error()})
+		return
+	}
+
+	ctx.JSON(statusCode, booking)
 }
 
 func (bc *BookingController) GetAllBookings(ctx *gin.Context) {

@@ -44,6 +44,7 @@ func (buc *BookingUseCase) CancelBook(bookingID string) (int, error) {
 	statusCode, err := buc.ErrorService.NoError()
 	return statusCode, err
 }
+
 func (buc *BookingUseCase) EditBook(booking *Domain.Booking) (int, error) {
 	err := buc.BookingRepo.EditBook(booking)
 	if err != nil {
@@ -52,9 +53,18 @@ func (buc *BookingUseCase) EditBook(booking *Domain.Booking) (int, error) {
 
 	return buc.ErrorService.NoError()
 }
+
 func (buc *BookingUseCase) GetBooking(bookingID string) (*Domain.Booking, int, error) {
-	panic("unimplemented")
+	booking, err := buc.BookingRepo.GetBooking(bookingID)
+	if err != nil {
+		statusCode, err := buc.ErrorService.BookingNotFound()
+		return nil, statusCode, err
+	}
+
+	statusCode, err := buc.ErrorService.NoError()
+	return booking, statusCode, err
 }
+
 func (buc *BookingUseCase) GetAllBookings(travelID string) (*[]Domain.Booking, int, error) {
 	panic("unimplemented")
 }
