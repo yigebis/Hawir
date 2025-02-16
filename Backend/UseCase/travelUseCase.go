@@ -10,7 +10,7 @@ type TravelUseCase struct {
 	ErrorService IErrorService
 }
 
-func NewTravelUseCase(travelRepo ITravelRepository, errorService IErrorService) *TravelUseCase {
+func NewTravelUseCase(travelRepo ITravelRepository, errorService IErrorService) ITravelUseCase {
 	return &TravelUseCase{
 		TravelRepo:   travelRepo,
 		ErrorService: errorService,

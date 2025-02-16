@@ -32,6 +32,9 @@ var ErrTravelNotFound = errors.New("travel not found")
 // Agency errors
 var ErrAgencyNotFound = errors.New("agency not found")
 
+// Booking errors
+var ErrBookingNotFound = errors.New("Booking not found")
+
 type Error struct{}
 
 func NewErrorService() UseCase.IErrorService {
@@ -106,4 +109,9 @@ func (e *Error) TravelNotFound() (int, error) {
 // Agency errors
 func (e *Error) AgencyNotFound() (int, error) {
 	return http.StatusNotFound, ErrAgencyNotFound
+}
+
+// Booking errors
+func (e *Error) BookingNotFound() (int, error){
+	return http.StatusNotFound, ErrBookingNotFound
 }

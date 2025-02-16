@@ -23,4 +23,7 @@ type IErrorService interface {
 
 	// Agency errors
 	AgencyNotFound() (int, error)
+
+	// Booking errors
+	BookingNotFound() (int, error)
 }
