@@ -5,10 +5,15 @@ import (
 )
 
 type BookingUseCase struct {
+	BookingRepo IBookingRepository
+	ErrorService IErrorService
 }
 
-func NewBookingUseCase() IBookingUseCase {
-	return &BookingUseCase{}
+func NewBookingUseCase(bookingRepo IBookingRepository, errorService IErrorService) IBookingUseCase {
+	return &BookingUseCase{
+		BookingRepo: bookingRepo,
+		ErrorService: errorService,
+	}
 }
 
 // Yigerem
@@ -30,7 +35,14 @@ func (buc *BookingUseCase) ChangeSeat(seatNo int, travelerID string, travelID st
 
 // Yohannes
 func (buc *BookingUseCase) CancelBook(bookingID string) (int, error) {
-	panic("unimplemented")
+	err := buc.BookingRepo.CancelBook(bookingID)
+	if err != nil {
+		statusCode, err := buc.ErrorService.BookingNotFound()
+		return statusCode, err
+	}
+
+	statusCode, err := buc.ErrorService.NoError()
+	return statusCode, err
 }
 func (buc *BookingUseCase) EditBook(booking *Domain.Booking) (int, error) {
 	panic("unimplemented")

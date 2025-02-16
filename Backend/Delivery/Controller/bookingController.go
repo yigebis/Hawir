@@ -3,6 +3,7 @@ package Controller
 import (
 	"Hawir/Domain"
 	"Hawir/UseCase"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -48,7 +49,19 @@ func (bc *BookingController) EditBook(ctx *gin.Context) {
 }
 
 func (bc *BookingController) CancelBook(ctx *gin.Context) {
+	bookingID := ctx.Param("id")
+	if bookingID == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error" : "missing Booking ID"})
+		return
+	}
 
+	statusCode, err := bc.BookingUseCase.CancelBook(bookingID)
+	if err != nil {
+		ctx.JSON(statusCode, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(statusCode, nil)
 }
 
 func (bc *BookingController) GetBooking(ctx *gin.Context) {

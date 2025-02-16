@@ -4,13 +4,23 @@ import (
 	"Hawir/Domain"
 	"Hawir/UseCase"
 	"context"
+	"errors"
 
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type BookingRepository struct {
 	DbCtx      context.Context
 	Collection *mongo.Collection
+}
+
+func NewBookingRepository(dbCtx context.Context, collection *mongo.Collection) UseCase.IBookingRepository {
+	return &BookingRepository{
+		DbCtx:      dbCtx,
+		Collection: collection,
+	}
 }
 
 // Book implements UseCase.IBookingRepository.
@@ -20,7 +30,21 @@ func (b *BookingRepository) Book(booking *Domain.Booking) error {
 
 // CancelBook implements UseCase.IBookingRepository.
 func (b *BookingRepository) CancelBook(bookingID string) error {
-	panic("unimplemented")
+	objId, err := primitive.ObjectIDFromHex(bookingID)
+	if err != nil {
+		return errors.New("invalid booking ID format")
+	}
+
+	filter := bson.M{"_id": objId}
+	result, err := b.Collection.DeleteOne(b.DbCtx, filter)
+	if err != nil {
+		return err
+	}
+
+	if result.DeletedCount == 0 {
+		return errors.New("booking not found")
+	}
+	return nil
 }
 
 // ChangeSeat implements UseCase.IBookingRepository.
@@ -46,11 +70,4 @@ func (b *BookingRepository) GetAllBookings(travelID string) (*[]Domain.Booking, 
 // GetBooking implements UseCase.IBookingRepository.
 func (b *BookingRepository) GetBooking(bookingID string) (*Domain.Booking, error) {
 	panic("unimplemented")
-}
-
-func NewBookingRepository(dbCtx context.Context, collection *mongo.Collection) UseCase.IBookingRepository {
-	return &BookingRepository{
-		DbCtx:      dbCtx,
-		Collection: collection,
-	}
 }
