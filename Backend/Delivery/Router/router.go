@@ -64,11 +64,11 @@ func (r *Router) Run() {
 	//booking endpoints
 	router.POST("/booking/seat/choose")
 	router.POST("/booking/seat/change")
-	router.POST("/booking/add")
-	router.POST("/booking/edit")
+	router.POST("/booking/add", r.BookingController.Book)
+	router.POST("/booking/edit", r.BookingController.EditBook)
 	router.POST("/booking/cancel")
-	router.POST("/booking/:id")
-	router.POST("/booking/all")
+	router.GET("/booking/:id", r.BookingController.GetBooking)
+	router.GET("/booking/all/:id", r.BookingController.GetAllBookings)
 
 	router.Run()
 }

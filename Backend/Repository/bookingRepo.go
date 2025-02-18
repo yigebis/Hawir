@@ -94,12 +94,7 @@ func (b *BookingRepository) EditBook(booking *Domain.Booking) error {
 
 // GetAllBookings implements UseCase.IBookingRepository.
 func (b *BookingRepository) GetAllBookings(travelID string) (*[]Domain.Booking, error) {
-	objId, err := primitive.ObjectIDFromHex(travelID)
-	if err != nil {
-		return nil, errors.New("invalid travel ID format")
-	}
-
-	filter := bson.M{"travel_id": objId}
+	filter := bson.M{"travel_id": travelID}
 	var bookings []Domain.Booking
 	cursor, err := b.Collection.Find(b.DbCtx, filter)
 	if err != nil {
