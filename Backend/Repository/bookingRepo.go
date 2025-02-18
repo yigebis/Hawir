@@ -94,7 +94,34 @@ func (b *BookingRepository) EditBook(booking *Domain.Booking) error {
 
 // GetAllBookings implements UseCase.IBookingRepository.
 func (b *BookingRepository) GetAllBookings(travelID string) (*[]Domain.Booking, error) {
-	panic("unimplemented")
+	objId, err := primitive.ObjectIDFromHex(travelID)
+	if err != nil {
+		return nil, errors.New("invalid travel ID format")
+	}
+
+	filter := bson.M{"travel_id": objId}
+	var bookings []Domain.Booking
+	cursor, err := b.Collection.Find(b.DbCtx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	defer cursor.Close(b.DbCtx)
+	for cursor.Next(b.DbCtx) {
+		var booking Domain.Booking
+		err := cursor.Decode(&booking)
+		if err != nil {
+			return nil, err
+		}
+
+		bookings = append(bookings, booking)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return &bookings, nil
 }
 
 // GetBooking implements UseCase.IBookingRepository.
