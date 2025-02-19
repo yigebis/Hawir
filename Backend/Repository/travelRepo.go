@@ -105,12 +105,12 @@ func (tr *TravelRepository) ViewTravelById(id string) (*Domain.Travel, error) {
 
 func (tr *TravelRepository) ViewTravelsByAgencyId(agencyId string) (*[]Domain.Travel, error) {
 	// we need to find the travels by agency id
-	objID, err := primitive.ObjectIDFromHex(agencyId)
-	if err != nil {
-		return nil, err
-	}
+	// objID, err := primitive.ObjectIDFromHex(agencyId)
+	// if err != nil {
+	// 	return nil, err
+	// } // not required to convert to object id as we put the agency id in the database as a string
 
-	filter := bson.M{"agency_id": objID}
+	filter := bson.M{"agency_id": agencyId}
 
 	cursor, err := tr.Collection.Find(tr.DbCtx, filter)
 	if err != nil {
@@ -200,7 +200,7 @@ func (tr *TravelRepository) EditTravelStatus(travelID, status string) error {
 	if err != nil {
 		return err
 	}
-	filter := bson.M{"travel_id": objectID}
+	filter := bson.M{"_id": objectID}
 	update := bson.M{"$set": bson.M{
 		"status": status,
 	}}

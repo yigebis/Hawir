@@ -28,13 +28,13 @@ func (tc *TravelController) CreateTravel(ctx *gin.Context) {
 
 	err := ctx.ShouldBindBodyWithJSON(&travel)
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": "invalid request payload"})
+		ctx.JSON(400, gin.H{"error": "invalid request payload", "details": err.Error()})
 		return
 	}
 
 	err = tc.V.Struct(travel)
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": "invalid request payload"})
+		ctx.JSON(400, gin.H{"error": "invalid request payload", "details": err.Error()})
 		return
 	}
 
@@ -92,7 +92,7 @@ func (tc *TravelController) ViewTravelById(ctx *gin.Context) {
 
 func (tc *TravelController) ViewTravelsByAgencyId(ctx *gin.Context) {
 	// ViewTravelsByAgencyId views travels by agency id
-	agencyId := ctx.Param("agencyId")
+	agencyId := ctx.Param("agencyID")
 
 	travels, statusCode, err := tc.TravelUseCase.ViewTravelsByAgencyId(agencyId)
 	if err != nil {
@@ -146,7 +146,7 @@ func (tc *TravelController) SearchTravel(ctx *gin.Context) {
 
 func (tc *TravelController) CancelTravel(ctx *gin.Context) {
 	// CancelTravel cancels a travel
-	travelID := ctx.Param("travelId")
+	travelID := ctx.Param("id")
 
 	statusCode, err := tc.TravelUseCase.CancelTravel(travelID)
 	if err != nil {
