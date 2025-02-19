@@ -41,7 +41,7 @@ func (admc *AdminController) AddAgency(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(code, gin.H{"message": "travel added successfully"})
+	ctx.JSON(code, gin.H{"message": "agency added successfully"})
 }
 
 func (admc *AdminController) EditAgency(ctx *gin.Context) {
@@ -59,7 +59,7 @@ func (admc *AdminController) EditAgency(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(code, gin.H{"message": "travel edited successfully"})
+	ctx.JSON(code, gin.H{"message": "agency edited successfully"})
 }
 
 func (admc *AdminController) DeleteAgency(ctx *gin.Context) {
@@ -71,7 +71,7 @@ func (admc *AdminController) DeleteAgency(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(code, gin.H{"message": "travel deleted successfully"})
+	ctx.JSON(code, gin.H{"message": "agency deleted successfully"})
 }
 
 func (admc *AdminController) GetAgency(ctx *gin.Context) {

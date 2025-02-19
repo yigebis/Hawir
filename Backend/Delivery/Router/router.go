@@ -56,10 +56,10 @@ func (r *Router) Run() {
 
 	//admin-side endpoints
 	router.POST("/agency/add", r.AdminController.AddAgency)
-	router.POST("/agency/delete/:id", r.AdminController.DeleteAgency)
+	router.DELETE("/agency/delete/:id", r.AdminController.DeleteAgency)
 	router.POST("/agency/edit", r.AdminController.EditAgency)
-	router.POST("/agency/:id", r.AdminController.GetAgency)
-	router.POST("/agency/all", r.AdminController.GetAllAgencies)
+	router.GET("/agency/:id", r.AdminController.GetAgency)
+	router.GET("/agency/all", r.AdminController.GetAllAgencies)
 
 	//booking endpoints
 	router.POST("/booking/seat/choose")
