@@ -12,7 +12,7 @@ type Travel struct {
 	StartLocation     string             `json:"start_location" bson:"start_location" validate:"required"`
 	PickupLocations   []string           `json:"pickup_locations" bson:"pickup_locations" validate:"required"`
 	Destination       string             `json:"destination" bson:"destination" validate:"required"`
-	PlannedStartTime  time.Time          `json:"planned_start_time" bsong:"planned_start_time" validate:"required"`
+	PlannedStartTime  time.Time          `json:"planned_start_time" bson:"planned_start_time" validate:"required"`
 	ActualStartTime   time.Time          `json:"actual_start_time" bson:"actual_start_time"`
 	EstArrivalTime    time.Time          `json:"est_arrival_time" bson:"est_arrival_time"`
 	ActualArrivalTime time.Time          `json:"actual_arrival_time" bson:"actual_arrival_time"`
