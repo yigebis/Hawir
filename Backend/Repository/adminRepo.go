@@ -84,7 +84,8 @@ func (admr *AdminRepository) GetAgency(agencyID string) (*Domain.Agency, error) 
 		return nil, err
 	}
 
-	err = admr.Collection.FindOne(admr.DbCtx, objID).Decode(&agency)
+	filter := bson.M{"_id": objID}
+	err = admr.Collection.FindOne(admr.DbCtx, filter).Decode(&agency)
 	return &agency, err
 }
 
