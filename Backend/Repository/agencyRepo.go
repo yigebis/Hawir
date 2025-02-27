@@ -10,24 +10,24 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type AdminRepository struct {
+type AgencyRepository struct {
 	DbCtx      context.Context
 	Collection *mongo.Collection
 }
 
-func NewAdminRepository(dbctx context.Context, collection *mongo.Collection) UseCase.IAdminRepository {
-	return &AdminRepository{
+func NewAgencyRepository(dbctx context.Context, collection *mongo.Collection) UseCase.IAgencyRepository {
+	return &AgencyRepository{
 		DbCtx:      dbctx,
 		Collection: collection,
 	}
 }
 
-func (admr *AdminRepository) AddAgency(agency *Domain.Agency) error {
+func (admr *AgencyRepository) AddAgency(agency *Domain.Agency) error {
 	_, err := admr.Collection.InsertOne(admr.DbCtx, agency)
 	return err
 }
 
-func (admr *AdminRepository) EditAgency(agency *Domain.Agency) error {
+func (admr *AgencyRepository) EditAgency(agency *Domain.Agency) error {
 	filter := bson.M{"_id": agency.ID}
 
 	update := bson.M{}
@@ -64,7 +64,7 @@ func (admr *AdminRepository) EditAgency(agency *Domain.Agency) error {
 	return err
 }
 
-func (admr *AdminRepository) DeleteAgency(agencyID string) error {
+func (admr *AgencyRepository) DeleteAgency(agencyID string) error {
 	objID, err := primitive.ObjectIDFromHex(agencyID)
 	if err != nil {
 		return err
@@ -76,7 +76,7 @@ func (admr *AdminRepository) DeleteAgency(agencyID string) error {
 	return err
 }
 
-func (admr *AdminRepository) GetAgency(agencyID string) (*Domain.Agency, error) {
+func (admr *AgencyRepository) GetAgency(agencyID string) (*Domain.Agency, error) {
 	var agency Domain.Agency
 
 	objID, err := primitive.ObjectIDFromHex(agencyID)
@@ -89,7 +89,7 @@ func (admr *AdminRepository) GetAgency(agencyID string) (*Domain.Agency, error) 
 	return &agency, err
 }
 
-func (admr *AdminRepository) GetAllAgencies() (*[]Domain.Agency, error) {
+func (admr *AgencyRepository) GetAllAgencies() (*[]Domain.Agency, error) {
 	var agencies []Domain.Agency
 
 	cursor, err := admr.Collection.Find(admr.DbCtx, bson.M{})
@@ -102,4 +102,17 @@ func (admr *AdminRepository) GetAllAgencies() (*[]Domain.Agency, error) {
 
 	return &agencies, nil
 
+}
+
+func (admr *AgencyRepository) CheckAgency(agencyID string) (bool, error) {
+	var agency Domain.Agency
+
+	objID, err := primitive.ObjectIDFromHex(agencyID)
+	if err != nil {
+		return false, err
+	}
+
+	filter := bson.M{"_id": objID}
+	err = admr.Collection.FindOne(admr.DbCtx, filter).Decode(&agency)
+	return true, err
 }

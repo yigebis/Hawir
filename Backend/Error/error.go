@@ -33,7 +33,10 @@ var ErrTravelNotFound = errors.New("travel not found")
 var ErrAgencyNotFound = errors.New("agency not found")
 
 // Booking errors
-var ErrBookingNotFound = errors.New("Booking not found")
+var ErrBookingNotFound = errors.New("booking not found")
+var ErrSeatReserved = errors.New("seat is already reserved")
+var ErrTravelerAlreadyBooked = errors.New("traveler has already booked a seat")
+var ErrSeatNotChosen = errors.New("traveler has not chosen a seat")
 
 type Error struct{}
 
@@ -112,6 +115,30 @@ func (e *Error) AgencyNotFound() (int, error) {
 }
 
 // Booking errors
-func (e *Error) BookingNotFound() (int, error){
+func (e *Error) BookingNotFound() (int, error) {
 	return http.StatusNotFound, ErrBookingNotFound
+}
+
+func (e *Error) SeatReserved() (int, error) {
+	return http.StatusBadRequest, ErrSeatReserved
+}
+
+func (e *Error) TravelerAlreadyBooked() (int, error) {
+	return http.StatusBadRequest, ErrTravelerAlreadyBooked
+}
+
+func (e *Error) SeatNotChosen() (int, error) {
+	return http.StatusBadRequest, ErrSeatNotChosen
+}
+
+func (e *Error) InvalidStartLocation() (int, error) {
+	return http.StatusBadRequest, errors.New("start location is not in the pickup locations")
+}
+
+func (e *Error) InvalidPlannedStartTime() (int, error) {
+	return http.StatusBadRequest, errors.New("planned start time is in the past")
+}
+
+func (e *Error) InvalidEstArrivalTime() (int, error) {
+	return http.StatusBadRequest, errors.New("estimated arrival time is before the planned start time")
 }

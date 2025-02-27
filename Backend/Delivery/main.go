@@ -54,6 +54,8 @@ func main() {
 	fmt.Println("Connected to db!")
 	user_collection := client.Database("Hawir").Collection("users")
 	travel_collection := client.Database("Hawir").Collection("travels")
+	travel_stat_collection := client.Database("Hawir").Collection("travel_stats")
+	seat_collection := client.Database("Hawir").Collection("seats")
 	agency_collection := client.Database("Hawir").Collection("agencies")
 	booking_collection := client.Database("Hawir").Collection("Booking")
 
@@ -64,8 +66,13 @@ func main() {
 
 	ur := Repository.NewUserRepository(user_context, user_collection)
 	tr := Repository.NewTravelRepository(travel_context, travel_collection)
-	ar := Repository.NewAdminRepository(agency_context, agency_collection)
-	br := Repository.NewBookingRepository(booking_context, booking_collection)
+	ar := Repository.NewAgencyRepository(agency_context, agency_collection)
+	br := Repository.NewBookingRepository(
+		booking_context,
+		booking_collection,
+		travel_stat_collection,
+		seat_collection,
+	)
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	es := Error.NewErrorService()
@@ -94,7 +101,7 @@ func main() {
 	oauthService := Infrastructure.NewOAuth(oauthState, oauthClientID, oauthClientSecret, websiteDomainName)
 
 	uuc := UseCase.NewUserUseCase(ur, ps, ts, ms, es, ex, tx, rx)
-	tuc := UseCase.NewTravelUseCase(tr, es)
+	tuc := UseCase.NewTravelUseCase(tr, ar, es)
 	auc := UseCase.NewAdminUseCase(ar, ps, es)
 	buc := UseCase.NewBookingUseCase(br, es)
 
@@ -103,7 +110,7 @@ func main() {
 	travel_controller := Controller.NewTravelController(tuc)
 	admin_controller := Controller.NewAdminController(auc)
 	booking_controller := Controller.NewBookingController(buc)
-	
+
 	// setting up the router
 	router := Router.NewRouter(user_controller, travel_controller, admin_controller, booking_controller, jwtSecret)
 	router.Run()

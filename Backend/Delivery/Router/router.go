@@ -48,27 +48,26 @@ func (r *Router) Run() {
 	router.GET("/auth/callback", r.UserController.GoogleCallback)     // Handles Google callback
 	// router.GET("/api/travel/id/:id", r.TravelController.GetTravelByID)
 
-	router.POST("/travel/create", r.TravelController.CreateTravel)             //agency authorization
-	router.POST("/travel/edit", r.TravelController.EditTravel)                 //agency authorization
+	router.POST("/travel/add", r.TravelController.CreateTravel)                //agency authorization
+	router.PUT("/travel/edit", r.TravelController.EditTravel)                  //agency authorization
 	router.GET("/travel/:id", r.TravelController.ViewTravelById)               //no authorization
 	router.GET("/travels/:agencyID", r.TravelController.ViewTravelsByAgencyId) //no authorization
-	router.POST("/travel/cancel/:id", r.TravelController.CancelTravel)         //agency authorization
+	router.DELETE("/travel/cancel/:id", r.TravelController.CancelTravel)       //agency authorization
 
 	//admin-side endpoints
 	router.POST("/agency/add", r.AdminController.AddAgency)
 	router.DELETE("/agency/delete/:id", r.AdminController.DeleteAgency)
-	router.POST("/agency/edit", r.AdminController.EditAgency)
+	router.PUT("/agency/edit/:id", r.AdminController.EditAgency)
 	router.GET("/agency/:id", r.AdminController.GetAgency)
 	router.GET("/agency/all", r.AdminController.GetAllAgencies)
 
 	//booking endpoints
-	router.POST("/booking/seat/choose")
-	router.POST("/booking/seat/change")
+	router.POST("/booking/seat/choose", r.BookingController.ChooseSeat)
 	router.POST("/booking/add", r.BookingController.Book)
-	router.POST("/booking/edit", r.BookingController.EditBook)
-	router.POST("/booking/cancel")
+	router.PUT("/booking/edit/:id", r.BookingController.EditBook)
+	router.DELETE("/booking/cancel", r.BookingController.CancelBook)
 	router.GET("/booking/:id", r.BookingController.GetBooking)
-	router.GET("/booking/all/:id", r.BookingController.GetAllBookings)
+	router.GET("/booking/all/:travelId", r.BookingController.GetAllBookings)
 
 	router.Run()
 }

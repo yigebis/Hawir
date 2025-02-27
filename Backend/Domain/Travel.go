@@ -19,7 +19,7 @@ type Travel struct {
 	Price             float64            `json:"price" bson:"price" validate:"required"`
 	Notice            string             `json:"notice" bson:"notice" validate:"required"`
 	BusRef            string             `json:"bus_ref" bson:"bus_ref" validate:"required"`
-	HasPayBack        bool               `json:"has_pay_back" bson:"has_pay_back"`
+	HasPayBack        bool               `json:"has_pay_back" bson:"has_pay_back" validate:"required"`
 	DriverName        string             `json:"driver_name" bson:"driver_name" validate:"required"`
 	PostTime          time.Time          `json:"post_time" bson:"post_time" validate:"required"`
 	LastModTime       time.Time          `json:"last_mod_time" bson:"last_mod_time"`
@@ -27,6 +27,7 @@ type Travel struct {
 }
 
 type TravelStats struct {
+	TravelID      string  `json:"travel_id" bson:"travel_id"` // Travel ID
 	Seats         []bool  `json:"seats" bson:"seats"`
 	ReservedCount int64   `json:"reserved_count" bson:"reserved_count"`
 	AvgRating     float64 `json:"avg_rating" bson:"avg_rating"`

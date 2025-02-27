@@ -6,9 +6,8 @@ import (
 
 type IBookingUseCase interface {
 	// Yigerem
-	ChooseSeat(seatNo int, travelerID string, travelID string) (int, error) //this will make the seat reserved for 5 minutes
-	Book(booking *Domain.Booking) (int, error)                              //this will make the seat reserved for 30 minutes
-	ChangeSeat(seatNo int, travelerID string, travelID string) (int, error) //this will free the chosen seat if not booked, and grants another seat
+	ChooseSeat(seat *Domain.Seat) (int, error) //this will make the seat reserved for 5 minutes
+	Book(booking *Domain.Booking) (int, error) //this will make the seat reserved for 30 minutes
 
 	// Yohannes
 	CancelBook(bookingID string) (int, error)
@@ -18,11 +17,16 @@ type IBookingUseCase interface {
 }
 
 type IBookingRepository interface {
-	ChooseSeat(seatNo int, travelerID string, travelID string) error
+	ChooseSeat(seat *Domain.Seat) error
 	Book(booking *Domain.Booking) error
-	ChangeSeat(seatNo int, travelerID string, travelID string) error
+	DeleteSeat(seatNo int) error
+	CheckSeat(travelID string, seatNo int) (bool, error)
+	FreeSeat(travelID string, seatNo int) error
+	GetSeatByTravelerID(travelerID, travelID string) (*Domain.Seat, error)
+
 	CancelBook(bookingID string) error
 	EditBook(booking *Domain.Booking) error
 	GetBooking(bookingID string) (*Domain.Booking, error)
+	GetBookingByTravelerID(travelerID string, travelID string) (*Domain.Booking, error)
 	GetAllBookings(travelID string) (*[]Domain.Booking, error)
 }

@@ -14,7 +14,7 @@ type Agency struct {
 	Services         []string           `json:"services" bson:"services,omitempty"`
 	LogoURL          string             `json:"logo_url" bson:"logo_url,omitempty"`
 	Description      string             `json:"description" bson:"description,omitempty" validate:"required"`
-	Contact          []string           `json:"contact" bson:"contact,omitempty"`
+	Contact          []string           `json:"contact" bson:"contact,omitempty" validate:"required"`
 	Language         string             `json:"language" bson:"language,omitempty"`
 	Calendar         string             `json:"calendar" bson:"calendar,omitempty"`
 }

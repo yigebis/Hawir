@@ -6,12 +6,12 @@ import (
 )
 
 type AdminUseCase struct {
-	AdminRepo       IAdminRepository
+	AdminRepo       IAgencyRepository
 	PasswordService IPasswordService
 	ErrorService    IErrorService
 }
 
-func NewAdminUseCase(repo IAdminRepository, ps IPasswordService, es IErrorService) IAdminUseCase {
+func NewAdminUseCase(repo IAgencyRepository, ps IPasswordService, es IErrorService) IAdminUseCase {
 	return &AdminUseCase{
 		AdminRepo:       repo,
 		PasswordService: ps,

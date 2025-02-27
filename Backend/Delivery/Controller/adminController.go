@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type AdminController struct {
@@ -45,9 +46,21 @@ func (admc *AdminController) AddAgency(ctx *gin.Context) {
 }
 
 func (admc *AdminController) EditAgency(ctx *gin.Context) {
+	agencyID := ctx.Param("id")
+	if agencyID == "" {
+		ctx.JSON(400, gin.H{"error": "invalid request payload"})
+		return
+	}
+
 	var agency = Domain.Agency{}
 
 	err := ctx.ShouldBindJSON(&agency)
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": "invalid request payload"})
+		return
+	}
+
+	agency.ID, err = primitive.ObjectIDFromHex(agencyID)
 	if err != nil {
 		ctx.JSON(400, gin.H{"error": "invalid request payload"})
 		return
