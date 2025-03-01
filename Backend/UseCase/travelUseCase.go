@@ -3,35 +3,61 @@ package UseCase
 import (
 	"Hawir/Domain"
 	"fmt"
+	"time"
 )
 
 type TravelUseCase struct {
 	TravelRepo   ITravelRepository
+	AgencyRepo   IAgencyRepository
 	ErrorService IErrorService
 }
 
-func NewTravelUseCase(travelRepo ITravelRepository, errorService IErrorService) ITravelUseCase {
+func NewTravelUseCase(travelRepo ITravelRepository, agencyRepo IAgencyRepository, errorService IErrorService) ITravelUseCase {
 	return &TravelUseCase{
 		TravelRepo:   travelRepo,
+		AgencyRepo:   agencyRepo,
 		ErrorService: errorService,
 	}
 }
 
 func (tuc *TravelUseCase) CreateTravel(travel *Domain.Travel) (int, error) {
-	//do some validations here
-	if travel.AgencyId != "" { // what do we do with the agency ID
-
+	//check if the agency id exists
+	exists, err := tuc.AgencyRepo.CheckAgency(travel.AgencyId)
+	if err != nil {
+		return tuc.ErrorService.InternalServer()
+	}
+	if !exists {
+		return tuc.ErrorService.AgencyNotFound()
 	}
 
-	// if travel.Destination == "" {
-
-	// } i dont think we need to check the destinations
-
-	if travel.DriverName != "" {
-		// what do we do with the driver name
+	// start location must be in pick up locations
+	var found = false
+	for _, pickupLocation := range travel.PickupLocations {
+		if travel.StartLocation == pickupLocation {
+			found = true
+			break
+		}
 	}
 
-	err := tuc.TravelRepo.CreateTravel(travel)
+	if !found {
+		return tuc.ErrorService.InvalidStartLocation()
+	}
+
+	// ensure the travel is afterwards
+	if travel.PlannedStartTime.Unix() < time.Now().Unix() {
+		return tuc.ErrorService.InvalidPlannedStartTime()
+	}
+
+	// ensure the trave's arrival time plan is after the start time
+	if travel.EstArrivalTime.Unix() < travel.PlannedStartTime.Unix() {
+		return tuc.ErrorService.InvalidEstArrivalTime()
+	}
+
+	travel.PostTime = time.Now()
+	travel.LastModTime = travel.PostTime
+	travel.Status = "upcoming"
+
+	err = tuc.TravelRepo.CreateTravel(travel)
 	fmt.Println("after!")
 	if err != nil {
 		return tuc.ErrorService.InternalServer()

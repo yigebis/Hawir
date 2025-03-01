@@ -20,10 +20,16 @@ type IErrorService interface {
 
 	// Travel errors
 	TravelNotFound() (int, error)
+	InvalidStartLocation() (int, error)
+	InvalidPlannedStartTime() (int, error)
+	InvalidEstArrivalTime() (int, error)
 
 	// Agency errors
 	AgencyNotFound() (int, error)
 
 	// Booking errors
 	BookingNotFound() (int, error)
+	SeatReserved() (int, error)
+	TravelerAlreadyBooked() (int, error)
+	SeatNotChosen() (int, error)
 }
