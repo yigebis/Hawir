@@ -2,8 +2,9 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Calendar, momentLocalizer, Views } from 'react-big-calendar';
 import moment from 'moment';
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import TravelEvent, { TravelEventType } from "./TravelEvent";
+import AddTripModal from "../trips/AddTripModal";
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { format, addDays, subDays, startOfWeek, endOfWeek, isSameDay, isToday } from "date-fns";
 
@@ -14,6 +15,7 @@ const TravelCalendar: React.FC = () => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [weekDates, setWeekDates] = useState<Date[]>([]);
+  const [showAddTripModal, setShowAddTripModal] = useState(false);
   
   // Sample travel events
   const [events, setEvents] = useState<TravelEventType[]>([
@@ -92,21 +94,29 @@ const TravelCalendar: React.FC = () => {
   return (
     <div className="bg-white rounded-lg shadow-md">
       {/* Custom date selector section */}
-      <div className="flex items-center gap-3.5 p-5">
+      <div className="flex items-center justify-between gap-3.5 p-5">
+        <div className="flex items-center gap-3.5">
+          <button 
+            onClick={handlePrevious}
+            className="w-9 h-9 bg-[#F3F6FA] rounded-full flex items-center justify-center hover:bg-gray-200"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <span className="text-base font-medium">
+            {format(currentDate, "EEE dd MMMM, yyyy")}
+          </span>
+          <button 
+            onClick={handleNext}
+            className="w-9 h-9 bg-[#F3F6FA] rounded-full flex items-center justify-center hover:bg-gray-200"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
         <button 
-          onClick={handlePrevious}
+          onClick={() => setShowAddTripModal(true)} 
           className="w-9 h-9 bg-[#F3F6FA] rounded-full flex items-center justify-center hover:bg-gray-200"
         >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-        <span className="text-base font-medium">
-          {format(currentDate, "EEE dd MMMM, yyyy")}
-        </span>
-        <button 
-          onClick={handleNext}
-          className="w-9 h-9 bg-[#F3F6FA] rounded-full flex items-center justify-center hover:bg-gray-200"
-        >
-          <ChevronRight className="w-5 h-5" />
+          <Plus className="w-5 h-5 text-green-800" />
         </button>
       </div>
 
@@ -151,6 +161,11 @@ const TravelCalendar: React.FC = () => {
         onNavigate={setCurrentDate}
         components={components}
         {...calendarStyles}
+      />
+      
+      <AddTripModal 
+        isOpen={showAddTripModal} 
+        onClose={() => setShowAddTripModal(false)} 
       />
     </div>
   );

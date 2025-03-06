@@ -1,7 +1,11 @@
-import React from "react";
+
+import React, { useState } from "react";
 import TravelItem from "./TravelItem";
+import AddTripModal from "../trips/AddTripModal";
 
 const ActivityList: React.FC = () => {
+  const [showAddTripModal, setShowAddTripModal] = useState(false);
+  
   const travelItems = [
     {
       title: "Hawassa Trip",
@@ -23,7 +27,10 @@ const ActivityList: React.FC = () => {
         <h2 className="text-black text-base font-bold my-auto">
           Recent Activity
         </h2>
-        <button className="bg-[rgba(55,144,27,1)] flex items-center gap-0.5 text-sm text-white font-medium text-center flex-1 px-4 py-2 rounded-[10px]">
+        <button 
+          onClick={() => setShowAddTripModal(true)}
+          className="bg-[rgba(55,144,27,1)] flex items-center gap-0.5 text-sm text-white font-medium text-center flex-1 px-4 py-2 rounded-[10px]"
+        >
           <img
             src="https://cdn.builder.io/api/v1/image/assets/091e50b0e3084a89a54855377607a220/1ef417b1885764fdf7be0c1259bd277215ce282409cf9e2a4d66c6e854eda578?placeholderIfAbsent=true"
             alt="Add Icon"
@@ -44,6 +51,11 @@ const ActivityList: React.FC = () => {
           />
         ))}
       </div>
+      
+      <AddTripModal 
+        isOpen={showAddTripModal} 
+        onClose={() => setShowAddTripModal(false)} 
+      />
     </section>
   );
 };
