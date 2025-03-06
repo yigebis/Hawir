@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import ManageTravels from "./pages/ManageTravels";
 import NotFound from "./pages/NotFound";
+import "./styles/calendar.css";
 
 const queryClient = new QueryClient();
 

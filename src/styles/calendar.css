@@ -1,0 +1,94 @@
+
+/* Custom React Big Calendar Styles */
+.rbc-calendar {
+  font-family: 'Inter', sans-serif;
+}
+
+.rbc-header {
+  padding: 10px 0;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.rbc-header span {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+  border-radius: 50%;
+}
+
+.rbc-event {
+  background: transparent;
+  border: none;
+  color: inherit;
+  padding: 0;
+}
+
+.rbc-event-wrapper {
+  height: 100%;
+}
+
+.rbc-event-label {
+  display: none;
+}
+
+.rbc-time-slot {
+  font-size: 14px;
+  color: #666;
+}
+
+.rbc-label {
+  font-size: 14px;
+  color: #666;
+}
+
+.rbc-time-view {
+  border: none;
+  box-shadow: none;
+}
+
+.rbc-time-content {
+  border-top: none;
+}
+
+.rbc-time-header {
+  border-bottom: none;
+}
+
+.rbc-time-header-content {
+  border-left: none;
+}
+
+.rbc-today {
+  background-color: white;
+}
+
+.rbc-toolbar {
+  padding: 0;
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.rbc-toolbar-label {
+  font-weight: 500;
+  font-size: 16px;
+}
+
+.rbc-time-gutter .rbc-timeslot-group {
+  min-height: 50px;
+}
+
+.rbc-timeslot-group {
+  min-height: 50px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.rbc-day-slot .rbc-events-container {
+  margin-right: 0;
+}
+
+.rbc-current-time-indicator {
+  background-color: #F35B04;
+  height: 2px;
+}

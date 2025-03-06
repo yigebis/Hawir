@@ -5,7 +5,7 @@ import TravelCalendar from "@/components/travels/TravelCalendar";
 
 const ManageTravels: React.FC = () => {
   return (
-    <DashboardLayout>
+    <DashboardLayout showHeader={false}>
       <div className="flex flex-col">
         <div className="flex justify-between items-center mb-7">
           <h1 className="text-[#F35B04] text-base font-bold tracking-[2.4px] uppercase">
