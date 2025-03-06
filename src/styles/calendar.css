@@ -54,6 +54,7 @@
 
 .rbc-time-header {
   border-bottom: none;
+  display: none; /* Hide the default header as we're using our custom one */
 }
 
 .rbc-time-header-content {
@@ -68,6 +69,7 @@
   padding: 0;
   margin-bottom: 0;
   border-bottom: none;
+  display: none; /* Hide the default toolbar as we're using our custom one */
 }
 
 .rbc-toolbar-label {
