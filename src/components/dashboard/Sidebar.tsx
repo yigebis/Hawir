@@ -1,4 +1,6 @@
+
 import React from "react";
+import { Link } from "react-router-dom";
 
 const Sidebar: React.FC = () => {
   return (
@@ -16,31 +18,35 @@ const Sidebar: React.FC = () => {
       <nav className="mt-11">
         <ul className="flex flex-col gap-4">
           <li>
-            <div className="relative">
-              <div className="bg-[rgba(243,91,4,1)] absolute inset-0 w-[146px] h-[34px] rounded-[5px]" />
-              <div className="relative z-10 flex items-center gap-[11px] pl-2 py-2">
-                <img
-                  src="https://cdn.builder.io/api/v1/image/assets/091e50b0e3084a89a54855377607a220/717bbb1e8d3120a2eee3c7e0586da1875fa30e019232df1d67d43c8a388413b8?placeholderIfAbsent=true"
-                  alt="Dashboard Icon"
-                  className="aspect-[1] object-contain w-6 shrink-0"
-                />
-                <span className="text-white text-[15px] font-semibold leading-none">
-                  Dashboard
-                </span>
+            <Link to="/" className="block">
+              <div className="relative">
+                <div className="bg-[rgba(243,91,4,1)] absolute inset-0 w-[146px] h-[34px] rounded-[5px]" />
+                <div className="relative z-10 flex items-center gap-[11px] pl-2 py-2">
+                  <img
+                    src="https://cdn.builder.io/api/v1/image/assets/091e50b0e3084a89a54855377607a220/717bbb1e8d3120a2eee3c7e0586da1875fa30e019232df1d67d43c8a388413b8?placeholderIfAbsent=true"
+                    alt="Dashboard Icon"
+                    className="aspect-[1] object-contain w-6 shrink-0"
+                  />
+                  <span className="text-white text-[15px] font-semibold leading-none">
+                    Dashboard
+                  </span>
+                </div>
               </div>
-            </div>
+            </Link>
           </li>
           <li>
-            <div className="flex items-center gap-[11px] pl-2 py-2">
-              <img
-                src="https://cdn.builder.io/api/v1/image/assets/091e50b0e3084a89a54855377607a220/ce569e8fac2f33fd8b6b9baaf9a1a608536d8eeb9eb61cbcb9d73c1bc064b63f?placeholderIfAbsent=true"
-                alt="Manage Travels Icon"
-                className="aspect-[1] object-contain w-6 shrink-0"
-              />
-              <span className="text-sm font-medium leading-none">
-                Manage Travels
-              </span>
-            </div>
+            <Link to="/manage-travels" className="block">
+              <div className="flex items-center gap-[11px] pl-2 py-2">
+                <img
+                  src="https://cdn.builder.io/api/v1/image/assets/091e50b0e3084a89a54855377607a220/ce569e8fac2f33fd8b6b9baaf9a1a608536d8eeb9eb61cbcb9d73c1bc064b63f?placeholderIfAbsent=true"
+                  alt="Manage Travels Icon"
+                  className="aspect-[1] object-contain w-6 shrink-0"
+                />
+                <span className="text-sm font-medium leading-none">
+                  Manage Travels
+                </span>
+              </div>
+            </Link>
           </li>
           <li>
             <div className="flex items-center gap-[11px] pl-2 py-2">
