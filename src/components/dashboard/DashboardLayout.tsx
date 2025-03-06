@@ -1,3 +1,4 @@
+
 import React from "react";
 import Sidebar from "./Sidebar";
 import DashboardHeader from "./DashboardHeader";
@@ -6,9 +7,10 @@ import ActivityList from "./ActivityList";
 
 interface DashboardLayoutProps {
   children?: React.ReactNode;
+  showDefault?: boolean;
 }
 
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, showDefault = false }) => {
   return (
     <div className="bg-white overflow-hidden">
       <div className="bg-white pr-5 max-md:max-w-full">
@@ -19,9 +21,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           <div className="w-[84%] ml-5 max-md:w-full max-md:ml-0">
             <main className="w-full mt-6 max-md:max-w-full max-md:mt-10">
               <DashboardHeader />
-              <StatisticsCards />
-              <ActivityList />
-              {children}
+              {showDefault ? (
+                <>
+                  <StatisticsCards />
+                  <ActivityList />
+                </>
+              ) : (
+                children
+              )}
             </main>
           </div>
         </div>
