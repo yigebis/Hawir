@@ -11,11 +11,11 @@ const ManageTravels: React.FC = () => {
   return (
     <DashboardLayout showHeader={false}>
       <div className="flex flex-col">
-        <div className="flex justify-between items-center mb-7">
-          <h1 className="text-[#F35B04] text-base font-bold tracking-[2.4px] uppercase">
+        <div className="flex flex-col mb-7">
+          <h1 className="text-[#F35B04] text-base font-bold tracking-[2.4px] uppercase mb-4">
             Manage Travels
           </h1>
-          <div className="flex items-center gap-9">
+          <div className="flex justify-between items-center">
             <div className="flex gap-5">
               <div className="flex items-center gap-1">
                 <div className="w-2 h-2 rounded-full bg-green-500"></div>
@@ -42,17 +42,19 @@ const ManageTravels: React.FC = () => {
                 </svg>
               </div>
               <div className="cursor-pointer" onClick={() => setShowAddTripModal(true)}>
-                <svg width="17" height="18" viewBox="0 0 17 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M0 9C0 9.50485 0.422424 9.91697 0.91697 9.91697H7.58303V16.583C7.58303 17.0776 7.99515 17.5 8.5 17.5C9.00485 17.5 9.42727 17.0776 9.42727 16.583V9.91697H16.083C16.5776 9.91697 17 9.50485 17 9C17 8.49515 16.5776 8.07273 16.083 8.07273H9.42727V1.41697C9.42727 0.922424 9.00485 0.5 8.5 0.5C7.99515 0.5 7.58303 0.922424 7.58303 1.41697V8.07273H0.91697C0.422424 8.07273 0 8.49515 0 9Z" fill="#027A48"/>
-                </svg>
+                <Plus className="w-5 h-5 text-green-800" />
               </div>
             </div>
           </div>
         </div>
-        <TravelCalendar />
+        <TravelCalendar onAddTrip={() => setShowAddTripModal(true)} />
         <AddTripModal 
           isOpen={showAddTripModal} 
           onClose={() => setShowAddTripModal(false)} 
+          onSave={(tripData) => {
+            setShowAddTripModal(false);
+            // TODO: Add trip to calendar
+          }}
         />
       </div>
     </DashboardLayout>

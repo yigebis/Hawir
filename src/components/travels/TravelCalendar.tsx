@@ -1,21 +1,23 @@
 
 import React, { useState, useMemo, useEffect } from "react";
-import { Calendar, momentLocalizer, Views } from 'react-big-calendar';
+import { Calendar, momentLocalizer, Views, SlotInfo } from 'react-big-calendar';
 import moment from 'moment';
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import TravelEvent, { TravelEventType } from "./TravelEvent";
-import AddTripModal from "../trips/AddTripModal";
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { format, addDays, subDays, startOfWeek, endOfWeek, isSameDay, isToday } from "date-fns";
 
 // Set up the localizer for the calendar
 const localizer = momentLocalizer(moment);
 
-const TravelCalendar: React.FC = () => {
+interface TravelCalendarProps {
+  onAddTrip: () => void;
+}
+
+const TravelCalendar: React.FC<TravelCalendarProps> = ({ onAddTrip }) => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [weekDates, setWeekDates] = useState<Date[]>([]);
-  const [showAddTripModal, setShowAddTripModal] = useState(false);
   
   // Sample travel events
   const [events, setEvents] = useState<TravelEventType[]>([
@@ -69,6 +71,11 @@ const TravelCalendar: React.FC = () => {
     setSelectedDate(date);
   };
 
+  // Handle slot selection
+  const handleSelectSlot = (slotInfo: SlotInfo) => {
+    onAddTrip();
+  };
+
   // Custom calendar components
   const components = useMemo(() => ({
     event: ({ event }: { event: TravelEventType }) => (
@@ -113,7 +120,7 @@ const TravelCalendar: React.FC = () => {
           </button>
         </div>
         <button 
-          onClick={() => setShowAddTripModal(true)} 
+          onClick={onAddTrip} 
           className="w-9 h-9 bg-[#F3F6FA] rounded-full flex items-center justify-center hover:bg-gray-200"
         >
           <Plus className="w-5 h-5 text-green-800" />
@@ -160,12 +167,9 @@ const TravelCalendar: React.FC = () => {
         date={currentDate}
         onNavigate={setCurrentDate}
         components={components}
+        selectable={true}
+        onSelectSlot={handleSelectSlot}
         {...calendarStyles}
-      />
-      
-      <AddTripModal 
-        isOpen={showAddTripModal} 
-        onClose={() => setShowAddTripModal(false)} 
       />
     </div>
   );
