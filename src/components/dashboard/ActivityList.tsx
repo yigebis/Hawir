@@ -2,11 +2,11 @@
 import React, { useState } from "react";
 import TravelItem from "./TravelItem";
 import AddTripModal from "../trips/AddTripModal";
+import { Plus } from "lucide-react";
 
 const ActivityList: React.FC = () => {
   const [showAddTripModal, setShowAddTripModal] = useState(false);
-  
-  const travelItems = [
+  const [travelItems, setTravelItems] = useState([
     {
       title: "Hawassa Trip",
       departureDate: "2024-03-15",
@@ -19,7 +19,22 @@ const ActivityList: React.FC = () => {
       id: "TR929",
       price: "2200 Birr",
     },
-  ];
+  ]);
+
+  const handleSaveTrip = (tripData: any) => {
+    setShowAddTripModal(false);
+    
+    // Create a new travel item from the trip data
+    const newItem = {
+      title: `${tripData.departureCity} → ${tripData.arrivalCity}`,
+      departureDate: tripData.departureDate.toISOString().split('T')[0],
+      id: `TR${Math.floor(Math.random() * 1000)}`,
+      price: `${tripData.price} Birr`,
+    };
+    
+    // Add to travel items
+    setTravelItems(prev => [...prev, newItem]);
+  };
 
   return (
     <section className="mt-[22px]">
@@ -29,13 +44,9 @@ const ActivityList: React.FC = () => {
         </h2>
         <button 
           onClick={() => setShowAddTripModal(true)}
-          className="bg-[rgba(55,144,27,1)] flex items-center gap-0.5 text-sm text-white font-medium px-4 py-2 rounded-[10px]"
+          className="bg-[rgba(55,144,27,1)] flex items-center gap-1 text-sm text-white font-medium px-4 py-2 rounded-[10px]"
         >
-          <img
-            src="https://cdn.builder.io/api/v1/image/assets/091e50b0e3084a89a54855377607a220/1ef417b1885764fdf7be0c1259bd277215ce282409cf9e2a4d66c6e854eda578?placeholderIfAbsent=true"
-            alt="Add Icon"
-            className="aspect-[1] object-contain w-4 shrink-0 my-auto"
-          />
+          <Plus className="w-4 h-4" />
           <span>Add New Trip</span>
         </button>
       </div>
@@ -55,10 +66,7 @@ const ActivityList: React.FC = () => {
       <AddTripModal 
         isOpen={showAddTripModal} 
         onClose={() => setShowAddTripModal(false)} 
-        onSave={(tripData) => {
-          setShowAddTripModal(false);
-          // TODO: Add trip to travel items
-        }}
+        onSave={handleSaveTrip}
       />
     </section>
   );

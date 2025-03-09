@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Calendar, momentLocalizer, Views, SlotInfo } from 'react-big-calendar';
 import moment from 'moment';
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import TravelEvent, { TravelEventType } from "./TravelEvent";
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { format, addDays, subDays, startOfWeek, endOfWeek, isSameDay, isToday } from "date-fns";
@@ -11,12 +11,16 @@ import { format, addDays, subDays, startOfWeek, endOfWeek, isSameDay, isToday } 
 const localizer = momentLocalizer(moment);
 
 interface TravelCalendarProps {
-  onAddTrip: () => void;
+  onAddTrip: (dateTime?: { date?: Date; time?: string }) => void;
+  selectedDate: Date;
+  onDateChange: (date: Date) => void;
 }
 
-const TravelCalendar: React.FC<TravelCalendarProps> = ({ onAddTrip }) => {
-  const [currentDate, setCurrentDate] = useState<Date>(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+const TravelCalendar: React.FC<TravelCalendarProps> = ({ 
+  onAddTrip, 
+  selectedDate,
+  onDateChange
+}) => {
   const [weekDates, setWeekDates] = useState<Date[]>([]);
   
   // Sample travel events
@@ -37,10 +41,10 @@ const TravelCalendar: React.FC<TravelCalendarProps> = ({ onAddTrip }) => {
     }
   ]);
 
-  // Generate week dates whenever currentDate changes
+  // Generate week dates whenever selectedDate changes
   useEffect(() => {
-    const start = startOfWeek(currentDate, { weekStartsOn: 0 });
-    const end = endOfWeek(currentDate, { weekStartsOn: 0 });
+    const start = startOfWeek(selectedDate, { weekStartsOn: 0 });
+    const end = endOfWeek(selectedDate, { weekStartsOn: 0 });
     
     const dates: Date[] = [];
     let day = start;
@@ -51,29 +55,22 @@ const TravelCalendar: React.FC<TravelCalendarProps> = ({ onAddTrip }) => {
     }
     
     setWeekDates(dates);
-  }, [currentDate]);
+  }, [selectedDate]);
 
-  // Navigation handlers
-  const handlePrevious = () => {
-    const newDate = subDays(currentDate, 1);
-    setCurrentDate(newDate);
-    setSelectedDate(newDate);
-  };
-
-  const handleNext = () => {
-    const newDate = addDays(currentDate, 1);
-    setCurrentDate(newDate);
-    setSelectedDate(newDate);
-  };
-
+  // Handle date click
   const handleDateClick = (date: Date) => {
-    setCurrentDate(date);
-    setSelectedDate(date);
+    onDateChange(date);
   };
 
   // Handle slot selection
   const handleSelectSlot = (slotInfo: SlotInfo) => {
-    onAddTrip();
+    const date = new Date(slotInfo.start);
+    const timeString = format(date, "HH:mm");
+    
+    onAddTrip({
+      date: date,
+      time: timeString
+    });
   };
 
   // Custom calendar components
@@ -100,33 +97,6 @@ const TravelCalendar: React.FC<TravelCalendarProps> = ({ onAddTrip }) => {
 
   return (
     <div className="bg-white rounded-lg shadow-md">
-      {/* Custom date selector section */}
-      <div className="flex items-center justify-between gap-3.5 p-5">
-        <div className="flex items-center gap-3.5">
-          <button 
-            onClick={handlePrevious}
-            className="w-9 h-9 bg-[#F3F6FA] rounded-full flex items-center justify-center hover:bg-gray-200"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <span className="text-base font-medium">
-            {format(currentDate, "EEE dd MMMM, yyyy")}
-          </span>
-          <button 
-            onClick={handleNext}
-            className="w-9 h-9 bg-[#F3F6FA] rounded-full flex items-center justify-center hover:bg-gray-200"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
-        </div>
-        <button 
-          onClick={onAddTrip} 
-          className="w-9 h-9 bg-[#F3F6FA] rounded-full flex items-center justify-center hover:bg-gray-200"
-        >
-          <Plus className="w-5 h-5 text-green-800" />
-        </button>
-      </div>
-
       {/* Custom week day selector */}
       <div className="px-5 pb-3">
         <div className="grid grid-cols-7 text-center mb-2">
@@ -164,8 +134,8 @@ const TravelCalendar: React.FC<TravelCalendarProps> = ({ onAddTrip }) => {
         endAccessor="end"
         defaultView={Views.DAY}
         views={[Views.DAY]}
-        date={currentDate}
-        onNavigate={setCurrentDate}
+        date={selectedDate}
+        onNavigate={onDateChange}
         components={components}
         selectable={true}
         onSelectSlot={handleSelectSlot}
