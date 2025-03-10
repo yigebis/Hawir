@@ -8,20 +8,22 @@ import (
 )
 
 type Router struct {
-	UserController    *Controller.UserController
-	TravelController  *Controller.TravelController
-	AdminController   *Controller.AdminController
-	BookingController *Controller.BookingController
-	JWTSigner         string
+	UserController        *Controller.UserController
+	TravelController      *Controller.TravelController
+	AdminController       *Controller.AdminController
+	BookingController     *Controller.BookingController
+	DestinationController *Controller.DestinationController
+	JWTSigner             string
 }
 
-func NewRouter(uc *Controller.UserController, tc *Controller.TravelController, ac *Controller.AdminController, bc *Controller.BookingController, jwtSigner string) *Router {
+func NewRouter(uc *Controller.UserController, tc *Controller.TravelController, ac *Controller.AdminController, bc *Controller.BookingController, dc *Controller.DestinationController, jwtSigner string) *Router {
 	return &Router{
-		UserController:    uc,
-		TravelController:  tc,
-		AdminController:   ac,
-		BookingController: bc,
-		JWTSigner:         jwtSigner,
+		UserController:        uc,
+		TravelController:      tc,
+		AdminController:       ac,
+		BookingController:     bc,
+		DestinationController: dc,
+		JWTSigner:             jwtSigner,
 	}
 }
 
@@ -69,5 +71,8 @@ func (r *Router) Run() {
 	router.GET("/booking/:id", r.BookingController.GetBooking)
 	router.GET("/booking/all/:travelId", r.BookingController.GetAllBookings)
 
+	//destination endpoints
+	router.POST("/destination/add", r.DestinationController.AddDestination)
+	router.GET("/destination/:id", r.DestinationController.GetDestinationByID)
 	router.Run()
 }

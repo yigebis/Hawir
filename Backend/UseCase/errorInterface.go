@@ -32,4 +32,7 @@ type IErrorService interface {
 	SeatReserved() (int, error)
 	TravelerAlreadyBooked() (int, error)
 	SeatNotChosen() (int, error)
+
+	// Destination errors
+	DestinationNotFound() (int, error)
 }

@@ -38,6 +38,9 @@ var ErrSeatReserved = errors.New("seat is already reserved")
 var ErrTravelerAlreadyBooked = errors.New("traveler has already booked a seat")
 var ErrSeatNotChosen = errors.New("traveler has not chosen a seat")
 
+// Destination errors
+var ErrDestinationNotFound = errors.New("destination not found")
+
 type Error struct{}
 
 func NewErrorService() UseCase.IErrorService {
@@ -141,4 +144,9 @@ func (e *Error) InvalidPlannedStartTime() (int, error) {
 
 func (e *Error) InvalidEstArrivalTime() (int, error) {
 	return http.StatusBadRequest, errors.New("estimated arrival time is before the planned start time")
+}
+
+// Destination errors
+func (e *Error) DestinationNotFound() (int, error) {
+	return http.StatusNotFound, ErrDestinationNotFound
 }
