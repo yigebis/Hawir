@@ -4,7 +4,8 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import TravelCalendar from "@/components/travels/TravelCalendar";
 import AddTripModal from "@/components/trips/AddTripModal";
 import { ChevronLeft, ChevronRight, Plus, Search, List, Calendar } from "lucide-react";
-import { format, startOfWeek, endOfWeek, addWeeks, subWeeks } from "date-fns";
+import { format, addWeeks, subWeeks, startOfDay } from "date-fns";
+import { TravelEventType } from "@/components/travels/TravelEvent";
 
 const ManageTravels: React.FC = () => {
   const [showAddTripModal, setShowAddTripModal] = useState(false);
@@ -14,7 +15,67 @@ const ManageTravels: React.FC = () => {
     time?: string;
   }>({});
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState<"day" | "week">("day");
+  const [viewMode, setViewMode] = useState<"day" | "week">("week");
+  
+  // Sample travel events
+  const [events] = useState<TravelEventType[]>([
+    {
+      id: 1,
+      title: "Addis Ababa → Bahir Dar",
+      start: new Date(new Date().setHours(4, 0, 0)),
+      end: new Date(new Date().setHours(5, 30, 0)),
+      color: "orange"
+    },
+    {
+      id: 2,
+      title: "Addis Ababa → Bahir Dar",
+      start: new Date(new Date().setHours(4, 0, 0)),
+      end: new Date(new Date().setHours(5, 30, 0)),
+      color: "orange"
+    },
+    {
+      id: 3,
+      title: "Addis Ababa → Bahir Dar",
+      start: new Date(startOfDay(addWeeks(new Date(), 0)).setHours(4, 0, 0)),
+      end: new Date(startOfDay(addWeeks(new Date(), 0)).setHours(5, 30, 0)),
+      color: "orange"
+    },
+    {
+      id: 4,
+      title: "Bahir Dar → Gondar",
+      start: new Date(startOfDay(addWeeks(new Date(), 0)).setHours(7, 0, 0)),
+      end: new Date(startOfDay(addWeeks(new Date(), 0)).setHours(8, 30, 0)),
+      color: "blue"
+    },
+    {
+      id: 5,
+      title: "Addis Ababa → Bahir Dar",
+      start: new Date(startOfDay(addWeeks(new Date(), 0)).setHours(4, 0, 0)),
+      end: new Date(startOfDay(addWeeks(new Date(), 0)).setHours(5, 30, 0)),
+      color: "orange"
+    },
+    {
+      id: 6,
+      title: "Bahir Dar → Gondar",
+      start: new Date(startOfDay(addWeeks(new Date(), 0)).setHours(7, 0, 0)),
+      end: new Date(startOfDay(addWeeks(new Date(), 0)).setHours(8, 30, 0)),
+      color: "blue"
+    },
+    {
+      id: 7,
+      title: "Bahir Dar → Gondar",
+      start: new Date(startOfDay(addWeeks(new Date(), 0)).setHours(7, 0, 0)),
+      end: new Date(startOfDay(addWeeks(new Date(), 0)).setHours(8, 30, 0)),
+      color: "blue"
+    },
+    {
+      id: 8,
+      title: "Bahir Dar → Gondar",
+      start: new Date(startOfDay(addWeeks(new Date(), 0)).setHours(7, 0, 0)),
+      end: new Date(startOfDay(addWeeks(new Date(), 0)).setHours(8, 30, 0)),
+      color: "blue"
+    }
+  ]);
 
   const handleNextPeriod = () => {
     if (viewMode === "day") {
@@ -54,98 +115,81 @@ const ManageTravels: React.FC = () => {
   };
 
   const getDateRangeText = () => {
-    if (viewMode === "day") {
-      return format(currentDate, "EEE dd MMMM, yyyy");
-    } else {
-      const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
-      const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
-      return `${format(weekStart, "dd MMM")} - ${format(weekEnd, "dd MMM, yyyy")}`;
-    }
+    return format(currentDate, "MMMM yyyy");
   };
 
   return (
     <DashboardLayout showHeader={false}>
       <div className="flex flex-col">
         <div className="flex flex-col mb-3">
-          <h1 className="text-[#F35B04] text-base font-bold tracking-[2.4px] uppercase mb-6">
+          <h1 className="text-[#F35B04] text-2xl font-semibold uppercase mb-6 px-4 pt-4">
             MANAGE TRAVELS
           </h1>
           
-          <div className="flex justify-between items-start">
+          <div className="flex justify-between items-center px-4 pb-4">
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3 mr-4">
+              <div className="flex items-center gap-3">
                 <ChevronLeft 
-                  className="w-5 h-5 cursor-pointer" 
+                  className="w-5 h-5 cursor-pointer text-gray-600" 
                   onClick={handlePreviousPeriod}
                 />
-                <span className="text-base font-medium">
+                <span className="text-lg font-medium">
                   {getDateRangeText()}
                 </span>
                 <ChevronRight 
-                  className="w-5 h-5 cursor-pointer" 
+                  className="w-5 h-5 cursor-pointer text-gray-600" 
                   onClick={handleNextPeriod}
                 />
               </div>
             </div>
             
-            <div className="flex items-center gap-4 mt-2">
-              <div className="flex gap-5">
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
+            <div className="flex items-center gap-6">
+              <div className="flex gap-6">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-[#10B981]"></div>
                   <span className="text-xs text-gray-500">Ongoing</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-[#60A5FA]"></div>
                   <span className="text-xs text-gray-500">Upcoming</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-[#F97316]"></div>
                   <span className="text-xs text-gray-500">Completed</span>
                 </div>
               </div>
               
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  {showSearchInput && (
-                    <input
-                      type="text"
-                      placeholder="Search..."
-                      className="absolute right-0 top-[-8px] w-44 h-8 pl-2 pr-8 border border-gray-300 rounded-md text-sm"
-                      autoFocus
-                      onBlur={() => setTimeout(() => setShowSearchInput(false), 100)}
-                    />
+              <div className="flex items-center gap-3">
+                <button className="flex items-center justify-center w-8 h-8 rounded-md text-gray-600 hover:bg-gray-100">
+                  {viewMode === "day" ? (
+                    <List className="w-5 h-5" onClick={toggleViewMode} />
+                  ) : (
+                    <Calendar className="w-5 h-5" onClick={toggleViewMode} />
                   )}
-                  <Search 
-                    className="w-5 h-5 text-green-800 cursor-pointer relative z-10" 
-                    onClick={toggleSearch}
-                  />
-                </div>
-                {viewMode === "day" ? (
-                  <List 
-                    className="w-5 h-5 text-green-800 cursor-pointer" 
-                    onClick={toggleViewMode}
-                  />
-                ) : (
-                  <Calendar 
-                    className="w-5 h-5 text-green-800 cursor-pointer" 
-                    onClick={toggleViewMode}
-                  />
-                )}
-                <Plus 
-                  className="w-5 h-5 text-green-800 cursor-pointer" 
+                </button>
+                <button className="flex items-center justify-center w-8 h-8 rounded-md text-gray-600 hover:bg-gray-100">
+                  <Search className="w-5 h-5" onClick={toggleSearch} />
+                </button>
+                <button 
+                  className="flex items-center justify-center w-8 h-8 bg-[#F35B04] text-white rounded-md"
                   onClick={() => handleAddTrip()}
-                />
+                >
+                  <Plus className="w-5 h-5" />
+                </button>
               </div>
             </div>
           </div>
         </div>
         
-        <TravelCalendar 
-          onAddTrip={handleAddTrip} 
-          selectedDate={currentDate}
-          onDateChange={setCurrentDate}
-          viewMode={viewMode}
-        />
+        <div className="border-t border-[#E5E7EB]">
+          <TravelCalendar 
+            onAddTrip={handleAddTrip} 
+            selectedDate={currentDate}
+            onDateChange={setCurrentDate}
+            viewMode={viewMode}
+            events={events}
+          />
+        </div>
         
         <AddTripModal 
           isOpen={showAddTripModal} 
