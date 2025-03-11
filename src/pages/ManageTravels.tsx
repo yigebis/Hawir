@@ -3,8 +3,8 @@ import React, { useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import TravelCalendar from "@/components/travels/TravelCalendar";
 import AddTripModal from "@/components/trips/AddTripModal";
-import { ChevronLeft, ChevronRight, Plus, Search, Menu } from "lucide-react";
-import { format } from "date-fns";
+import { ChevronLeft, ChevronRight, Plus, Search, List, Calendar } from "lucide-react";
+import { format, startOfWeek, endOfWeek, addWeeks, subWeeks } from "date-fns";
 
 const ManageTravels: React.FC = () => {
   const [showAddTripModal, setShowAddTripModal] = useState(false);
@@ -14,17 +14,26 @@ const ManageTravels: React.FC = () => {
     time?: string;
   }>({});
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [viewMode, setViewMode] = useState<"day" | "week">("day");
 
-  const handleNextDay = () => {
-    const nextDay = new Date(currentDate);
-    nextDay.setDate(nextDay.getDate() + 1);
-    setCurrentDate(nextDay);
+  const handleNextPeriod = () => {
+    if (viewMode === "day") {
+      const nextDay = new Date(currentDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+      setCurrentDate(nextDay);
+    } else {
+      setCurrentDate(addWeeks(currentDate, 1));
+    }
   };
 
-  const handlePreviousDay = () => {
-    const prevDay = new Date(currentDate);
-    prevDay.setDate(prevDay.getDate() - 1);
-    setCurrentDate(prevDay);
+  const handlePreviousPeriod = () => {
+    if (viewMode === "day") {
+      const prevDay = new Date(currentDate);
+      prevDay.setDate(prevDay.getDate() - 1);
+      setCurrentDate(prevDay);
+    } else {
+      setCurrentDate(subWeeks(currentDate, 1));
+    }
   };
 
   const handleAddTrip = (dateTime?: { date?: Date; time?: string }) => {
@@ -40,6 +49,20 @@ const ManageTravels: React.FC = () => {
     setShowSearchInput(!showSearchInput);
   };
 
+  const toggleViewMode = () => {
+    setViewMode(viewMode === "day" ? "week" : "day");
+  };
+
+  const getDateRangeText = () => {
+    if (viewMode === "day") {
+      return format(currentDate, "EEE dd MMMM, yyyy");
+    } else {
+      const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+      const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
+      return `${format(weekStart, "dd MMM")} - ${format(weekEnd, "dd MMM, yyyy")}`;
+    }
+  };
+
   return (
     <DashboardLayout showHeader={false}>
       <div className="flex flex-col">
@@ -53,14 +76,14 @@ const ManageTravels: React.FC = () => {
               <div className="flex items-center gap-3 mr-4">
                 <ChevronLeft 
                   className="w-5 h-5 cursor-pointer" 
-                  onClick={handlePreviousDay}
+                  onClick={handlePreviousPeriod}
                 />
                 <span className="text-base font-medium">
-                  {format(currentDate, "EEE dd MMMM, yyyy")}
+                  {getDateRangeText()}
                 </span>
                 <ChevronRight 
                   className="w-5 h-5 cursor-pointer" 
-                  onClick={handleNextDay}
+                  onClick={handleNextPeriod}
                 />
               </div>
             </div>
@@ -97,7 +120,17 @@ const ManageTravels: React.FC = () => {
                     onClick={toggleSearch}
                   />
                 </div>
-                <Menu className="w-5 h-5 text-green-800 cursor-pointer" />
+                {viewMode === "day" ? (
+                  <List 
+                    className="w-5 h-5 text-green-800 cursor-pointer" 
+                    onClick={toggleViewMode}
+                  />
+                ) : (
+                  <Calendar 
+                    className="w-5 h-5 text-green-800 cursor-pointer" 
+                    onClick={toggleViewMode}
+                  />
+                )}
                 <Plus 
                   className="w-5 h-5 text-green-800 cursor-pointer" 
                   onClick={() => handleAddTrip()}
@@ -111,6 +144,7 @@ const ManageTravels: React.FC = () => {
           onAddTrip={handleAddTrip} 
           selectedDate={currentDate}
           onDateChange={setCurrentDate}
+          viewMode={viewMode}
         />
         
         <AddTripModal 
