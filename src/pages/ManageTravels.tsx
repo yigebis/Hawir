@@ -66,7 +66,7 @@ const ManageTravels: React.FC = () => {
   return (
     <DashboardLayout showHeader={false}>
       <div className="flex flex-col">
-        <div className="flex flex-col mb-3">
+        <div className="flex flex-col mb-4">
           <h1 className="text-[#F35B04] text-base font-bold tracking-[2.4px] uppercase mb-6">
             MANAGE TRAVELS
           </h1>
@@ -75,31 +75,31 @@ const ManageTravels: React.FC = () => {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-3 mr-4">
                 <ChevronLeft 
-                  className="w-5 h-5 cursor-pointer" 
+                  className="w-5 h-5 cursor-pointer text-gray-600 hover:text-gray-900" 
                   onClick={handlePreviousPeriod}
                 />
-                <span className="text-base font-medium">
+                <span className="text-base font-medium text-gray-800">
                   {getDateRangeText()}
                 </span>
                 <ChevronRight 
-                  className="w-5 h-5 cursor-pointer" 
+                  className="w-5 h-5 cursor-pointer text-gray-600 hover:text-gray-900" 
                   onClick={handleNextPeriod}
                 />
               </div>
             </div>
             
-            <div className="flex items-center gap-4 mt-2">
-              <div className="flex gap-5">
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
+            <div className="flex items-center gap-5">
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-[#10B981]"></div>
                   <span className="text-xs text-gray-500">Ongoing</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-[#60A5FA]"></div>
                   <span className="text-xs text-gray-500">Upcoming</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-[#F97316]"></div>
                   <span className="text-xs text-gray-500">Completed</span>
                 </div>
               </div>
@@ -110,31 +110,33 @@ const ManageTravels: React.FC = () => {
                     <input
                       type="text"
                       placeholder="Search..."
-                      className="absolute right-0 top-[-8px] w-44 h-8 pl-2 pr-8 border border-gray-300 rounded-md text-sm"
+                      className="absolute right-0 top-[-8px] w-44 h-8 pl-2 pr-8 border border-gray-200 rounded-md text-sm"
                       autoFocus
                       onBlur={() => setTimeout(() => setShowSearchInput(false), 100)}
                     />
                   )}
                   <Search 
-                    className="w-5 h-5 text-green-800 cursor-pointer relative z-10" 
+                    className="w-5 h-5 text-gray-600 hover:text-gray-900 cursor-pointer relative z-10" 
                     onClick={toggleSearch}
                   />
                 </div>
                 {viewMode === "day" ? (
                   <List 
-                    className="w-5 h-5 text-green-800 cursor-pointer" 
+                    className="w-5 h-5 text-gray-600 hover:text-gray-900 cursor-pointer" 
                     onClick={toggleViewMode}
                   />
                 ) : (
                   <Calendar 
-                    className="w-5 h-5 text-green-800 cursor-pointer" 
+                    className="w-5 h-5 text-gray-600 hover:text-gray-900 cursor-pointer" 
                     onClick={toggleViewMode}
                   />
                 )}
-                <Plus 
-                  className="w-5 h-5 text-green-800 cursor-pointer" 
+                <button
+                  className="flex items-center justify-center w-8 h-8 rounded-md bg-[#F35B04] text-white cursor-pointer"
                   onClick={() => handleAddTrip()}
-                />
+                >
+                  <Plus className="w-5 h-5" />
+                </button>
               </div>
             </div>
           </div>

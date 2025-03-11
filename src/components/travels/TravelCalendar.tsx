@@ -2,7 +2,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Calendar, momentLocalizer, Views, SlotInfo } from 'react-big-calendar';
 import moment from 'moment';
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import TravelEvent, { TravelEventType } from "./TravelEvent";
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { format, addDays, subDays, startOfWeek, endOfWeek, isSameDay, isToday, startOfDay } from "date-fns";
@@ -39,7 +38,7 @@ const TravelCalendar: React.FC<TravelCalendarProps> = ({
       title: "Addis Ababa → Bahir Dar",
       start: new Date(new Date().setHours(4, 0, 0)),
       end: new Date(new Date().setHours(5, 30, 0)),
-      color: "green"
+      color: "orange"
     },
     {
       id: 3,
@@ -67,7 +66,7 @@ const TravelCalendar: React.FC<TravelCalendarProps> = ({
       title: "Bahir Dar → Gondar",
       start: new Date(startOfDay(addDays(new Date(), 2)).setHours(7, 0, 0)),
       end: new Date(startOfDay(addDays(new Date(), 2)).setHours(8, 30, 0)),
-      color: "blue"
+      color: "green"
     }
   ]);
 
@@ -121,7 +120,7 @@ const TravelCalendar: React.FC<TravelCalendarProps> = ({
     ),
     toolbar: () => null, // We'll handle toolbar ourselves
     timeGutterHeader: () => (
-      <div className="px-2 py-2 bg-[#C1C6D0] border-t border-b border-gray-400 text-xs">
+      <div className="px-2 py-2 text-xs text-gray-500 font-normal border-b border-gray-200">
         All-day
       </div>
     )
@@ -130,17 +129,17 @@ const TravelCalendar: React.FC<TravelCalendarProps> = ({
   // Custom styles for the calendar
   const calendarStyles = {
     height: 600,
-    className: "custom-calendar bg-white rounded-lg shadow-md"
+    className: "custom-calendar bg-white rounded-lg shadow-sm"
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-100">
       {/* Custom week day selector (only shown in day view) */}
       {viewMode === "day" && (
-        <div className="px-5 pb-3">
+        <div className="px-5 py-4 border-b border-gray-100">
           <div className="grid grid-cols-7 text-center mb-2">
             {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
-              <div key={index} className="text-xs font-medium">
+              <div key={index} className="text-xs font-medium text-gray-500">
                 {day}
               </div>
             ))}
@@ -154,8 +153,8 @@ const TravelCalendar: React.FC<TravelCalendarProps> = ({
                     isSameDay(date, selectedDate) 
                       ? 'bg-[#F35B04] text-white' 
                       : isToday(date)
-                      ? 'bg-gray-200'
-                      : 'hover:bg-gray-100'
+                      ? 'bg-gray-100'
+                      : 'hover:bg-gray-50'
                   }`}
                 >
                   {format(date, "d")}
