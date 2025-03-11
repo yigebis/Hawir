@@ -2,51 +2,20 @@
 /* Custom React Big Calendar Styles */
 .rbc-calendar {
   font-family: 'Inter', sans-serif;
-  border: 1px solid #E5E7EB;
-  border-radius: 4px;
 }
 
 .rbc-header {
-  padding: 12px 0;
-  font-size: 14px;
+  padding: 10px 0;
+  font-size: 12px;
   font-weight: 500;
-  color: #6B7280;
-  border-bottom: 1px solid #E5E7EB;
-  background-color: #FFFFFF;
 }
 
-.rbc-header + .rbc-header {
-  border-left: 1px solid #E5E7EB;
-}
-
-.rbc-row-bg {
-  border-bottom: 1px solid #E5E7EB;
-}
-
-.rbc-day-bg + .rbc-day-bg {
-  border-left: 1px solid #E5E7EB;
-}
-
-.rbc-time-header-content {
-  border-left: 1px solid #E5E7EB;
-}
-
-.rbc-time-header-gutter {
-  background-color: #FFFFFF;
-}
-
-.rbc-time-gutter {
-  font-size: 14px;
-  color: #6B7280;
-}
-
-.rbc-time-view-resources .rbc-time-gutter,
-.rbc-time-view-resources .rbc-time-header-gutter {
-  width: 100px;
-}
-
-.rbc-time-view {
-  border: none;
+.rbc-header span {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+  border-radius: 50%;
 }
 
 .rbc-event {
@@ -54,10 +23,9 @@
   border: none;
   color: inherit;
   padding: 0;
-  border-radius: 0;
 }
 
-.rbc-event-content {
+.rbc-event-wrapper {
   height: 100%;
 }
 
@@ -67,14 +35,17 @@
 
 .rbc-time-slot {
   font-size: 14px;
-  color: #6B7280;
+  color: #666;
 }
 
 .rbc-label {
   font-size: 14px;
-  color: #6B7280;
-  font-weight: normal;
-  padding: 12px 0;
+  color: #666;
+}
+
+.rbc-time-view {
+  border: none;
+  box-shadow: none;
 }
 
 .rbc-time-content {
@@ -83,10 +54,15 @@
 
 .rbc-time-header {
   border-bottom: none;
+  display: none; /* Hide the default header as we're using our custom one */
+}
+
+.rbc-time-header-content {
+  border-left: none;
 }
 
 .rbc-today {
-  background-color: #F9FAFB;
+  background-color: white;
 }
 
 .rbc-toolbar {
@@ -96,14 +72,18 @@
   display: none; /* Hide the default toolbar as we're using our custom one */
 }
 
+.rbc-toolbar-label {
+  font-weight: 500;
+  font-size: 16px;
+}
+
 .rbc-time-gutter .rbc-timeslot-group {
-  min-height: 60px;
-  border-bottom: 1px solid #E5E7EB;
+  min-height: 50px;
 }
 
 .rbc-timeslot-group {
-  min-height: 60px;
-  border-bottom: 1px solid #E5E7EB;
+  min-height: 50px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .rbc-day-slot .rbc-events-container {
@@ -113,36 +93,4 @@
 .rbc-current-time-indicator {
   background-color: #F35B04;
   height: 2px;
-}
-
-.rbc-time-view .rbc-row {
-  min-height: auto;
-}
-
-.rbc-time-content > * + * > * {
-  border-left: 1px solid #E5E7EB;
-}
-
-.rbc-day-slot .rbc-time-slot {
-  border-top: none;
-}
-
-/* Remove the selection highlight */
-.rbc-slot-selection {
-  background-color: transparent;
-}
-
-.rbc-time-gutter {
-  text-align: center;
-}
-
-.rbc-day-slot .rbc-event {
-  border: none;
-  margin: 0 4px;
-}
-
-/* Adjust DashboardLayout for the sidebar */
-.dashboard-layout-sidebar {
-  width: 260px;
-  background-color: #F5F7FA;
 }
