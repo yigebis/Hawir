@@ -1,14 +1,12 @@
 
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import TravelCalendar from "@/components/travels/TravelCalendar";
 import AddTripModal from "@/components/trips/AddTripModal";
-import { ChevronLeft, ChevronRight, Plus, Search, List } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Search, Menu } from "lucide-react";
 import { format } from "date-fns";
 
 const ManageTravels: React.FC = () => {
-  const navigate = useNavigate();
   const [showAddTripModal, setShowAddTripModal] = useState(false);
   const [showSearchInput, setShowSearchInput] = useState(false);
   const [selectedDateTime, setSelectedDateTime] = useState<{
@@ -40,10 +38,6 @@ const ManageTravels: React.FC = () => {
 
   const toggleSearch = () => {
     setShowSearchInput(!showSearchInput);
-  };
-
-  const handleViewTaskList = () => {
-    navigate("/manage-travels/task-view");
   };
 
   return (
@@ -103,10 +97,7 @@ const ManageTravels: React.FC = () => {
                     onClick={toggleSearch}
                   />
                 </div>
-                <List 
-                  className="w-5 h-5 text-green-800 cursor-pointer" 
-                  onClick={handleViewTaskList}
-                />
+                <Menu className="w-5 h-5 text-green-800 cursor-pointer" />
                 <Plus 
                   className="w-5 h-5 text-green-800 cursor-pointer" 
                   onClick={() => handleAddTrip()}
@@ -120,26 +111,6 @@ const ManageTravels: React.FC = () => {
           onAddTrip={handleAddTrip} 
           selectedDate={currentDate}
           onDateChange={setCurrentDate}
-          onEventClick={(event) => {
-            navigate("/manage-travels/task-view", { 
-              state: { 
-                eventData: {
-                  id: `TR${event.id}`,
-                  title: event.title,
-                  startTime: format(event.start, "HH:mm"),
-                  endTime: format(event.end, "HH:mm"),
-                  route: event.title,
-                  status: event.color === "green" ? "Ongoing" : 
-                         event.color === "blue" ? "Upcoming" : "Completed",
-                  date: format(event.start, "MMMM dd, yyyy"),
-                  driverName: "Abebe Kebede",
-                  busNumber: "AA-12345",
-                  passengerCount: 42,
-                  terminalName: "Central Terminal"
-                }
-              }
-            });
-          }}
         />
         
         <AddTripModal 
