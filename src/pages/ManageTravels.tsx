@@ -1,14 +1,12 @@
+
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import TravelCalendar from "@/components/travels/TravelCalendar";
 import AddTripModal from "@/components/trips/AddTripModal";
-import { ChevronLeft, ChevronRight, Plus, Search, ListIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Search, Menu } from "lucide-react";
 import { format } from "date-fns";
-import { TravelEventType } from "@/components/travels/TravelEvent";
 
 const ManageTravels: React.FC = () => {
-  const navigate = useNavigate();
   const [showAddTripModal, setShowAddTripModal] = useState(false);
   const [showSearchInput, setShowSearchInput] = useState(false);
   const [selectedDateTime, setSelectedDateTime] = useState<{
@@ -40,23 +38,6 @@ const ManageTravels: React.FC = () => {
 
   const toggleSearch = () => {
     setShowSearchInput(!showSearchInput);
-  };
-
-  const navigateToTaskView = () => {
-    navigate("/travel-task-view", {
-      state: {
-        event: {
-          title: "Bahir Dar → Gondar",
-          start: new Date().setHours(7, 0),
-          end: new Date().setHours(8, 30),
-          status: "ongoing"
-        }
-      }
-    });
-  };
-
-  const handleEventClick = (event: TravelEventType) => {
-    navigate("/travel-task-view", { state: { event } });
   };
 
   return (
@@ -116,10 +97,7 @@ const ManageTravels: React.FC = () => {
                     onClick={toggleSearch}
                   />
                 </div>
-                <ListIcon 
-                  className="w-5 h-5 text-green-800 cursor-pointer" 
-                  onClick={navigateToTaskView}
-                />
+                <Menu className="w-5 h-5 text-green-800 cursor-pointer" />
                 <Plus 
                   className="w-5 h-5 text-green-800 cursor-pointer" 
                   onClick={() => handleAddTrip()}
@@ -133,7 +111,6 @@ const ManageTravels: React.FC = () => {
           onAddTrip={handleAddTrip} 
           selectedDate={currentDate}
           onDateChange={setCurrentDate}
-          onEventClick={handleEventClick}
         />
         
         <AddTripModal 
@@ -143,6 +120,7 @@ const ManageTravels: React.FC = () => {
           initialTime={selectedDateTime.time}
           onSave={(tripData) => {
             setShowAddTripModal(false);
+            // TODO: Add trip to calendar
             console.log("Trip saved:", tripData);
           }}
         />
