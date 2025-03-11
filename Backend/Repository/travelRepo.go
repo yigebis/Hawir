@@ -27,7 +27,6 @@ func NewTravelRepository(dbCtx context.Context, collection *mongo.Collection) Us
 }
 
 func (tr *TravelRepository) CreateTravel(travel *Domain.Travel) error {
-	fmt.Println("inside repo!")
 	_, err := tr.Collection.InsertOne(tr.DbCtx, travel)
 	if err != nil {
 		fmt.Println(err.Error())

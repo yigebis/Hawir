@@ -2,7 +2,6 @@ package UseCase
 
 import (
 	"Hawir/Domain"
-	"fmt"
 	"time"
 )
 
@@ -58,7 +57,6 @@ func (tuc *TravelUseCase) CreateTravel(travel *Domain.Travel) (int, error) {
 	travel.Status = "upcoming"
 
 	err = tuc.TravelRepo.CreateTravel(travel)
-	fmt.Println("after!")
 	if err != nil {
 		return tuc.ErrorService.InternalServer()
 	}
