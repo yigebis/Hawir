@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
@@ -42,13 +41,20 @@ const ManageTravels: React.FC = () => {
   const toggleSearch = () => {
     setShowSearchInput(!showSearchInput);
   };
-  
-  // New function to navigate to task view
+
   const navigateToTaskView = () => {
-    navigate("/travel-task-view");
+    navigate("/travel-task-view", {
+      state: {
+        event: {
+          title: "Bahir Dar → Gondar",
+          start: new Date().setHours(7, 0),
+          end: new Date().setHours(8, 30),
+          status: "ongoing"
+        }
+      }
+    });
   };
-  
-  // Handle event click
+
   const handleEventClick = (event: TravelEventType) => {
     navigate("/travel-task-view", { state: { event } });
   };
@@ -137,7 +143,6 @@ const ManageTravels: React.FC = () => {
           initialTime={selectedDateTime.time}
           onSave={(tripData) => {
             setShowAddTripModal(false);
-            // TODO: Add trip to calendar
             console.log("Trip saved:", tripData);
           }}
         />
