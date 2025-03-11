@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import ManageTravels from "./pages/ManageTravels";
+import TravelTaskView from "./pages/TravelTaskView";
 import NotFound from "./pages/NotFound";
 import "./styles/calendar.css";
 
@@ -20,6 +21,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/manage-travels" element={<ManageTravels />} />
+          <Route path="/travel-task-view" element={<TravelTaskView />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -1,12 +1,15 @@
 
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import TravelCalendar from "@/components/travels/TravelCalendar";
 import AddTripModal from "@/components/trips/AddTripModal";
-import { ChevronLeft, ChevronRight, Plus, Search, Menu } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Search, ListIcon } from "lucide-react";
 import { format } from "date-fns";
+import { TravelEventType } from "@/components/travels/TravelEvent";
 
 const ManageTravels: React.FC = () => {
+  const navigate = useNavigate();
   const [showAddTripModal, setShowAddTripModal] = useState(false);
   const [showSearchInput, setShowSearchInput] = useState(false);
   const [selectedDateTime, setSelectedDateTime] = useState<{
@@ -38,6 +41,16 @@ const ManageTravels: React.FC = () => {
 
   const toggleSearch = () => {
     setShowSearchInput(!showSearchInput);
+  };
+  
+  // New function to navigate to task view
+  const navigateToTaskView = () => {
+    navigate("/travel-task-view");
+  };
+  
+  // Handle event click
+  const handleEventClick = (event: TravelEventType) => {
+    navigate("/travel-task-view", { state: { event } });
   };
 
   return (
@@ -97,7 +110,10 @@ const ManageTravels: React.FC = () => {
                     onClick={toggleSearch}
                   />
                 </div>
-                <Menu className="w-5 h-5 text-green-800 cursor-pointer" />
+                <ListIcon 
+                  className="w-5 h-5 text-green-800 cursor-pointer" 
+                  onClick={navigateToTaskView}
+                />
                 <Plus 
                   className="w-5 h-5 text-green-800 cursor-pointer" 
                   onClick={() => handleAddTrip()}
@@ -111,6 +127,7 @@ const ManageTravels: React.FC = () => {
           onAddTrip={handleAddTrip} 
           selectedDate={currentDate}
           onDateChange={setCurrentDate}
+          onEventClick={handleEventClick}
         />
         
         <AddTripModal 
