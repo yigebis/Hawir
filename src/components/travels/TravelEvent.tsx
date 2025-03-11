@@ -29,7 +29,7 @@ const TravelEvent: React.FC<EventProps> = ({ event }) => {
   };
 
   return (
-    <div className={`p-4 rounded bg-[#F3F6FA] border-l-4 ${getBorderColor()} h-full overflow-hidden`}>
+    <div className={`p-4 rounded bg-[#F3F6FA] border-l-4 ${getBorderColor()} h-full overflow-hidden cursor-pointer hover:bg-[#EDF1F7] transition-colors`}>
       <div className="text-sm font-medium mb-2">
         {event.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - {event.end.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
       </div>

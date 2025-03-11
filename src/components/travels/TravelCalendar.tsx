@@ -14,12 +14,14 @@ interface TravelCalendarProps {
   onAddTrip: (dateTime?: { date?: Date; time?: string }) => void;
   selectedDate: Date;
   onDateChange: (date: Date) => void;
+  onEventClick?: (event: TravelEventType) => void;
 }
 
 const TravelCalendar: React.FC<TravelCalendarProps> = ({ 
   onAddTrip, 
   selectedDate,
-  onDateChange
+  onDateChange,
+  onEventClick
 }) => {
   const [weekDates, setWeekDates] = useState<Date[]>([]);
   
@@ -71,6 +73,13 @@ const TravelCalendar: React.FC<TravelCalendarProps> = ({
       date: date,
       time: timeString
     });
+  };
+
+  // Handle event click
+  const handleSelectEvent = (event: TravelEventType) => {
+    if (onEventClick) {
+      onEventClick(event);
+    }
   };
 
   // Custom calendar components
@@ -139,6 +148,7 @@ const TravelCalendar: React.FC<TravelCalendarProps> = ({
         components={components}
         selectable={true}
         onSelectSlot={handleSelectSlot}
+        onSelectEvent={handleSelectEvent}
         {...calendarStyles}
       />
     </div>
