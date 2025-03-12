@@ -1,4 +1,3 @@
-
 import React from "react";
 
 interface StatisticCardProps {
@@ -12,10 +11,27 @@ const StatisticCard: React.FC<StatisticCardProps> = ({
   label,
   color,
 }) => {
+  const getTextColorClass = (color: string) => {
+    switch (color) {
+      case 'red-600':
+        return 'text-red-600';
+      case 'green-700':
+        return 'text-green-700';
+      case 'yellow-500':
+        return 'text-yellow-500';
+      case 'orange-500':
+        return 'text-orange-500';
+      default:
+        return 'text-gray-700';
+    }
+  };
+
+  const textColorClass = getTextColorClass(color);
+
   return (
     <div className="bg-white shadow-sm rounded-lg p-5 flex-1 border border-gray-200">
-      <div className={`text-${color} text-2xl font-bold`}>{value}</div>
-      <div className={`text-${color} text-sm font-medium mt-1`}>{label}</div>
+      <div className={`${textColorClass} text-2xl font-bold`}>{value}</div>
+      <div className={`${textColorClass} text-sm font-medium mt-1`}>{label}</div>
     </div>
   );
 };
