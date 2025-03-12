@@ -14,52 +14,27 @@ interface EventProps {
 }
 
 const TravelEvent: React.FC<EventProps> = ({ event }) => {
-  // Determine background and text color based on event color
-  const getStyles = () => {
+  // Determine border color based on event color
+  const getBorderColor = () => {
     switch(event.color) {
       case 'blue':
-        return {
-          bg: 'bg-[#EFF6FF]',
-          border: 'border-l-[#60A5FA]',
-          text: 'text-[#60A5FA]',
-          status: 'Upcoming'
-        };
+        return 'border-l-blue-500';
       case 'green':
-        return {
-          bg: 'bg-[#F0FDF4]',
-          border: 'border-l-[#10B981]',
-          text: 'text-[#10B981]',
-          status: 'Ongoing'
-        };
+        return 'border-l-green-500';
       case 'orange':
-        return {
-          bg: 'bg-[#FFF7ED]',
-          border: 'border-l-[#F97316]',
-          text: 'text-[#F97316]',
-          status: 'Completed'
-        };
+        return 'border-l-orange-500';
       default:
-        return {
-          bg: 'bg-[#F3F6FA]',
-          border: 'border-l-gray-300',
-          text: 'text-gray-500',
-          status: 'Unknown'
-        };
+        return 'border-l-gray-500';
     }
   };
 
-  const styles = getStyles();
-
   return (
-    <div className={`p-3 rounded-md ${styles.bg} border-l-2 ${styles.border} h-full overflow-hidden cursor-pointer hover:bg-opacity-80 transition-colors shadow-sm`}>
-      <div className={`text-sm font-normal mb-1.5 ${styles.text}`}>
+    <div className={`p-4 rounded bg-[#F3F6FA] border-l-4 ${getBorderColor()} h-full overflow-hidden`}>
+      <div className="text-sm font-medium mb-2">
         {event.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - {event.end.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
       </div>
-      <div className="text-sm text-gray-600 mb-1.5">
+      <div className="text-base font-semibold">
         {event.title}
-      </div>
-      <div className={`text-xs ${styles.text}`}>
-        {styles.status}
       </div>
     </div>
   );
