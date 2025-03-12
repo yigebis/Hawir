@@ -39,7 +39,38 @@ func (dr *DestinationRepository) AddDestination(destination *Domain.Destination)
 
 // EditDestination implements UseCase.IDestinationRepository.
 func (dr *DestinationRepository) EditDestination(destination *Domain.Destination) error {
-	panic("unimplemented")
+	objId, err := primitive.ObjectIDFromHex(destination.ID.Hex())
+	if err != nil {
+		return err
+	}
+
+	filter := bson.M{"_id": objId}
+	updateData := bson.M{
+		"name":               destination.Name,
+		"latitude":           destination.Latitude,
+		"longitude":          destination.Longitude,
+		"description":        destination.Description,
+		"hotels":             destination.Hotels,
+		"culture":            destination.Culture,
+		"history":            destination.History,
+		"population":         destination.Population,
+		"touristAttractions": destination.TouristAttractions,
+		// Automatically set last_mod_time to now on update
+		"last_mod_time": time.Now(),
+	}
+
+	update := bson.M{"$set": updateData}
+
+	result, err := dr.Collection.UpdateOne(dr.DbCtx, filter, update)
+	if err != nil {
+		return err
+	}
+
+	if result.MatchedCount == 0 {
+		return errors.New("destination not found")
+	}
+
+	return nil
 }
 
 // ViewAllDestinations implements UseCase.IDestinationRepository.
@@ -54,7 +85,7 @@ func (dr *DestinationRepository) ViewDestinationById(id string) (*Domain.Destina
 		return nil, errors.New("invalid destination id format")
 	}
 
-	filter := bson.M{"_id" : objId}
+	filter := bson.M{"_id": objId}
 
 	var destination Domain.Destination
 	err = dr.Collection.FindOne(dr.DbCtx, filter).Decode(&destination)

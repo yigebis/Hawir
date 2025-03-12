@@ -24,7 +24,12 @@ func (duc *DestinationUseCase) AddDestination(destination *Domain.Destination) (
 
 // EditDestination implements IDestinationUseCase.
 func (duc *DestinationUseCase) EditDestination(destination *Domain.Destination) (int, error) {
-	panic("unimplemented")
+	err := duc.DestinationRepo.EditDestination(destination)
+	if err != nil {
+		return duc.ErrorService.DestinationNotFound()
+	}
+
+	return duc.ErrorService.NoError()
 }
 
 // ViewAllDestinations implements IDestinationUseCase.

@@ -57,7 +57,7 @@ func (tc *TravelController) EditTravel(ctx *gin.Context) {
 		return
 	}
 
-	err = tc.V.Struct(travel) // i dont really know what this does!!
+	err = tc.V.Struct(travel) 
 	if err != nil {
 		ctx.JSON(400, gin.H{"error": "invalid request payload", "details": err.Error()})
 		return
