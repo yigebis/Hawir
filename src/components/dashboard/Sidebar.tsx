@@ -25,7 +25,7 @@ const Sidebar: React.FC = () => {
   };
 
   return (
-    <aside className="bg-[#f8f9fa] flex w-[260px] min-w-[260px] h-screen flex-col items-stretch text-black pt-[30px] pb-[30px] border-r border-gray-200">
+    <aside className="bg-[#F3F6FA] flex w-[260px] min-w-[260px] h-screen flex-col items-stretch text-black pt-[30px] pb-[30px] border-r border-gray-200">
       <div className="flex items-center gap-[13px] text-[15px] font-semibold leading-none ml-6 mb-8">
         <img
           src="https://cdn.builder.io/api/v1/image/assets/091e50b0e3084a89a54855377607a220/641273b6196bb7c5fbc8634b7c433a5e44d67b761f08127ff70cd2a1af3bdcfa?placeholderIfAbsent=true"
