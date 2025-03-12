@@ -75,5 +75,6 @@ func (r *Router) Run() {
 	router.POST("/destination/add", r.DestinationController.AddDestination)
 	router.GET("/destination/:id", r.DestinationController.GetDestinationByID)
 	router.PUT("/destination/edit", r.DestinationController.EditDestination)
+	router.GET("/destination/all", r.DestinationController.ViewAllDestinations)
 	router.Run()
 }
