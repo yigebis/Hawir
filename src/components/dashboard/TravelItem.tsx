@@ -15,15 +15,15 @@ const TravelItem: React.FC<TravelItemProps> = ({
   price,
 }) => {
   return (
-    <div className="border rounded-lg p-4 mb-4 hover:shadow-md transition-shadow">
+    <div className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow bg-white">
       <div className="flex justify-between">
         <div>
-          <h4 className="font-bold text-sm">{title}</h4>
-          <p className="text-sm mt-1">Departure: {departureDate}</p>
-          <p className="text-xs text-gray-500 mt-2">ID:{id}</p>
+          <h4 className="font-bold text-lg text-gray-900">{title}</h4>
+          <p className="text-sm text-gray-600 mt-1">Departure: {departureDate}</p>
+          <p className="text-xs text-gray-500 mt-1">ID:{id}</p>
         </div>
         <div className="self-center">
-          <p className="text-sm">Price: {price}</p>
+          <p className="text-sm font-medium">Price: {price}</p>
         </div>
       </div>
     </div>

@@ -13,7 +13,7 @@ const StatisticCard: React.FC<StatisticCardProps> = ({
   color,
 }) => {
   return (
-    <div className="bg-white shadow-sm rounded-lg p-5 flex-1">
+    <div className="bg-white shadow-sm rounded-lg p-5 flex-1 border border-gray-200">
       <div className={`text-${color} text-2xl font-bold`}>{value}</div>
       <div className={`text-${color} text-sm font-medium mt-1`}>{label}</div>
     </div>
@@ -24,11 +24,11 @@ const StatisticsCards: React.FC = () => {
   return (
     <section className="w-full">
       <div className="relative bg-cover bg-center rounded-lg overflow-hidden py-10" 
-           style={{ backgroundImage: `url('/lovable-uploads/4c4213de-f24a-40c1-b7fe-7b45878a2969.png')` }}>
-        <div className="absolute inset-0 bg-gradient-to-r from-[rgba(255,255,255,0.7)] to-[rgba(255,255,255,0.4)]"></div>
+           style={{ backgroundImage: `url('/lovable-uploads/9492f03e-a061-4185-97c0-59561a456329.png')` }}>
+        <div className="absolute inset-0 bg-black bg-opacity-30"></div>
         <div className="relative z-10 text-center px-4 mb-6">
-          <h2 className="text-2xl font-bold text-black">Manage your travels with ease</h2>
-          <p className="text-sm text-black mt-2">Discover new destination with Hawir</p>
+          <h2 className="text-2xl font-bold text-white">Manage your travels with ease</h2>
+          <p className="text-sm text-white text-opacity-90 mt-2">Discover new destination with Hawir</p>
         </div>
         
         <div className="relative z-10 flex flex-wrap gap-4 px-6">

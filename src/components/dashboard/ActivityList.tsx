@@ -37,21 +37,21 @@ const ActivityList: React.FC = () => {
   };
 
   return (
-    <section className="mt-[22px]">
-      <div className="flex w-full items-center justify-between gap-[40px] max-md:max-w-full max-md:mr-1">
-        <h2 className="text-black text-base font-bold">
+    <section className="mt-6">
+      <div className="flex w-full items-center justify-between mb-4">
+        <h2 className="text-xl font-bold text-gray-900">
           Recent Activity
         </h2>
         <button 
           onClick={() => setShowAddTripModal(true)}
-          className="bg-[rgba(55,144,27,1)] flex items-center gap-1 text-sm text-white font-medium px-4 py-2 rounded-[10px]"
+          className="bg-green-600 flex items-center gap-1 text-sm text-white font-medium px-4 py-2 rounded-lg"
         >
           <Plus className="w-4 h-4" />
-          <span>Add New Trip</span>
+          <span>Add New</span>
         </button>
       </div>
 
-      <div className="mt-4">
+      <div className="space-y-4">
         {travelItems.map((item, index) => (
           <TravelItem
             key={index}

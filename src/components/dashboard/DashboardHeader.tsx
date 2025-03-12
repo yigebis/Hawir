@@ -13,11 +13,11 @@ const DashboardHeader: React.FC = () => {
           <input
             type="text"
             placeholder="Search for destination"
-            className="w-64 py-2 pl-4 pr-10 rounded-full border border-gray-300 outline-none text-sm"
+            className="w-64 py-2 pl-10 pr-4 rounded-full border border-gray-300 outline-none text-sm"
           />
           <Search 
             size={18} 
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" 
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" 
           />
         </div>
         <div className="flex items-center gap-5">
