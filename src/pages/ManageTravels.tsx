@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import TravelCalendar, { CalendarViewMode } from "@/components/travels/TravelCalendar";
 import AddTripModal from "@/components/trips/AddTripModal";
-import { ChevronLeft, ChevronRight, Plus, Search, Menu, LayoutGrid } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Search, LayoutGrid } from "lucide-react";
 import { format } from "date-fns";
 
 const ManageTravels: React.FC = () => {
@@ -53,26 +53,28 @@ const ManageTravels: React.FC = () => {
             MANAGE TRAVELS
           </h1>
           
-          <div className="flex justify-between items-start">
-            <div className="flex items-center gap-4">
-              {viewMode !== "yearly" && (
-                <div className="flex items-center gap-3 mr-4">
-                  <ChevronLeft 
-                    className="w-5 h-5 cursor-pointer" 
-                    onClick={handlePreviousDay}
-                  />
-                  <span className="text-base font-medium">
-                    {format(currentDate, "EEE dd MMMM, yyyy")}
-                  </span>
-                  <ChevronRight 
-                    className="w-5 h-5 cursor-pointer" 
-                    onClick={handleNextDay}
-                  />
-                </div>
-              )}
-            </div>
+          <div className="flex justify-between items-center mb-4">
+            {viewMode !== "yearly" && (
+              <div className="flex items-center gap-2">
+                <button 
+                  className="p-1 rounded-full hover:bg-gray-100"
+                  onClick={handlePreviousDay}
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <span className="text-base font-medium">
+                  {format(currentDate, "EEE dd MMMM, yyyy")}
+                </span>
+                <button 
+                  className="p-1 rounded-full hover:bg-gray-100"
+                  onClick={handleNextDay}
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            )}
             
-            <div className="flex items-center gap-4 mt-2">
+            <div className="flex items-center gap-6">
               <div className="flex gap-5">
                 <div className="flex items-center gap-1">
                   <div className="w-2 h-2 rounded-full bg-green-500"></div>
