@@ -14,6 +14,16 @@ const Sidebar: React.FC = () => {
   const location = useLocation();
   const path = location.pathname;
 
+  const isActive = (routePath: string) => {
+    if (routePath === '/' && path === '/') {
+      return true;
+    }
+    if (routePath !== '/' && path.startsWith(routePath)) {
+      return true;
+    }
+    return false;
+  };
+
   return (
     <aside className="bg-[#f8f9fa] flex w-[260px] min-w-[260px] h-screen flex-col items-stretch text-black pt-[30px] pb-[30px] border-r border-gray-200">
       <div className="flex items-center gap-[13px] text-[15px] font-semibold leading-none ml-6 mb-8">
@@ -32,7 +42,7 @@ const Sidebar: React.FC = () => {
             <Link 
               to="/" 
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                path === '/' 
+                isActive('/') 
                   ? 'bg-[#F35B04] text-white' 
                   : 'text-gray-700 hover:bg-gray-200'
               }`}
@@ -45,7 +55,7 @@ const Sidebar: React.FC = () => {
             <Link 
               to="/manage-travels" 
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                path === '/manage-travels' 
+                isActive('/manage-travels') 
                   ? 'bg-[#F35B04] text-white' 
                   : 'text-gray-700 hover:bg-gray-200'
               }`}
@@ -58,7 +68,7 @@ const Sidebar: React.FC = () => {
             <Link 
               to="/customers" 
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                path === '/customers' 
+                isActive('/customers') 
                   ? 'bg-[#F35B04] text-white' 
                   : 'text-gray-700 hover:bg-gray-200'
               }`}
@@ -71,7 +81,7 @@ const Sidebar: React.FC = () => {
             <Link 
               to="/reports" 
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                path === '/reports' 
+                isActive('/reports') 
                   ? 'bg-[#F35B04] text-white' 
                   : 'text-gray-700 hover:bg-gray-200'
               }`}
@@ -84,7 +94,7 @@ const Sidebar: React.FC = () => {
             <Link 
               to="/tours" 
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                path === '/tours' 
+                isActive('/tours') 
                   ? 'bg-[#F35B04] text-white' 
                   : 'text-gray-700 hover:bg-gray-200'
               }`}
@@ -97,7 +107,7 @@ const Sidebar: React.FC = () => {
             <Link 
               to="/fleet" 
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                path === '/fleet' 
+                isActive('/fleet') 
                   ? 'bg-[#F35B04] text-white' 
                   : 'text-gray-700 hover:bg-gray-200'
               }`}

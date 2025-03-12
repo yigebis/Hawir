@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import TravelCalendar, { CalendarViewMode } from "@/components/travels/TravelCalendar";
 import AddTripModal from "@/components/trips/AddTripModal";
-import { ChevronLeft, ChevronRight, Plus, Search, Menu, LayoutGrid } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Search, LayoutGrid } from "lucide-react";
 import { format } from "date-fns";
 
 const ManageTravels: React.FC = () => {
@@ -48,32 +48,36 @@ const ManageTravels: React.FC = () => {
   return (
     <DashboardLayout showHeader={false}>
       <div className="flex flex-col">
-        <div className="flex flex-col mb-3">
+        <div className="flex flex-col mb-6">
           <h1 className="text-[#F35B04] text-base font-bold tracking-[2.4px] uppercase mb-6">
             MANAGE TRAVELS
           </h1>
           
-          <div className="flex justify-between items-start">
-            <div className="flex items-center gap-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center">
               {viewMode !== "yearly" && (
-                <div className="flex items-center gap-3 mr-4">
-                  <ChevronLeft 
-                    className="w-5 h-5 cursor-pointer" 
+                <div className="flex items-center space-x-4">
+                  <button 
+                    className="p-1 rounded-full hover:bg-gray-100"
                     onClick={handlePreviousDay}
-                  />
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
                   <span className="text-base font-medium">
                     {format(currentDate, "EEE dd MMMM, yyyy")}
                   </span>
-                  <ChevronRight 
-                    className="w-5 h-5 cursor-pointer" 
+                  <button 
+                    className="p-1 rounded-full hover:bg-gray-100"
                     onClick={handleNextDay}
-                  />
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
                 </div>
               )}
             </div>
             
-            <div className="flex items-center gap-4 mt-2">
-              <div className="flex gap-5">
+            <div className="flex items-center space-x-6">
+              <div className="flex space-x-5">
                 <div className="flex items-center gap-1">
                   <div className="w-2 h-2 rounded-full bg-green-500"></div>
                   <span className="text-xs text-gray-500">Ongoing</span>
@@ -88,7 +92,7 @@ const ManageTravels: React.FC = () => {
                 </div>
               </div>
               
-              <div className="flex items-center gap-4">
+              <div className="flex items-center space-x-4">
                 <div className="relative">
                   {showSearchInput && (
                     <input
@@ -99,19 +103,25 @@ const ManageTravels: React.FC = () => {
                       onBlur={() => setTimeout(() => setShowSearchInput(false), 100)}
                     />
                   )}
-                  <Search 
-                    className="w-5 h-5 text-green-800 cursor-pointer relative z-10" 
+                  <button 
+                    className="text-green-800 focus:outline-none" 
                     onClick={toggleSearch}
-                  />
+                  >
+                    <Search className="w-5 h-5" />
+                  </button>
                 </div>
-                <LayoutGrid 
-                  className="w-5 h-5 text-green-800 cursor-pointer" 
+                <button 
+                  className="text-green-800 focus:outline-none" 
                   onClick={toggleViewMode}
-                />
-                <Plus 
-                  className="w-5 h-5 text-green-800 cursor-pointer" 
+                >
+                  <LayoutGrid className="w-5 h-5" />
+                </button>
+                <button 
+                  className="text-green-800 focus:outline-none" 
                   onClick={() => handleAddTrip()}
-                />
+                >
+                  <Plus className="w-5 h-5" />
+                </button>
               </div>
             </div>
           </div>
