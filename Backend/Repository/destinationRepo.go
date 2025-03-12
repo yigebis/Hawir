@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type DestinationRepository struct {
@@ -74,8 +75,30 @@ func (dr *DestinationRepository) EditDestination(destination *Domain.Destination
 }
 
 // ViewAllDestinations implements UseCase.IDestinationRepository.
-func (dr *DestinationRepository) ViewAllDestinations() (*[]Domain.Destination, error) {
-	panic("unimplemented")
+func (dr *DestinationRepository) ViewAllDestinations(limit, skip int) (*[]Domain.Destination, int, error) {
+	var destinations []Domain.Destination
+	collection := dr.Collection
+
+	// Count total documents
+	total, err := collection.CountDocuments(dr.DbCtx, bson.M{})
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Query with pagination
+	findOptions := options.Find().SetLimit(int64(limit)).SetSkip(int64(skip))
+	cursor, err := collection.Find(dr.DbCtx, bson.M{}, findOptions)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer cursor.Close(dr.DbCtx)
+
+	// Decode results into destinations slice
+	if err := cursor.All(dr.DbCtx, &destinations); err != nil {
+		return nil, 0, err
+	}
+
+	return &destinations, int(total), nil
 }
 
 // ViewDestinationById implements UseCase.IDestinationRepository.

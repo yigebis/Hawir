@@ -4,6 +4,7 @@ import (
 	"Hawir/Domain"
 	"Hawir/UseCase"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -78,5 +79,39 @@ func (dc *DestinationController) EditDestination(ctx *gin.Context){
 	}
 
 	ctx.JSON(statusCode, gin.H{"message": "destination edited successfully"})
+}
+
+func (dc *DestinationController) ViewAllDestinations(ctx *gin.Context) {
+	// Parse query parameters for pagination
+	page, err := strconv.Atoi(ctx.DefaultQuery("page", "1"))
+	if err != nil || page < 1 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid page number"})
+		return
+	}
+
+	limit, err := strconv.Atoi(ctx.DefaultQuery("limit", "10"))
+	if err != nil || limit < 1 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid limit number"})
+		return
+	}
+
+	// Calculate the skip value
+	skip := (page - 1) * limit
+
+	// Fetch paginated destinations from the use case
+	destinations, total, err := dc.DestinationUseCase.ViewAllDestinations(limit, skip)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Return paginated response
+	ctx.JSON(http.StatusOK, gin.H{
+		"data":       destinations,
+		"page":       page,
+		"limit":      limit,
+		"total":      total,
+		"totalPages": (total + limit - 1) / limit, // Calculate total pages
+	})
 }
 
