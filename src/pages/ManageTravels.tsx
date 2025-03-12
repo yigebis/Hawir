@@ -1,9 +1,9 @@
 
 import React, { useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import TravelCalendar from "@/components/travels/TravelCalendar";
+import TravelCalendar, { CalendarViewMode } from "@/components/travels/TravelCalendar";
 import AddTripModal from "@/components/trips/AddTripModal";
-import { ChevronLeft, ChevronRight, Plus, Search, Menu } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Search, Menu, LayoutGrid } from "lucide-react";
 import { format } from "date-fns";
 
 const ManageTravels: React.FC = () => {
@@ -14,6 +14,7 @@ const ManageTravels: React.FC = () => {
     time?: string;
   }>({});
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [viewMode, setViewMode] = useState<CalendarViewMode>("day");
 
   const handleNextDay = () => {
     const nextDay = new Date(currentDate);
@@ -40,6 +41,10 @@ const ManageTravels: React.FC = () => {
     setShowSearchInput(!showSearchInput);
   };
 
+  const toggleViewMode = () => {
+    setViewMode(viewMode === "yearly" ? "day" : "yearly");
+  };
+
   return (
     <DashboardLayout showHeader={false}>
       <div className="flex flex-col">
@@ -50,19 +55,21 @@ const ManageTravels: React.FC = () => {
           
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3 mr-4">
-                <ChevronLeft 
-                  className="w-5 h-5 cursor-pointer" 
-                  onClick={handlePreviousDay}
-                />
-                <span className="text-base font-medium">
-                  {format(currentDate, "EEE dd MMMM, yyyy")}
-                </span>
-                <ChevronRight 
-                  className="w-5 h-5 cursor-pointer" 
-                  onClick={handleNextDay}
-                />
-              </div>
+              {viewMode !== "yearly" && (
+                <div className="flex items-center gap-3 mr-4">
+                  <ChevronLeft 
+                    className="w-5 h-5 cursor-pointer" 
+                    onClick={handlePreviousDay}
+                  />
+                  <span className="text-base font-medium">
+                    {format(currentDate, "EEE dd MMMM, yyyy")}
+                  </span>
+                  <ChevronRight 
+                    className="w-5 h-5 cursor-pointer" 
+                    onClick={handleNextDay}
+                  />
+                </div>
+              )}
             </div>
             
             <div className="flex items-center gap-4 mt-2">
@@ -97,7 +104,10 @@ const ManageTravels: React.FC = () => {
                     onClick={toggleSearch}
                   />
                 </div>
-                <Menu className="w-5 h-5 text-green-800 cursor-pointer" />
+                <LayoutGrid 
+                  className="w-5 h-5 text-green-800 cursor-pointer" 
+                  onClick={toggleViewMode}
+                />
                 <Plus 
                   className="w-5 h-5 text-green-800 cursor-pointer" 
                   onClick={() => handleAddTrip()}
@@ -111,6 +121,8 @@ const ManageTravels: React.FC = () => {
           onAddTrip={handleAddTrip} 
           selectedDate={currentDate}
           onDateChange={setCurrentDate}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
         />
         
         <AddTripModal 

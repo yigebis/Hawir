@@ -5,21 +5,28 @@ import moment from 'moment';
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import TravelEvent, { TravelEventType } from "./TravelEvent";
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { format, addDays, subDays, startOfWeek, endOfWeek, isSameDay, isToday } from "date-fns";
+import { format, addDays, subDays, startOfWeek, endOfWeek, isSameDay, isToday, addMonths, subMonths } from "date-fns";
+import YearlyCalendarView from "./YearlyCalendarView";
 
 // Set up the localizer for the calendar
 const localizer = momentLocalizer(moment);
+
+export type CalendarViewMode = "day" | "week" | "yearly";
 
 interface TravelCalendarProps {
   onAddTrip: (dateTime?: { date?: Date; time?: string }) => void;
   selectedDate: Date;
   onDateChange: (date: Date) => void;
+  viewMode: CalendarViewMode;
+  onViewModeChange: (mode: CalendarViewMode) => void;
 }
 
 const TravelCalendar: React.FC<TravelCalendarProps> = ({ 
   onAddTrip, 
   selectedDate,
-  onDateChange
+  onDateChange,
+  viewMode,
+  onViewModeChange
 }) => {
   const [weekDates, setWeekDates] = useState<Date[]>([]);
   
@@ -73,6 +80,12 @@ const TravelCalendar: React.FC<TravelCalendarProps> = ({
     });
   };
 
+  // Handle year view date selection
+  const handleYearlyDateSelect = (date: Date) => {
+    onDateChange(date);
+    onViewModeChange("day");
+  };
+
   // Custom calendar components
   const components = useMemo(() => ({
     event: ({ event }: { event: TravelEventType }) => (
@@ -94,6 +107,16 @@ const TravelCalendar: React.FC<TravelCalendarProps> = ({
     height: 600,
     className: "custom-calendar bg-white rounded-lg shadow-md"
   };
+
+  if (viewMode === "yearly") {
+    return (
+      <YearlyCalendarView 
+        selectedDate={selectedDate}
+        onDateChange={onDateChange}
+        onDateSelect={handleYearlyDateSelect}
+      />
+    );
+  }
 
   return (
     <div className="bg-white rounded-lg shadow-md">
