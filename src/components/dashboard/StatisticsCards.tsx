@@ -43,7 +43,7 @@ const StatisticsCards: React.FC = () => {
       <div 
         className="relative bg-cover bg-center rounded-lg overflow-hidden py-10" 
         style={{ 
-          backgroundImage: `url('/lovable-uploads/26d12b78-4b71-45eb-a1c8-205f77d2552d.png')`,
+          backgroundImage: "url('/lovable-uploads/26d12b78-4b71-45eb-a1c8-205f77d2552d.png')",
           backgroundSize: 'cover',
           backgroundPosition: 'center'
         }}
