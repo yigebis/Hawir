@@ -25,7 +25,7 @@ const StatisticsCards: React.FC = () => {
     <section className="w-full">
       <div className="relative bg-cover bg-center rounded-lg overflow-hidden py-10" 
            style={{ backgroundImage: `url('/lovable-uploads/fe3f2873-7992-4b05-89e6-9a216c37b767.png')` }}>
-        <div className="absolute inset-0 bg-black/5"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-[rgba(255,255,255,0.7)] to-[rgba(255,255,255,0.4)]"></div>
         <div className="relative z-10 text-center px-4 mb-6">
           <h2 className="text-2xl font-bold text-black">Manage your travels with ease</h2>
           <p className="text-sm text-black mt-2">Discover new destination with Hawir</p>
