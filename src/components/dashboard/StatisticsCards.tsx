@@ -24,7 +24,7 @@ const StatisticsCards: React.FC = () => {
   return (
     <section className="w-full">
       <div className="relative bg-cover bg-center rounded-lg overflow-hidden py-10" 
-           style={{ backgroundImage: `url('/lovable-uploads/fe3f2873-7992-4b05-89e6-9a216c37b767.png')` }}>
+           style={{ backgroundImage: `url('/lovable-uploads/4c4213de-f24a-40c1-b7fe-7b45878a2969.png')` }}>
         <div className="absolute inset-0 bg-gradient-to-r from-[rgba(255,255,255,0.7)] to-[rgba(255,255,255,0.4)]"></div>
         <div className="relative z-10 text-center px-4 mb-6">
           <h2 className="text-2xl font-bold text-black">Manage your travels with ease</h2>
