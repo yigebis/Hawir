@@ -58,6 +58,7 @@ func main() {
 	seat_collection := client.Database("Hawir").Collection("seats")
 	agency_collection := client.Database("Hawir").Collection("agencies")
 	booking_collection := client.Database("Hawir").Collection("Booking")
+	adminCollection := client.Database("Hawir").Collection("Admins")
 	destination_collection := client.Database("Hawir").Collection("destinations")
 
 	user_context := context.TODO()
@@ -67,8 +68,9 @@ func main() {
 	destination_context := context.TODO()
 
 	ur := Repository.NewUserRepository(user_context, user_collection)
+	agr := Repository.NewAgencyRepository(agency_context, agency_collection, adminCollection)
 	tr := Repository.NewTravelRepository(travel_context, travel_collection)
-	ar := Repository.NewAgencyRepository(agency_context, agency_collection)
+	tsr := Repository.NewTravelStatsRepo(travel_context, travel_stat_collection)
 	br := Repository.NewBookingRepository(
 		booking_context,
 		booking_collection,
@@ -104,19 +106,22 @@ func main() {
 	oauthService := Infrastructure.NewOAuth(oauthState, oauthClientID, oauthClientSecret, websiteDomainName)
 
 	uuc := UseCase.NewUserUseCase(ur, ps, ts, ms, es, ex, tx, rx)
-	tuc := UseCase.NewTravelUseCase(tr, ar, es)
-	auc := UseCase.NewAdminUseCase(ar, ps, es)
-	buc := UseCase.NewBookingUseCase(br, es)
+	aguc := UseCase.NewAgencyUseCase(agr, ps, ts, es, ex, tx, rx)
+	tuc := UseCase.NewTravelUseCase(tr, tsr, agr, es)
+	auc := UseCase.NewAdminUseCase(agr, ps, es)
+	buc := UseCase.NewBookingUseCase(br, tr, es)
 	duc := UseCase.NewDestinationUseCase(dr, es)
+
 
 	// setting up the controllers
 	user_controller := Controller.NewUserController(uuc, ts, oauthService, ps, vs)
+	agency_controller := Controller.NewAgencyController(aguc, ts, ps, vs)
 	travel_controller := Controller.NewTravelController(tuc)
-	admin_controller := Controller.NewAdminController(auc)
+	admin_controller := Controller.NewAdminController(auc, vs)
 	booking_controller := Controller.NewBookingController(buc)
 	destination_controller := Controller.NewDestinationController(duc)
 
 	// setting up the router
-	router := Router.NewRouter(user_controller, travel_controller, admin_controller, booking_controller, destination_controller, jwtSecret)
+	router := Router.NewRouter(user_controller, agency_controller, travel_controller, admin_controller, booking_controller, jwtSecret, destination_controller)
 	router.Run()
 }

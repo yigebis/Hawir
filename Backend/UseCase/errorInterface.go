@@ -18,6 +18,9 @@ type IErrorService interface {
 	MissingValidPasswordChar() (int, error)
 	InvalidPhoneNumber() (int, error)
 
+	// agency user errors
+	InvalidEmailAgencyIDPassword() (int, error)
+
 	// Travel errors
 	TravelNotFound() (int, error)
 	InvalidStartLocation() (int, error)
@@ -32,6 +35,7 @@ type IErrorService interface {
 	SeatReserved() (int, error)
 	TravelerAlreadyBooked() (int, error)
 	SeatNotChosen() (int, error)
+	IncorrectSeatNumber() (int, error)
 
 	// Destination errors
 	DestinationNotFound() (int, error)

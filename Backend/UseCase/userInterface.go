@@ -30,6 +30,7 @@ type IPasswordService interface {
 type ITokenService interface {
 	GenerateToken(id, firstName string, expiryDuration int64) (string, error)
 	GenerateEmailToken(email string, expiryDuration int64) (string, error)
+	GenerateAgencyToken(email, role, agencyID string, expiryDuration int64) (string, error)
 	ValidateToken(token string) (map[string]interface{}, error)
 }
 

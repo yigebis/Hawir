@@ -8,22 +8,23 @@ import (
 
 type Travel struct {
 	ID                primitive.ObjectID `json:"id" bson:"_id,omitempty"`
-	AgencyId          string             `json:"agency_id" bson:"agency_id" validate:"required"`
-	StartLocation     string             `json:"start_location" bson:"start_location" validate:"required"`
-	PickupLocations   []string           `json:"pickup_locations" bson:"pickup_locations" validate:"required"`
-	Destination       string             `json:"destination" bson:"destination" validate:"required"`
-	PlannedStartTime  time.Time          `json:"planned_start_time" bson:"planned_start_time" validate:"required"`
-	ActualStartTime   time.Time          `json:"actual_start_time" bson:"actual_start_time"`
-	EstArrivalTime    time.Time          `json:"est_arrival_time" bson:"est_arrival_time"`
-	ActualArrivalTime time.Time          `json:"actual_arrival_time" bson:"actual_arrival_time"`
-	Price             float64            `json:"price" bson:"price" validate:"required"`
-	Notice            string             `json:"notice" bson:"notice" validate:"required"`
-	BusRef            string             `json:"bus_ref" bson:"bus_ref" validate:"required"`
-	HasPayBack        bool               `json:"has_pay_back" bson:"has_pay_back" validate:"required"`
-	DriverName        string             `json:"driver_name" bson:"driver_name" validate:"required"`
-	PostTime          time.Time          `json:"post_time" bson:"post_time" validate:"required"`
-	LastModTime       time.Time          `json:"last_mod_time" bson:"last_mod_time"`
-	Status            string             `json:"status" bson:"status"`
+	AgencyId          string             `json:"agency_id" bson:"agency_id,omitempty" validate:"required"`
+	StartLocation     string             `json:"start_location" bson:"start_location,omitempty" validate:"required"`
+	PickupLocations   []string           `json:"pickup_locations" bson:"pickup_locations,omitempty" validate:"required"`
+	Destination       string             `json:"destination" bson:"destination,omitempty" validate:"required"`
+	PlannedStartTime  time.Time          `json:"planned_start_time" bson:"planned_start_time,omitempty" validate:"required"`
+	ActualStartTime   time.Time          `json:"actual_start_time" bson:"actual_start_time,omitempty"`
+	EstArrivalTime    time.Time          `json:"est_arrival_time" bson:"est_arrival_time,omitempty"`
+	ActualArrivalTime time.Time          `json:"actual_arrival_time" bson:"actual_arrival_time,omitempty"`
+	Price             float64            `json:"price" bson:"price,omitempty" validate:"required,min=0"`
+	//Notice            string             `json:"notice" bson:"notice,omitempty" validate:"required"`
+	TotalSeats int    `json:"total_seats" bson:"total_seats,omitempty" validate:"required,min=20"`
+	BusRef     string `json:"bus_ref" bson:"bus_ref,omitempty"`
+	// HasPayBack        bool               `json:"has_pay_back" bson:"has_pay_back,omitempty" validate:"required"`
+	DriverName  string    `json:"driver_name" bson:"driver_name,omitempty"`
+	PostTime    time.Time `json:"post_time" bson:"post_time,omitempty"`
+	LastModTime time.Time `json:"last_mod_time" bson:"last_mod_time,omitempty"`
+	Status      string    `json:"status" bson:"status,omitempty"`
 }
 
 type TravelStats struct {

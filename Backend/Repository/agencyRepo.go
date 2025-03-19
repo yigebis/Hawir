@@ -11,23 +11,25 @@ import (
 )
 
 type AgencyRepository struct {
-	DbCtx      context.Context
-	Collection *mongo.Collection
+	DbCtx            context.Context
+	AgencyCollection *mongo.Collection
+	AdminCollection  *mongo.Collection
 }
 
-func NewAgencyRepository(dbctx context.Context, collection *mongo.Collection) UseCase.IAgencyRepository {
+func NewAgencyRepository(dbctx context.Context, agencyCollection *mongo.Collection, adminCollection *mongo.Collection) UseCase.IAgencyRepository {
 	return &AgencyRepository{
-		DbCtx:      dbctx,
-		Collection: collection,
+		DbCtx:            dbctx,
+		AgencyCollection: agencyCollection,
+		AdminCollection:  adminCollection,
 	}
 }
 
-func (admr *AgencyRepository) AddAgency(agency *Domain.Agency) error {
-	_, err := admr.Collection.InsertOne(admr.DbCtx, agency)
+func (agr *AgencyRepository) AddAgency(agency *Domain.Agency) error {
+	_, err := agr.AgencyCollection.InsertOne(agr.DbCtx, agency)
 	return err
 }
 
-func (admr *AgencyRepository) EditAgency(agency *Domain.Agency) error {
+func (agr *AgencyRepository) EditAgency(agency *Domain.Agency) error {
 	filter := bson.M{"_id": agency.ID}
 
 	update := bson.M{}
@@ -60,23 +62,31 @@ func (admr *AgencyRepository) EditAgency(agency *Domain.Agency) error {
 		update["calendar"] = agency.Calendar
 	}
 
-	_, err := admr.Collection.UpdateOne(admr.DbCtx, filter, bson.M{"$set": update})
+	if agency.Password != "" {
+		update["password"] = agency.Password
+	}
+
+	if agency.SuperAdminEmail != "" {
+		update["super_admin_email"] = agency.SuperAdminEmail
+	}
+
+	_, err := agr.AgencyCollection.UpdateOne(agr.DbCtx, filter, bson.M{"$set": update})
 	return err
 }
 
-func (admr *AgencyRepository) DeleteAgency(agencyID string) error {
+func (agr *AgencyRepository) DeleteAgency(agencyID string) error {
 	objID, err := primitive.ObjectIDFromHex(agencyID)
 	if err != nil {
 		return err
 	}
 
 	filter := bson.M{"_id": objID}
-	_, err = admr.Collection.DeleteOne(admr.DbCtx, filter)
+	_, err = agr.AgencyCollection.DeleteOne(agr.DbCtx, filter)
 
 	return err
 }
 
-func (admr *AgencyRepository) GetAgency(agencyID string) (*Domain.Agency, error) {
+func (agr *AgencyRepository) GetAgency(agencyID string) (*Domain.Agency, error) {
 	var agency Domain.Agency
 
 	objID, err := primitive.ObjectIDFromHex(agencyID)
@@ -85,26 +95,54 @@ func (admr *AgencyRepository) GetAgency(agencyID string) (*Domain.Agency, error)
 	}
 
 	filter := bson.M{"_id": objID}
-	err = admr.Collection.FindOne(admr.DbCtx, filter).Decode(&agency)
+	err = agr.AgencyCollection.FindOne(agr.DbCtx, filter).Decode(&agency)
 	return &agency, err
 }
 
-func (admr *AgencyRepository) GetAllAgencies() (*[]Domain.Agency, error) {
-	var agencies []Domain.Agency
-
-	cursor, err := admr.Collection.Find(admr.DbCtx, bson.M{})
+func (agr *AgencyRepository) GetAgencyByUniqueID(uniqueID string) (*Domain.Agency, error) {
+	var agency Domain.Agency
+	filter := bson.M{"unique_id": uniqueID}
+	err := agr.AgencyCollection.FindOne(agr.DbCtx, filter).Decode(&agency)
 	if err != nil {
 		return nil, err
 	}
-	defer cursor.Close(admr.DbCtx)
+	return &agency, nil
+}
 
-	cursor.All(admr.DbCtx, &agencies)
+func (agr *AgencyRepository) GetAgencyAdmin(email string) (*Domain.Admins, error) {
+	admin := Domain.Admins{}
+
+	filter := bson.M{"email": email}
+	err := agr.AdminCollection.FindOne(agr.DbCtx, filter).Decode(&admin)
+	if err != nil {
+		return nil, err
+	}
+	return &admin, nil
+}
+
+func (agr *AgencyRepository) ResetAgencyAdminPassword(id primitive.ObjectID, newPassword string) error {
+	filter := bson.M{"_id": id}
+	update := bson.M{"$set": bson.M{"password": newPassword}}
+	_, err := agr.AdminCollection.UpdateOne(agr.DbCtx, filter, update)
+	return err
+}
+
+func (agr *AgencyRepository) GetAllAgencies() (*[]Domain.Agency, error) {
+	var agencies []Domain.Agency
+
+	cursor, err := agr.AgencyCollection.Find(agr.DbCtx, bson.M{})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(agr.DbCtx)
+
+	cursor.All(agr.DbCtx, &agencies)
 
 	return &agencies, nil
 
 }
 
-func (admr *AgencyRepository) CheckAgency(agencyID string) (bool, error) {
+func (agr *AgencyRepository) CheckAgency(agencyID string) (bool, error) {
 	var agency Domain.Agency
 
 	objID, err := primitive.ObjectIDFromHex(agencyID)
@@ -113,6 +151,21 @@ func (admr *AgencyRepository) CheckAgency(agencyID string) (bool, error) {
 	}
 
 	filter := bson.M{"_id": objID}
-	err = admr.Collection.FindOne(admr.DbCtx, filter).Decode(&agency)
+	err = agr.AgencyCollection.FindOne(agr.DbCtx, filter).Decode(&agency)
 	return true, err
+}
+
+func (agr *AgencyRepository) AddAgencyAdmin(admin *Domain.Admins) error {
+	_, err := agr.AdminCollection.InsertOne(agr.DbCtx, admin)
+	return err
+}
+
+func (agr *AgencyRepository) EditAgencyAdmin(admin *Domain.Admins) error {
+	filter := bson.M{"email": admin.Email}
+	update := bson.M{"$set": bson.M{
+		"email":    admin.Email,
+		"password": admin.Password,
+	}}
+	_, err := agr.AdminCollection.UpdateOne(agr.DbCtx, filter, update)
+	return err
 }

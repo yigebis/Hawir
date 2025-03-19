@@ -28,13 +28,13 @@ func (tc *TravelController) CreateTravel(ctx *gin.Context) {
 
 	err := ctx.ShouldBindBodyWithJSON(&travel)
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": "invalid request payload", "details": err.Error()})
+		ctx.JSON(400, gin.H{"error": "invalid request payload" /*, "details": err.Error()*/})
 		return
 	}
 
 	err = tc.V.Struct(travel)
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": "invalid request payload", "details": err.Error()})
+		ctx.JSON(400, gin.H{"error": "invalid request payload" /*, "details": err.Error()*/})
 		return
 	}
 
@@ -54,12 +54,6 @@ func (tc *TravelController) EditTravel(ctx *gin.Context) {
 	err := ctx.ShouldBindJSON(&travel)
 	if err != nil {
 		ctx.JSON(400, gin.H{"error": "invalid request payload"})
-		return
-	}
-
-	err = tc.V.Struct(travel) 
-	if err != nil {
-		ctx.JSON(400, gin.H{"error": "invalid request payload", "details": err.Error()})
 		return
 	}
 

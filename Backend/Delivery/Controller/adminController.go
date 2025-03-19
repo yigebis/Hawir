@@ -2,6 +2,7 @@ package Controller
 
 import (
 	"Hawir/Domain"
+	"Hawir/Infrastructure"
 	"Hawir/UseCase"
 
 	"github.com/gin-gonic/gin"
@@ -10,14 +11,16 @@ import (
 )
 
 type AdminController struct {
-	AdminUseCase UseCase.IAdminUseCase
-	V            *validator.Validate
+	AdminUseCase      UseCase.IAdminUseCase
+	V                 *validator.Validate
+	passwordValidator *Infrastructure.ValidationService
 }
 
-func NewAdminController(auc UseCase.IAdminUseCase) *AdminController {
+func NewAdminController(auc UseCase.IAdminUseCase, pv *Infrastructure.ValidationService) *AdminController {
 	return &AdminController{
-		AdminUseCase: auc,
-		V:            validator.New(),
+		AdminUseCase:      auc,
+		V:                 validator.New(),
+		passwordValidator: pv,
 	}
 }
 
@@ -36,7 +39,13 @@ func (admc *AdminController) AddAgency(ctx *gin.Context) {
 		return
 	}
 
-	code, err := admc.AdminUseCase.AddAgency(&agency)
+	code, err := admc.passwordValidator.ValidatePassword(agency.Password)
+	if err != nil {
+		ctx.JSON(code, gin.H{"error": err.Error()})
+		return
+	}
+
+	code, err = admc.AdminUseCase.AddAgency(&agency)
 	if err != nil {
 		ctx.JSON(code, gin.H{"error": err.Error()})
 		return
@@ -64,6 +73,15 @@ func (admc *AdminController) EditAgency(ctx *gin.Context) {
 	if err != nil {
 		ctx.JSON(400, gin.H{"error": "invalid request payload"})
 		return
+	}
+
+	// validate the password if it's non-empty
+	if agency.Password != "" {
+		code, err := admc.passwordValidator.ValidatePassword(agency.Password)
+		if err != nil {
+			ctx.JSON(code, gin.H{"error": err.Error()})
+			return
+		}
 	}
 
 	code, err := admc.AdminUseCase.EditAgency(&agency)

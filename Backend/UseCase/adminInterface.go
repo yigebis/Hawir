@@ -11,12 +11,3 @@ type IAdminUseCase interface {
 	GetAgency(agencyID string) (*Domain.Agency, int, error)
 	GetAllAgencies() (*[]Domain.Agency, int, error)
 }
-
-type IAgencyRepository interface {
-	AddAgency(agency *Domain.Agency) error
-	EditAgency(agency *Domain.Agency) error
-	DeleteAgency(agencyID string) error
-	GetAgency(agencyID string) (*Domain.Agency, error)
-	GetAllAgencies() (*[]Domain.Agency, error)
-	CheckAgency(agencyID string) (bool, error)
-}

@@ -50,6 +50,24 @@ func (ts *TokenService) GenerateEmailToken(email string, expiryDuration int64) (
 	return jwtToken, nil
 }
 
+func (ts *TokenService) GenerateAgencyToken(email string, role string, agencyID string, expiryDuration int64) (string, error) {
+	claims := jwt.MapClaims{
+		"email":     email,
+		"exp":       expiryDuration,
+		"role":      role,
+		"agency_id": agencyID,
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	jwtToken, err := token.SignedString([]byte(ts.JwtSecret))
+	if err != nil {
+		return "", err
+	}
+
+	return jwtToken, nil
+}
+
 // ValidateToken implements UseCase.ITokenService.
 func (ts *TokenService) ValidateToken(tokenString string) (map[string]interface{}, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
