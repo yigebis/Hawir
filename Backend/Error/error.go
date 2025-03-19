@@ -45,6 +45,9 @@ var ErrTravelerAlreadyBooked = errors.New("traveler has already booked a seat")
 var ErrSeatNotChosen = errors.New("traveler has not chosen a seat")
 var ErrIncorrectSeatNumber = errors.New("seat number is incorrect")
 
+// Destination errors
+var ErrDestinationNotFound = errors.New("destination not found")
+
 type Error struct{}
 
 func NewErrorService() UseCase.IErrorService {
@@ -156,4 +159,9 @@ func (e *Error) IncorrectSeatNumber() (int, error) {
 
 func (e *Error) InvalidEmailAgencyIDPassword() (int, error) {
 	return http.StatusBadRequest, ErrInvalidEmailAgencyIDPassword
+}
+
+// Destination errors
+func (e *Error) DestinationNotFound() (int, error) {
+	return http.StatusNotFound, ErrDestinationNotFound
 }

@@ -59,11 +59,13 @@ func main() {
 	agency_collection := client.Database("Hawir").Collection("agencies")
 	booking_collection := client.Database("Hawir").Collection("Booking")
 	adminCollection := client.Database("Hawir").Collection("Admins")
+	destination_collection := client.Database("Hawir").Collection("destinations")
 
 	user_context := context.TODO()
 	travel_context := context.TODO()
 	agency_context := context.TODO()
 	booking_context := context.TODO()
+	destination_context := context.TODO()
 
 	ur := Repository.NewUserRepository(user_context, user_collection)
 	agr := Repository.NewAgencyRepository(agency_context, agency_collection, adminCollection)
@@ -75,6 +77,7 @@ func main() {
 		travel_stat_collection,
 		seat_collection,
 	)
+	dr := Repository.NewDestinationRepository(destination_context, destination_collection)
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	es := Error.NewErrorService()
@@ -107,6 +110,8 @@ func main() {
 	tuc := UseCase.NewTravelUseCase(tr, tsr, agr, es)
 	auc := UseCase.NewAdminUseCase(agr, ps, es)
 	buc := UseCase.NewBookingUseCase(br, tr, es)
+	duc := UseCase.NewDestinationUseCase(dr, es)
+
 
 	// setting up the controllers
 	user_controller := Controller.NewUserController(uuc, ts, oauthService, ps, vs)
@@ -114,8 +119,9 @@ func main() {
 	travel_controller := Controller.NewTravelController(tuc)
 	admin_controller := Controller.NewAdminController(auc, vs)
 	booking_controller := Controller.NewBookingController(buc)
+	destination_controller := Controller.NewDestinationController(duc)
 
 	// setting up the router
-	router := Router.NewRouter(user_controller, agency_controller, travel_controller, admin_controller, booking_controller, jwtSecret)
+	router := Router.NewRouter(user_controller, agency_controller, travel_controller, admin_controller, booking_controller, jwtSecret, destination_controller)
 	router.Run()
 }
