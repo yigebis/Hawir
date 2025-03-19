@@ -9,15 +9,17 @@ import (
 
 type Router struct {
 	UserController    *Controller.UserController
+	AgencyController  *Controller.AgencyController
 	TravelController  *Controller.TravelController
 	AdminController   *Controller.AdminController
 	BookingController *Controller.BookingController
 	JWTSigner         string
 }
 
-func NewRouter(uc *Controller.UserController, tc *Controller.TravelController, ac *Controller.AdminController, bc *Controller.BookingController, jwtSigner string) *Router {
+func NewRouter(uc *Controller.UserController, agc *Controller.AgencyController, tc *Controller.TravelController, ac *Controller.AdminController, bc *Controller.BookingController, jwtSigner string) *Router {
 	return &Router{
 		UserController:    uc,
+		AgencyController:  agc,
 		TravelController:  tc,
 		AdminController:   ac,
 		BookingController: bc,
@@ -46,12 +48,17 @@ func (r *Router) Run() {
 	router.GET("/email/reject", r.UserController.RejectEmail)
 	router.GET("/auth/with/google", r.UserController.LoginWithGoogle) // Redirects to Google login page
 	router.GET("/auth/callback", r.UserController.GoogleCallback)     // Handles Google callback
-	// router.GET("/api/travel/id/:id", r.TravelController.GetTravelByID)
+
+	// agency authentication
+	router.POST("/agency/login", r.AgencyController.LoginAgencyAdmin)
+	router.POST("/agency/password/reset", r.AgencyController.ResetAgencyAdminPassword)
+	// router.POST("/agency/edit", r.UserController.EditAgency)
 
 	router.POST("/travel/add", r.TravelController.CreateTravel)                //agency authorization
 	router.PUT("/travel/edit", r.TravelController.EditTravel)                  //agency authorization
 	router.GET("/travel/:id", r.TravelController.ViewTravelById)               //no authorization
 	router.GET("/travels/:agencyID", r.TravelController.ViewTravelsByAgencyId) //no authorization
+	router.GET("/travels/search", r.TravelController.SearchTravel)             //no authorization
 	router.DELETE("/travel/cancel/:id", r.TravelController.CancelTravel)       //agency authorization
 
 	//admin-side endpoints

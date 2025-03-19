@@ -26,8 +26,14 @@ var ErrMissingValidPasswordChar = errors.New("password should contain at least o
 
 var ErrInvalidPhoneNumber = errors.New("invalid Phone Number")
 
+// agency user errors
+var ErrInvalidEmailAgencyIDPassword = errors.New("invalid email or agency ID or password")
+
 // Travel errors
 var ErrTravelNotFound = errors.New("travel not found")
+var ErrInvalidEstArrivalTime = errors.New("estimated arrival time is before the planned start time")
+var ErrInvalidStartTime = errors.New("planned start time is in the past")
+var ErrStartPickupLocation = errors.New("start location is not in the pickup locations")
 
 // Agency errors
 var ErrAgencyNotFound = errors.New("agency not found")
@@ -37,6 +43,7 @@ var ErrBookingNotFound = errors.New("booking not found")
 var ErrSeatReserved = errors.New("seat is already reserved")
 var ErrTravelerAlreadyBooked = errors.New("traveler has already booked a seat")
 var ErrSeatNotChosen = errors.New("traveler has not chosen a seat")
+var ErrIncorrectSeatNumber = errors.New("seat number is incorrect")
 
 type Error struct{}
 
@@ -132,13 +139,21 @@ func (e *Error) SeatNotChosen() (int, error) {
 }
 
 func (e *Error) InvalidStartLocation() (int, error) {
-	return http.StatusBadRequest, errors.New("start location is not in the pickup locations")
+	return http.StatusBadRequest, ErrStartPickupLocation
 }
 
 func (e *Error) InvalidPlannedStartTime() (int, error) {
-	return http.StatusBadRequest, errors.New("planned start time is in the past")
+	return http.StatusBadRequest, ErrInvalidStartTime
 }
 
 func (e *Error) InvalidEstArrivalTime() (int, error) {
-	return http.StatusBadRequest, errors.New("estimated arrival time is before the planned start time")
+	return http.StatusBadRequest, ErrInvalidEstArrivalTime
+}
+
+func (e *Error) IncorrectSeatNumber() (int, error) {
+	return http.StatusBadRequest, ErrIncorrectSeatNumber
+}
+
+func (e *Error) InvalidEmailAgencyIDPassword() (int, error) {
+	return http.StatusBadRequest, ErrInvalidEmailAgencyIDPassword
 }

@@ -8,54 +8,39 @@ import (
 )
 
 type BookingUseCase struct {
-	BookingRepo IBookingRepository
-	// TravelRepo   ITravelRepository
+	BookingRepo  IBookingRepository
+	TravelRepo   ITravelRepository
 	ErrorService IErrorService
 }
 
-func NewBookingUseCase(bookingRepo IBookingRepository, errorService IErrorService) IBookingUseCase {
+func NewBookingUseCase(bookingRepo IBookingRepository, travelRepo ITravelRepository, errorService IErrorService) IBookingUseCase {
 	return &BookingUseCase{
 		BookingRepo:  bookingRepo,
 		ErrorService: errorService,
-		// TravelRepo:   travelRepo,
+		TravelRepo:   travelRepo,
 	}
 }
 
-// Yigerem
-
 // this will make the seat reserved for 5 minutes
 func (buc *BookingUseCase) ChooseSeat(seat *Domain.Seat) (int, error) {
+	// find the travel
+	travel, err := buc.TravelRepo.ViewTravelById(seat.TravelID)
+	if err != nil {
+		return buc.ErrorService.TravelNotFound()
+	}
+
+	// check if the seat number is valid
+	if seat.SeatNo < 0 || seat.SeatNo >= travel.TotalSeats {
+		return buc.ErrorService.IncorrectSeatNumber()
+	}
+
 	// check whether the seat has been booked/chosen or not
 	isReserved, err := buc.BookingRepo.CheckSeat(seat.TravelID, int(seat.SeatNo))
-
 	if err != nil {
 		return buc.ErrorService.InternalServer()
 	}
-
 	if isReserved {
 		return buc.ErrorService.SeatReserved()
-	}
-
-	// check if the traveler has booked a seat before
-	booking, _ := buc.BookingRepo.GetBookingByTravelerID(seat.TravelerID, seat.TravelID)
-	if booking != nil {
-		return buc.ErrorService.TravelerAlreadyBooked()
-	}
-
-	// check if the traveler has chosen a seat before
-	seat, _ = buc.BookingRepo.GetSeatByTravelerID(seat.TravelerID, seat.TravelID)
-
-	// if so, delete the seat and free up the seat
-	if seat != nil {
-		err = buc.BookingRepo.DeleteSeat(seat.SeatNo)
-		if err != nil {
-			return buc.ErrorService.InternalServer()
-		}
-
-		err = buc.BookingRepo.FreeSeat(seat.TravelID, seat.SeatNo)
-		if err != nil {
-			return buc.ErrorService.InternalServer()
-		}
 	}
 
 	// reserve it for some minutes
@@ -75,23 +60,31 @@ func (buc *BookingUseCase) ChooseSeat(seat *Domain.Seat) (int, error) {
 	return buc.ErrorService.NoError()
 }
 
-// this will make the seat reserved for 30 minutes
-func (buc *BookingUseCase) Book(booking *Domain.Booking) (int, error) {
-	// check whether the seat has been booked/chosen or not
-	isReserved, err := buc.BookingRepo.CheckSeat(booking.TravelID, int(booking.SeatNo))
+func (buc *BookingUseCase) UnchooseSeat(seat *Domain.Seat) (int, error) {
+	// check if the seat exists
+	reserved, err := buc.BookingRepo.CheckSeat(seat.TravelID, seat.SeatNo)
+	if err != nil {
+		return buc.ErrorService.InternalServer()
+	}
+	if !reserved {
+		return buc.ErrorService.SeatNotChosen()
+	}
+
+	// remove the seat
+	err = buc.BookingRepo.FreeSeat(seat.TravelID, seat.SeatNo)
 	if err != nil {
 		return buc.ErrorService.InternalServer()
 	}
 
-	if isReserved {
-		return buc.ErrorService.SeatReserved()
-	}
+	return buc.ErrorService.NoError()
+}
 
-	// check if the traveler has booked a seat before
-	book, _ := buc.BookingRepo.GetBookingByTravelerID(booking.TravelerID, booking.TravelID)
-
-	if book != nil {
-		return buc.ErrorService.TravelerAlreadyBooked()
+// this will make the seat reserved for 30 minutes
+func (buc *BookingUseCase) Book(booking *Domain.Booking) (int, error) {
+	// check whether the seat has been choosen by the traveler or not
+	_, err := buc.BookingRepo.GetSeatByTravelerID(booking.TravelerID, booking.TravelID)
+	if err != nil {
+		return buc.ErrorService.SeatNotChosen()
 	}
 
 	// delete the seat
@@ -118,7 +111,6 @@ func (buc *BookingUseCase) Book(booking *Domain.Booking) (int, error) {
 	return buc.ErrorService.NoError()
 }
 
-// Yohannes
 func (buc *BookingUseCase) CancelBook(bookingID string) (int, error) {
 	err := buc.BookingRepo.CancelBook(bookingID)
 	if err != nil {

@@ -26,13 +26,14 @@ func NewTravelRepository(dbCtx context.Context, collection *mongo.Collection) Us
 	}
 }
 
-func (tr *TravelRepository) CreateTravel(travel *Domain.Travel) error {
+func (tr *TravelRepository) CreateTravel(travel *Domain.Travel) (string, error) {
 	fmt.Println("inside repo!")
-	_, err := tr.Collection.InsertOne(tr.DbCtx, travel)
+	result, err := tr.Collection.InsertOne(tr.DbCtx, travel)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
-	return err
+
+	return result.InsertedID.(primitive.ObjectID).Hex(), err
 }
 
 func (tr *TravelRepository) EditTravel(travel *Domain.Travel) error {
@@ -49,20 +50,16 @@ func (tr *TravelRepository) EditTravel(travel *Domain.Travel) error {
 	// Build the update document explicitly, excluding the _id field.
 	// Also, update the last_mod_time to the current time.
 	updateData := bson.M{
-		"agency_id":          travel.AgencyId,
 		"start_location":     travel.StartLocation,
 		"pickup_locations":   travel.PickupLocations,
 		"destination":        travel.Destination,
 		"planned_start_time": travel.PlannedStartTime,
-		"actual_start_time":  travel.ActualStartTime,
 		"est_arrival_time":   travel.EstArrivalTime,
-		"actual_arrival_time": travel.ActualArrivalTime,
 		"price":              travel.Price,
-		"notice":             travel.Notice,
-		"bus_ref":            travel.BusRef,
-		"has_pay_back":       travel.HasPayBack,
-		"driver_name":        travel.DriverName,
-		"post_time":          travel.PostTime,
+		// "notice":             travel.Notice,
+		"bus_ref": travel.BusRef,
+		// "has_pay_back":       travel.HasPayBack,
+		"driver_name": travel.DriverName,
 		// Automatically set last_mod_time to now on update
 		"last_mod_time": time.Now(),
 		"status":        travel.Status,
@@ -95,11 +92,18 @@ func (tr *TravelRepository) ViewTravelById(id string) (*Domain.Travel, error) {
 	filter := bson.M{"_id": objId}
 
 	var travel Domain.Travel
-	err = tr.Collection.FindOne(tr.DbCtx, filter).Decode(&travel)
+	res := tr.Collection.FindOne(tr.DbCtx, filter)
+
+	// we need to return an error if the travel is not found
+	if res == nil {
+		return nil, errors.New("travel not found")
+	}
+
+	err = res.Decode(&travel)
 	if err != nil {
 		return nil, err
 	}
-	// we need to return an error if the travel is not found
+
 	return &travel, nil
 }
 

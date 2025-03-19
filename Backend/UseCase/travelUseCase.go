@@ -7,30 +7,22 @@ import (
 )
 
 type TravelUseCase struct {
-	TravelRepo   ITravelRepository
-	AgencyRepo   IAgencyRepository
-	ErrorService IErrorService
+	TravelRepo      ITravelRepository
+	TravelStatsRepo ITravelStatsRepository
+	AgencyRepo      IAgencyRepository
+	ErrorService    IErrorService
 }
 
-func NewTravelUseCase(travelRepo ITravelRepository, agencyRepo IAgencyRepository, errorService IErrorService) ITravelUseCase {
+func NewTravelUseCase(travelRepo ITravelRepository, travelStatsRepo ITravelStatsRepository, agencyRepo IAgencyRepository, errorService IErrorService) ITravelUseCase {
 	return &TravelUseCase{
-		TravelRepo:   travelRepo,
-		AgencyRepo:   agencyRepo,
-		ErrorService: errorService,
+		TravelRepo:      travelRepo,
+		TravelStatsRepo: travelStatsRepo,
+		AgencyRepo:      agencyRepo,
+		ErrorService:    errorService,
 	}
 }
 
-func (tuc *TravelUseCase) CreateTravel(travel *Domain.Travel) (int, error) {
-	//check if the agency id exists
-	exists, err := tuc.AgencyRepo.CheckAgency(travel.AgencyId)
-	if err != nil {
-		return tuc.ErrorService.InternalServer()
-	}
-	if !exists {
-		return tuc.ErrorService.AgencyNotFound()
-	}
-
-	// start location must be in pick up locations
+func (tuc *TravelUseCase) TravelValidation(travel *Domain.Travel) (int, error) {
 	var found = false
 	for _, pickupLocation := range travel.PickupLocations {
 		if travel.StartLocation == pickupLocation {
@@ -43,39 +35,66 @@ func (tuc *TravelUseCase) CreateTravel(travel *Domain.Travel) (int, error) {
 		return tuc.ErrorService.InvalidStartLocation()
 	}
 
-	// ensure the travel is afterwards
+	if travel.Price < 0 {
+		return 400, fmt.Errorf("price cannot be negative")
+	}
 	if travel.PlannedStartTime.Unix() < time.Now().Unix() {
-		return tuc.ErrorService.InvalidPlannedStartTime()
+		return 400, fmt.Errorf("planned start time cannot be in the past")
+	}
+	if travel.EstArrivalTime.Unix() < travel.PlannedStartTime.Unix() {
+		return 400, fmt.Errorf("estimated arrival time cannot be before planned start time")
 	}
 
-	// ensure the trave's arrival time plan is after the start time
-	if travel.EstArrivalTime.Unix() < travel.PlannedStartTime.Unix() {
-		return tuc.ErrorService.InvalidEstArrivalTime()
+	travel.ActualStartTime = time.Time{}
+	travel.ActualArrivalTime = time.Time{}
+
+	return 200, nil
+}
+
+func (tuc *TravelUseCase) CreateTravel(travel *Domain.Travel) (int, error) {
+	//check if the agency id exists
+	exists, err := tuc.AgencyRepo.CheckAgency(travel.AgencyId)
+	if err != nil {
+		return tuc.ErrorService.InternalServer()
+	}
+	if !exists {
+		return tuc.ErrorService.AgencyNotFound()
 	}
 
 	travel.PostTime = time.Now()
 	travel.LastModTime = travel.PostTime
 	travel.Status = "upcoming"
 
-	err = tuc.TravelRepo.CreateTravel(travel)
-	fmt.Println("after!")
+	travelID, err := tuc.TravelRepo.CreateTravel(travel)
 	if err != nil {
 		return tuc.ErrorService.InternalServer()
 	}
+
+	var travelStats = Domain.TravelStats{
+		TravelID:      travelID,
+		Seats:         make([]bool, travel.TotalSeats),
+		ReservedCount: 0,
+		AvgRating:     0,
+		RatedBy:       0,
+	}
+
+	err = tuc.TravelStatsRepo.CreateTravelStats(&travelStats)
+	if err != nil {
+		return tuc.ErrorService.InternalServer()
+	}
+
 	return tuc.ErrorService.NoError()
 }
 
 // editing a travel
 func (tuc *TravelUseCase) EditTravel(travel *Domain.Travel) (int, error) {
-	//do some validations here
-	if travel.AgencyId != "" {
-	} // what do we do with the agency ID
-	if travel.Destination != "" {
-	} // what do we do with the destination
-	if travel.DriverName != "" {
-	} // what do we do with the driver name
 
-	err := tuc.TravelRepo.EditTravel(travel)
+	code, err := tuc.TravelValidation(travel)
+	if err != nil {
+		return code, err
+	}
+
+	err = tuc.TravelRepo.EditTravel(travel)
 	if err != nil {
 		return tuc.ErrorService.TravelNotFound()
 	}
