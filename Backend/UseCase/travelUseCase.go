@@ -35,13 +35,13 @@ func (tuc *TravelUseCase) TravelValidation(travel *Domain.Travel) (int, error) {
 	}
 
 	if travel.Price < 0 {
-		return 400, fmt.Errorf("price cannot be negative")
+		return tuc.ErrorService.InvalidPrice()
 	}
 	if travel.PlannedStartTime.Unix() < time.Now().Unix() {
-		return 400, fmt.Errorf("planned start time cannot be in the past")
+		return tuc.ErrorService.InvalidPlannedStartTime()
 	}
 	if travel.EstArrivalTime.Unix() < travel.PlannedStartTime.Unix() {
-		return 400, fmt.Errorf("estimated arrival time cannot be before planned start time")
+		return tuc.ErrorService.InvalidEstArrivalTime()
 	}
 
 	travel.ActualStartTime = time.Time{}
