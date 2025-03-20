@@ -8,22 +8,24 @@ import (
 )
 
 type Router struct {
-	UserController    *Controller.UserController
-	AgencyController  *Controller.AgencyController
-	TravelController  *Controller.TravelController
-	AdminController   *Controller.AdminController
-	BookingController *Controller.BookingController
-	JWTSigner         string
+	UserController        *Controller.UserController
+	AgencyController      *Controller.AgencyController
+	TravelController      *Controller.TravelController
+	AdminController       *Controller.AdminController
+	BookingController     *Controller.BookingController
+	DestinationController *Controller.DestinationController
+	JWTSigner             string
 }
 
-func NewRouter(uc *Controller.UserController, agc *Controller.AgencyController, tc *Controller.TravelController, ac *Controller.AdminController, bc *Controller.BookingController, jwtSigner string) *Router {
+func NewRouter(uc *Controller.UserController, agc *Controller.AgencyController, tc *Controller.TravelController, ac *Controller.AdminController, bc *Controller.BookingController, destinationController *Controller.DestinationController, jwtSigner string) *Router {
 	return &Router{
-		UserController:    uc,
-		AgencyController:  agc,
-		TravelController:  tc,
-		AdminController:   ac,
-		BookingController: bc,
-		JWTSigner:         jwtSigner,
+		UserController:        uc,
+		AgencyController:      agc,
+		TravelController:      tc,
+		AdminController:       ac,
+		BookingController:     bc,
+		DestinationController: destinationController,
+		JWTSigner:             jwtSigner,
 	}
 }
 

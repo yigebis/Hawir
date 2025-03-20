@@ -15,15 +15,19 @@ type AgencyController struct {
 	TokenService      UseCase.ITokenService
 	PasswordService   UseCase.IPasswordService
 	ValidationService *Infrastructure.ValidationService
+	RefresherExpiry   int64
+	WebsiteDomainName string
 }
 
-func NewAgencyController(u UseCase.IAgencyUseCase, ts UseCase.ITokenService, ps UseCase.IPasswordService, vs *Infrastructure.ValidationService) *AgencyController {
+func NewAgencyController(u UseCase.IAgencyUseCase, ts UseCase.ITokenService, ps UseCase.IPasswordService, vs *Infrastructure.ValidationService, rx int64, wsn string) *AgencyController {
 	return &AgencyController{
 		AgencyUseCase:     u,
 		V:                 validator.New(),
 		TokenService:      ts,
 		PasswordService:   ps,
 		ValidationService: vs,
+		RefresherExpiry:   rx,
+		WebsiteDomainName: wsn,
 	}
 }
 
@@ -48,7 +52,10 @@ func (agc *AgencyController) LoginAgencyAdmin(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(code, gin.H{"token": token, "refresher": refresher})
+	// set the refresher on the http-only coockie
+	ctx.SetCookie("refresher", refresher, int(agc.RefresherExpiry), "/", agc.WebsiteDomainName, false, true)
+
+	ctx.JSON(code, gin.H{"token": token})
 }
 
 func (agc *AgencyController) ResetAgencyAdminPassword(ctx *gin.Context) {

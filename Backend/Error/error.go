@@ -34,6 +34,7 @@ var ErrTravelNotFound = errors.New("travel not found")
 var ErrInvalidEstArrivalTime = errors.New("estimated arrival time is before the planned start time")
 var ErrInvalidStartTime = errors.New("planned start time is in the past")
 var ErrStartPickupLocation = errors.New("start location is not in the pickup locations")
+var ErrInvalidPrice = errors.New("price is invalid")
 
 // Agency errors
 var ErrAgencyNotFound = errors.New("agency not found")
@@ -117,6 +118,10 @@ func (e *Error) InvalidPhoneNumber() (int, error) {
 // Travel errors
 func (e *Error) TravelNotFound() (int, error) {
 	return http.StatusNotFound, ErrTravelNotFound
+}
+
+func (e *Error) InvalidPrice() (int, error) {
+	return http.StatusBadRequest, ErrInvalidPrice
 }
 
 // Agency errors

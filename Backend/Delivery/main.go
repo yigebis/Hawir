@@ -112,16 +112,15 @@ func main() {
 	buc := UseCase.NewBookingUseCase(br, tr, es)
 	duc := UseCase.NewDestinationUseCase(dr, es)
 
-
 	// setting up the controllers
-	user_controller := Controller.NewUserController(uuc, ts, oauthService, ps, vs)
-	agency_controller := Controller.NewAgencyController(aguc, ts, ps, vs)
+	user_controller := Controller.NewUserController(uuc, ts, oauthService, ps, vs, rx, websiteDomainName)
+	agency_controller := Controller.NewAgencyController(aguc, ts, ps, vs, rx, websiteDomainName)
 	travel_controller := Controller.NewTravelController(tuc)
 	admin_controller := Controller.NewAdminController(auc, vs)
 	booking_controller := Controller.NewBookingController(buc)
 	destination_controller := Controller.NewDestinationController(duc)
 
 	// setting up the router
-	router := Router.NewRouter(user_controller, agency_controller, travel_controller, admin_controller, booking_controller, jwtSecret, destination_controller)
+	router := Router.NewRouter(user_controller, agency_controller, travel_controller, admin_controller, booking_controller, destination_controller, jwtSecret)
 	router.Run()
 }

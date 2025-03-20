@@ -26,6 +26,7 @@ type IErrorService interface {
 	InvalidStartLocation() (int, error)
 	InvalidPlannedStartTime() (int, error)
 	InvalidEstArrivalTime() (int, error)
+	InvalidPrice() (int, error)
 
 	// Agency errors
 	AgencyNotFound() (int, error)
