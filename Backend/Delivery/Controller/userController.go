@@ -19,9 +19,11 @@ type UserController struct {
 	OAuthService      *Infrastructure.OAuth
 	PasswordService   UseCase.IPasswordService
 	ValidationService *Infrastructure.ValidationService
+	RefresherExpiry   int64
+	WebsiteDomainName string
 }
 
-func NewUserController(u UseCase.IUserUseCase, ts UseCase.ITokenService, oauthService *Infrastructure.OAuth, ps UseCase.IPasswordService, vs *Infrastructure.ValidationService) *UserController {
+func NewUserController(u UseCase.IUserUseCase, ts UseCase.ITokenService, oauthService *Infrastructure.OAuth, ps UseCase.IPasswordService, vs *Infrastructure.ValidationService, rx int64, wsn string) *UserController {
 	return &UserController{
 		UserUseCase:       u,
 		V:                 validator.New(),
@@ -29,6 +31,8 @@ func NewUserController(u UseCase.IUserUseCase, ts UseCase.ITokenService, oauthSe
 		OAuthService:      oauthService,
 		PasswordService:   ps,
 		ValidationService: vs,
+		RefresherExpiry:   rx,
+		WebsiteDomainName: wsn,
 	}
 }
 
@@ -144,10 +148,10 @@ func (uc *UserController) LoginByEmail(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(code, gin.H{
-		"token":     token,
-		"refresher": refresher,
-	})
+	// set the refresher on the http-only coockie
+	ctx.SetCookie("refresher", refresher, int(uc.RefresherExpiry), "/", uc.WebsiteDomainName, false, true)
+
+	ctx.JSON(code, gin.H{"token": token})
 }
 
 func (uc *UserController) LoginByPhoneNumber(ctx *gin.Context) {

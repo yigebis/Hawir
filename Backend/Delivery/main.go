@@ -109,8 +109,8 @@ func main() {
 	buc := UseCase.NewBookingUseCase(br, tr, es)
 
 	// setting up the controllers
-	user_controller := Controller.NewUserController(uuc, ts, oauthService, ps, vs)
-	agency_controller := Controller.NewAgencyController(aguc, ts, ps, vs)
+	user_controller := Controller.NewUserController(uuc, ts, oauthService, ps, vs, rx, websiteDomainName)
+	agency_controller := Controller.NewAgencyController(aguc, ts, ps, vs, rx, websiteDomainName)
 	travel_controller := Controller.NewTravelController(tuc)
 	admin_controller := Controller.NewAdminController(auc, vs)
 	booking_controller := Controller.NewBookingController(buc)
