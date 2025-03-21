@@ -1,4 +1,3 @@
-
 import React from "react";
 
 interface StatisticCardProps {
@@ -43,15 +42,15 @@ const StatisticsCards: React.FC = () => {
       <div 
         className="relative bg-cover bg-center rounded-lg overflow-hidden py-10" 
         style={{ 
-          backgroundImage: "url('/lovable-uploads/26d12b78-4b71-45eb-a1c8-205f77d2552d.png')",
+          backgroundImage: "url('../../../public/Bgimg.png')",
           backgroundSize: 'cover',
           backgroundPosition: 'center'
         }}
       >
-        <div className="absolute inset-0 bg-black bg-opacity-50"></div>
+        <div className="absolute inset-0 backdrop-blur-md bg-white/50"></div>
         <div className="relative z-10 text-center px-4 mb-6">
-          <h2 className="text-2xl font-bold text-white">Manage your travels with ease</h2>
-          <p className="text-sm text-white text-opacity-90 mt-2">Discover new destination with Hawir</p>
+          <h2 className="text-2xl font-bold text-black">Manage your travels with ease</h2>
+          <p className="text-sm text-black text-opacity-90 mt-2">Discover new destination with Hawir</p>
         </div>
         
         <div className="relative z-10 flex flex-wrap gap-4 px-6">
