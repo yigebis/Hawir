@@ -3,11 +3,13 @@ package Repository
 import (
 	"Hawir/Domain"
 	"Hawir/UseCase"
+	"errors"
 	"fmt"
 
 	"context"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -71,4 +73,27 @@ func (ur *UserRepository) DeleteUserByEmail(email string) error {
 	filter := bson.M{"email": email}
 	_, err := ur.Collection.DeleteOne(ur.DbCtx, filter)
 	return err
+}
+
+func (ur *UserRepository) GetUserById(id string) (*Domain.User, error) {
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, errors.New("invalid user ID format")
+	}
+
+	filter := bson.M{"_id": objID}
+
+	var user Domain.User
+	res := ur.Collection.FindOne(ur.DbCtx, filter)
+
+	if res == nil {
+		return nil, errors.New("user not found")
+	}
+
+	err = res.Decode(&user)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
 }

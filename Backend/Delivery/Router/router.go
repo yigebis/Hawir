@@ -50,6 +50,7 @@ func (r *Router) Run() {
 	router.GET("/email/reject", r.UserController.RejectEmail)
 	router.GET("/auth/with/google", r.UserController.LoginWithGoogle) // Redirects to Google login page
 	router.GET("/auth/callback", r.UserController.GoogleCallback)     // Handles Google callback
+	router.GET("/user/:id", r.UserController.GetUserById)
 
 	// agency authentication
 	router.POST("/agency/login", r.AgencyController.LoginAgencyAdmin)

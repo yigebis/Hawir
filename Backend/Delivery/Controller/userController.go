@@ -252,3 +252,20 @@ func (uc *UserController) GoogleCallback(ctx *gin.Context) {
 		"refresher_token": refresherToken,
 	})
 }
+
+func (uc *UserController) GetUserById(ctx *gin.Context) {
+	id := ctx.Param("id")
+
+	if id == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "missing user id"})
+		return
+	}
+
+	user, statusCode, err := uc.UserUseCase.GetUserById(id)
+	if err != nil {
+		ctx.JSON(statusCode, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(statusCode, user)
+}
