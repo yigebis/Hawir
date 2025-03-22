@@ -108,13 +108,13 @@ func (admc *AdminController) DeleteAgency(ctx *gin.Context) {
 func (admc *AdminController) GetAgency(ctx *gin.Context) {
 	id := ctx.Param("id")
 
-	travel, code, err := admc.AdminUseCase.GetAgency(id)
+	agency, code, err := admc.AdminUseCase.GetAgency(id)
 	if err != nil {
 		ctx.JSON(code, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(code, travel)
+	ctx.JSON(code, agency)
 }
 
 func (admc *AdminController) GetAllAgencies(ctx *gin.Context) {

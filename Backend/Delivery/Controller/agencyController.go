@@ -4,6 +4,7 @@ import (
 	"Hawir/Domain"
 	"Hawir/Infrastructure"
 	"Hawir/UseCase"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -80,4 +81,21 @@ func (agc *AgencyController) ResetAgencyAdminPassword(ctx *gin.Context) {
 	}
 
 	ctx.JSON(code, gin.H{"message": "password reset successful"})
+}
+
+func (agc *AgencyController) GetAgencyByIdForUser(ctx *gin.Context) {
+	id := ctx.Param("id")
+
+	if id == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "missing travel ID"})
+		return
+	}
+
+	agency, statusCode, err := agc.AgencyUseCase.GetAgencyByIdForUser(id)
+	if err != nil {
+		ctx.JSON(statusCode, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(statusCode, agency)
 }
