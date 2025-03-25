@@ -1,0 +1,150 @@
+
+/* Custom React Big Calendar Styles */
+.rbc-calendar {
+  font-family: 'Inter', sans-serif;
+}
+
+.rbc-header {
+  padding: 10px 0;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.rbc-header span {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+  border-radius: 50%;
+}
+
+.rbc-event {
+  background: transparent;
+  border: none;
+  color: inherit;
+  padding: 0;
+}
+
+.rbc-event-wrapper {
+  height: 100%;
+}
+
+.rbc-event-label {
+  display: none;
+}
+
+.rbc-time-slot {
+  font-size: 14px;
+  color: #666;
+}
+
+.rbc-label {
+  font-size: 14px;
+  color: #666;
+}
+
+.rbc-time-view {
+  border: none;
+  box-shadow: none;
+}
+
+.rbc-time-content {
+  border-top: none;
+}
+
+.rbc-time-header {
+  border-bottom: none;
+  display: none; /* Hide the default header as we're using our custom one */
+}
+
+.rbc-time-header-content {
+  border-left: none;
+}
+
+.rbc-today {
+  background-color: white;
+}
+
+.rbc-toolbar {
+  padding: 0;
+  margin-bottom: 0;
+  border-bottom: none;
+  display: none; /* Hide the default toolbar as we're using our custom one */
+}
+
+.rbc-toolbar-label {
+  font-weight: 500;
+  font-size: 16px;
+}
+
+.rbc-time-gutter .rbc-timeslot-group {
+  min-height: 50px;
+}
+
+.rbc-timeslot-group {
+  min-height: 50px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.rbc-day-slot .rbc-events-container {
+  margin-right: 0;
+}
+
+.rbc-current-time-indicator {
+  background-color: #F35B04;
+  height: 2px;
+}
+
+/* Yearly calendar view styles */
+.yearly-calendar-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  width: 100%;
+}
+
+.month-container {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.month-header {
+  font-weight: 600;
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.month-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+}
+
+.month-day {
+  height: 32px;
+  width: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 2px;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.month-day.selected {
+  background-color: #F35B04;
+  color: white;
+}
+
+.month-day.today {
+  background-color: #f3f4f6;
+}
+
+.month-day:hover {
+  background-color: #f3f4f6;
+}
+
+.month-day.empty {
+  cursor: default;
+}
