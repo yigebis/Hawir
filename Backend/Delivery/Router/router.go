@@ -34,7 +34,7 @@ func (r *Router) Run() {
 
 	// Apply CORS middleware before defining routes
 	config := cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "https://hawir.netlify.app"}, // Frontend URL
+		AllowOrigins:     []string{"http://localhost:5173", "https://hawir.netlify.app",}, // Frontend URL
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},            // HTTP methods to allow
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},            // Headers to allow
 		ExposeHeaders:    []string{"Content-Length"},                                     // Headers to expose to frontend
