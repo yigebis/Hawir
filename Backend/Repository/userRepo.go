@@ -97,3 +97,32 @@ func (ur *UserRepository) GetUserById(id string) (*Domain.User, error) {
 
 	return &user, nil
 }
+
+func (ur *UserRepository) EditUser(user *Domain.User) error {
+	objID, err := primitive.ObjectIDFromHex(user.ID.Hex())
+	if err != nil {
+		return err
+	}
+
+	filter := bson.M{"_id": objID}
+	updateData := bson.M {
+		"first_name": user.FirstName,
+		"last_name": user.LastName,
+		"email": user.Email,
+		"phone_number": user.PhoneNumber,
+		"profile_photo": user.ProfilePhoto,
+	}
+
+	update := bson.M{"$set": updateData}
+
+	result, err := ur.Collection.UpdateOne(ur.DbCtx, filter, update)
+	if err != nil {
+		return err
+	}
+
+	if result.MatchedCount == 0{
+		return errors.New("user not found")
+	}
+
+	return nil
+}
