@@ -55,6 +55,7 @@ func (r *Router) Run() {
 	// agency authentication
 	router.POST("/agency/login", r.AgencyController.LoginAgencyAdmin)
 	router.POST("/agency/password/reset", r.AgencyController.ResetAgencyAdminPassword)
+	router.GET("/agency/get/:id", r.AgencyController.GetAgencyByIdForUser)
 	// router.POST("/agency/edit", r.UserController.EditAgency)
 
 	router.POST("/travel/add", r.TravelController.CreateTravel)                //agency authorization

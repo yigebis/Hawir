@@ -4,6 +4,7 @@ import (
 	"Hawir/Domain"
 	"Hawir/UseCase"
 	"context"
+	"errors"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -168,4 +169,35 @@ func (agr *AgencyRepository) EditAgencyAdmin(admin *Domain.Admins) error {
 	}}
 	_, err := agr.AdminCollection.UpdateOne(agr.DbCtx, filter, update)
 	return err
+}
+
+func (agr *AgencyRepository) GetAgencyByIdForUser(agencyId string) (*Domain.AgencyUser, error) {
+	objId, err := primitive.ObjectIDFromHex(agencyId)
+	if err != nil {
+		return nil, errors.New("invalid agency ID format")
+	}
+
+	filter := bson.M{"_id": objId}
+	var agency Domain.Agency
+	res := agr.AgencyCollection.FindOne(agr.DbCtx, filter)
+
+	if res == nil {
+		return nil, errors.New("agency not found")
+	}
+
+	err = res.Decode(&agency)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var agencyUser Domain.AgencyUser
+	agencyUser.ID = agency.ID
+	agencyUser.Name = agency.Name
+	agencyUser.Services = agency.Services
+	agencyUser.LogoURL = agency.LogoURL
+	agencyUser.Description = agency.Description
+	agencyUser.Contact = agency.Contact
+
+	return &agencyUser, nil
 }

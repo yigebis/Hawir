@@ -93,3 +93,13 @@ func (aguc *AgencyUseCase) ResetAgencyAdminPassword(passwordReset *Domain.Passwo
 
 	return aguc.ErrorService.NoError()
 }
+
+func (aguc *AgencyUseCase) GetAgencyByIdForUser(agencyId string) (*Domain.AgencyUser, int, error) {
+	agency, err := aguc.AgencyRepo.GetAgencyByIdForUser(agencyId)
+	if err != nil {
+		statusCode, err := aguc.ErrorService.AgencyNotFound()
+		return nil, statusCode, err
+	}
+	statusCode, err := aguc.ErrorService.NoError()
+	return agency, statusCode, err
+}
