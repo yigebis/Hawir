@@ -258,3 +258,14 @@ func (uuc *UserUseCase) LoginByAuth(user *Domain.User) (string, string, int, err
 	code, err := uuc.ErrorService.NoError()
 	return accessToken, refresherToken, code, err
 }
+
+func (uuc *UserUseCase) GetUserById(id string) (*Domain.User, int, error) {
+	user, err := uuc.UserRepo.GetUserById(id)
+	if err != nil {
+		code, err := uuc.ErrorService.InternalServer()
+		return nil, code, err
+	}
+
+	code, err := uuc.ErrorService.NoError()
+	return user, code, err
+}
