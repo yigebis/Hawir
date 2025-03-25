@@ -269,3 +269,11 @@ func (uuc *UserUseCase) GetUserById(id string) (*Domain.User, int, error) {
 	code, err := uuc.ErrorService.NoError()
 	return user, code, err
 }
+
+func (uuc *UserUseCase) EditUser(user *Domain.User) (int, error) {
+	err := uuc.UserRepo.EditUser(user)
+	if err != nil {
+		return uuc.ErrorService.UserNotFound()
+	}
+	return uuc.ErrorService.NoError()
+}

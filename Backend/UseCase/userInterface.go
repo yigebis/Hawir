@@ -13,6 +13,7 @@ type IUserUseCase interface {
 	VerifyEmail(email, token string) (int, error)
 	RejectEmail(email, token string) (int, error)
 	GetUserById(id string) (*Domain.User, int, error)
+	EditUser(user *Domain.User) (int, error)
 }
 
 type IUserRepository interface {
@@ -22,6 +23,7 @@ type IUserRepository interface {
 	VerifyUser(user *Domain.User) error
 	DeleteUserByEmail(email string) error
 	GetUserById(id string) (*Domain.User, error)
+	EditUser(user *Domain.User) error
 }
 
 type IPasswordService interface {

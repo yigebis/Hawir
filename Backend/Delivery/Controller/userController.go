@@ -269,3 +269,46 @@ func (uc *UserController) GetUserById(ctx *gin.Context) {
 
 	ctx.JSON(statusCode, user)
 }
+
+func (uc *UserController) EditUser(ctx *gin.Context){
+	user := Domain.User{}
+
+	err := ctx.ShouldBindJSON(&user)
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": "invalid request payload"})
+		return
+	}
+
+	// // process other struct validation
+	// err = uc.V.Struct(user)
+	// if err != nil {
+	// 	ctx.JSON(400, gin.H{"error": "invalid request payload"})
+	// 	return
+	// }
+
+	if user.PhoneNumber != "" {
+		statusCode, err := uc.ValidationService.PhoneValidation(user.PhoneNumber) // calls the phoneValidation method and gets the status code and err
+		if err != nil {
+			ctx.JSON(statusCode, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
+	statusCode, err := uc.UserUseCase.EditUser(&user)
+	if err != nil {
+		ctx.JSON(statusCode, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(statusCode, gin.H{"message": "user edited successfully"})
+}
+
+func (uc *UserController) UpdateUserPassword(ctx *gin.Context) {
+	changeCredential := Domain.ChangeCredential{}
+	err := ctx.ShouldBindJSON(&changeCredential)
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": "invalid request payload"})
+		return
+	}
+	
+}

@@ -51,6 +51,7 @@ func (r *Router) Run() {
 	router.GET("/auth/with/google", r.UserController.LoginWithGoogle) // Redirects to Google login page
 	router.GET("/auth/callback", r.UserController.GoogleCallback)     // Handles Google callback
 	router.GET("/user/:id", r.UserController.GetUserById)
+	router.PUT("/user/edit", r.UserController.EditUser)
 
 	// agency authentication
 	router.POST("/agency/login", r.AgencyController.LoginAgencyAdmin)
