@@ -94,12 +94,34 @@ func (aguc *AgencyUseCase) ResetAgencyAdminPassword(passwordReset *Domain.Passwo
 	return aguc.ErrorService.NoError()
 }
 
-func (aguc *AgencyUseCase) GetAgencyByIdForUser(agencyId string) (*Domain.AgencyUser, int, error) {
-	agency, err := aguc.AgencyRepo.GetAgencyByIdForUser(agencyId)
+func (aguc *AgencyUseCase) GetAgency(id string) (*Domain.Agency, int, error) {
+	agency, err := aguc.AgencyRepo.GetAgency(id)
 	if err != nil {
-		statusCode, err := aguc.ErrorService.AgencyNotFound()
-		return nil, statusCode, err
+		code, err := aguc.ErrorService.AgencyNotFound()
+		return nil, code, err
 	}
-	statusCode, err := aguc.ErrorService.NoError()
-	return agency, statusCode, err
+
+	code, err := aguc.ErrorService.NoError()
+	return agency, code, err
+}
+
+func (aguc *AgencyUseCase) GetAgencyByUniqueID(id string) (*Domain.Agency, int, error) {
+	agency, err := aguc.AgencyRepo.GetAgencyByUniqueID(id)
+	if err != nil {
+		code, err := aguc.ErrorService.AgencyNotFound()
+		return nil, code, err
+	}
+
+	code, err := aguc.ErrorService.NoError()
+	return agency, code, err
+}
+func (aguc *AgencyUseCase) GetAllAgencies() (*[]Domain.Agency, int, error) {
+	agency, err := aguc.AgencyRepo.GetAllAgencies()
+	if err != nil {
+		code, err := aguc.ErrorService.AgencyNotFound()
+		return nil, code, err
+	}
+
+	code, err := aguc.ErrorService.NoError()
+	return agency, code, err
 }

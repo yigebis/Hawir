@@ -34,7 +34,7 @@ func (r *Router) Run() {
 
 	// Apply CORS middleware before defining routes
 	config := cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "https://hawir.netlify.app",}, // Frontend URL
+		AllowOrigins:     []string{"http://localhost:5173", "https://hawir.netlify.app"}, // Frontend URL
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},            // HTTP methods to allow
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},            // Headers to allow
 		ExposeHeaders:    []string{"Content-Length"},                                     // Headers to expose to frontend
@@ -52,11 +52,13 @@ func (r *Router) Run() {
 	router.GET("/auth/callback", r.UserController.GoogleCallback)     // Handles Google callback
 	router.GET("/user/:id", r.UserController.GetUserById)
 	router.PUT("/user/edit", r.UserController.EditUser)
+	router.PUT("/user/password/reset", r.UserController.ResetPassword)
 
-	// agency authentication
+	// agency endpoints
 	router.POST("/agency/login", r.AgencyController.LoginAgencyAdmin)
 	router.POST("/agency/password/reset", r.AgencyController.ResetAgencyAdminPassword)
-	router.GET("/agency/get/:id", r.AgencyController.GetAgencyByIdForUser)
+	router.GET("/agency/:id", r.AgencyController.GetAgencyByUniqueID)
+	router.GET("/agency/all", r.AgencyController.GetAllAgencies)
 	// router.POST("/agency/edit", r.UserController.EditAgency)
 
 	router.POST("/travel/add", r.TravelController.CreateTravel)                //agency authorization
@@ -70,8 +72,6 @@ func (r *Router) Run() {
 	router.POST("/agency/add", r.AdminController.AddAgency)
 	router.DELETE("/agency/delete/:id", r.AdminController.DeleteAgency)
 	router.PUT("/agency/edit/:id", r.AdminController.EditAgency)
-	router.GET("/agency/:id", r.AdminController.GetAgency)
-	router.GET("/agency/all", r.AdminController.GetAllAgencies)
 
 	//booking endpoints
 	router.POST("/booking/seat/choose", r.BookingController.ChooseSeat)

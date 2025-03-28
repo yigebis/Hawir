@@ -100,25 +100,3 @@ func (auc *AdminUseCase) DeleteAgency(id string) (int, error) {
 
 	return auc.ErrorService.NoError()
 }
-
-func (auc *AdminUseCase) GetAgency(id string) (*Domain.Agency, int, error) {
-	agency, err := auc.AgencyRepo.GetAgency(id)
-	if err != nil {
-		code, err := auc.ErrorService.AgencyNotFound()
-		return nil, code, err
-	}
-
-	code, err := auc.ErrorService.NoError()
-	return agency, code, err
-}
-
-func (auc *AdminUseCase) GetAllAgencies() (*[]Domain.Agency, int, error) {
-	agency, err := auc.AgencyRepo.GetAllAgencies()
-	if err != nil {
-		code, err := auc.ErrorService.AgencyNotFound()
-		return nil, code, err
-	}
-
-	code, err := auc.ErrorService.NoError()
-	return agency, code, err
-}

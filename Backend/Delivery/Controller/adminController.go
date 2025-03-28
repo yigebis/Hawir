@@ -12,13 +12,15 @@ import (
 
 type AdminController struct {
 	AdminUseCase      UseCase.IAdminUseCase
+	AgencyUseCase     UseCase.IAgencyUseCase
 	V                 *validator.Validate
 	passwordValidator *Infrastructure.ValidationService
 }
 
-func NewAdminController(auc UseCase.IAdminUseCase, pv *Infrastructure.ValidationService) *AdminController {
+func NewAdminController(auc UseCase.IAdminUseCase, aguc UseCase.IAgencyUseCase, pv *Infrastructure.ValidationService) *AdminController {
 	return &AdminController{
 		AdminUseCase:      auc,
+		AgencyUseCase:     aguc,
 		V:                 validator.New(),
 		passwordValidator: pv,
 	}
@@ -103,26 +105,4 @@ func (admc *AdminController) DeleteAgency(ctx *gin.Context) {
 	}
 
 	ctx.JSON(code, gin.H{"message": "agency deleted successfully"})
-}
-
-func (admc *AdminController) GetAgency(ctx *gin.Context) {
-	id := ctx.Param("id")
-
-	agency, code, err := admc.AdminUseCase.GetAgency(id)
-	if err != nil {
-		ctx.JSON(code, gin.H{"error": err.Error()})
-		return
-	}
-
-	ctx.JSON(code, agency)
-}
-
-func (admc *AdminController) GetAllAgencies(ctx *gin.Context) {
-	agencies, code, err := admc.AdminUseCase.GetAllAgencies()
-	if err != nil {
-		ctx.JSON(code, gin.H{"error": err.Error()})
-		return
-	}
-
-	ctx.JSON(code, agencies)
 }

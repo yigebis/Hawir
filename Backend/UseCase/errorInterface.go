@@ -9,7 +9,7 @@ type IErrorService interface {
 	InvalidToken() (int, error)
 	UserNotFound() (int, error)
 	InvalidEmailPassword() (int, error)
-	InvalidUserNamePassword() (int, error)
+	// InvalidUserNamePassword() (int, error)
 	InvalidEmailRefresher() (int, error)
 	NotVerified() (int, error)
 	SamePassword() (int, error)
@@ -17,6 +17,7 @@ type IErrorService interface {
 	PasswordTooShort() (int, error)
 	MissingValidPasswordChar() (int, error)
 	InvalidPhoneNumber() (int, error)
+	InvalidName() (int, error)
 
 	// agency user errors
 	InvalidEmailAgencyIDPassword() (int, error)
