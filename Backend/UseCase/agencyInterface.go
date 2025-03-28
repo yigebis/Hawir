@@ -9,7 +9,9 @@ import (
 type IAgencyUseCase interface {
 	LoginAgencyAdmin(credentials *Domain.AgencyAdminCredentials) (string, string, int, error)
 	ResetAgencyAdminPassword(passwordReset *Domain.PasswordReset) (int, error)
-	GetAgencyByIdForUser(agencyId string) (*Domain.AgencyUser, int, error)
+	GetAllAgencies() (*[]Domain.Agency, int, error)
+	GetAgency(id string) (*Domain.Agency, int, error)
+	GetAgencyByUniqueID(id string) (*Domain.Agency, int, error)
 }
 
 type IAgencyRepository interface {
@@ -24,5 +26,4 @@ type IAgencyRepository interface {
 	GetAgencyByUniqueID(uniqueID string) (*Domain.Agency, error)
 	GetAgencyAdmin(email string) (*Domain.Admins, error)
 	ResetAgencyAdminPassword(primitive.ObjectID, string) error
-	GetAgencyByIdForUser(agencyId string) (*Domain.AgencyUser, error)
 }

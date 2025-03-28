@@ -14,6 +14,7 @@ import (
 
 type UserController struct {
 	UserUseCase       UseCase.IUserUseCase
+	AgencyUseCase     UseCase.IAgencyUseCase
 	V                 *validator.Validate
 	TokenService      UseCase.ITokenService
 	OAuthService      *Infrastructure.OAuth
@@ -23,7 +24,7 @@ type UserController struct {
 	WebsiteDomainName string
 }
 
-func NewUserController(u UseCase.IUserUseCase, ts UseCase.ITokenService, oauthService *Infrastructure.OAuth, ps UseCase.IPasswordService, vs *Infrastructure.ValidationService, rx int64, wsn string) *UserController {
+func NewUserController(u UseCase.IUserUseCase, auc UseCase.IAgencyUseCase, ts UseCase.ITokenService, oauthService *Infrastructure.OAuth, ps UseCase.IPasswordService, vs *Infrastructure.ValidationService, rx int64, wsn string) *UserController {
 	return &UserController{
 		UserUseCase:       u,
 		V:                 validator.New(),
@@ -52,6 +53,16 @@ func (uc *UserController) Register(ctx *gin.Context) {
 		return
 	}
 
+	// validate the names
+	if code, err := uc.ValidationService.NameValidation(user.FirstName); err != nil {
+		ctx.JSON(code, gin.H{"error": err.Error()})
+		return
+	}
+	if code, err := uc.ValidationService.NameValidation(user.LastName); err != nil {
+		ctx.JSON(code, gin.H{"error": err.Error()})
+		return
+	}
+
 	//validate password
 	statusCode, err := uc.ValidationService.ValidatePassword(user.Password)
 	if err != nil {
@@ -60,23 +71,23 @@ func (uc *UserController) Register(ctx *gin.Context) {
 	}
 
 	//validate login preference
-	if user.LoginPreference == "email" && user.Email == "" {
-		ctx.JSON(400, gin.H{"error": "email is required"})
-		return
-	}
+	// if user.LoginPreference == "email" && user.Email == "" {
+	// 	ctx.JSON(400, gin.H{"error": "email is required"})
+	// 	return
+	// }
 
-	if user.LoginPreference == "phone_number" {
-		if user.PhoneNumber == "" {
-			ctx.JSON(400, gin.H{"error": "phone is required"})
-			return
-		}
+	// if user.LoginPreference == "phone_number" {
+	// 	if user.PhoneNumber == "" {
+	// 		ctx.JSON(400, gin.H{"error": "phone is required"})
+	// 		return
+	// 	}
 
-		statusCode, err = uc.ValidationService.PhoneValidation(user.PhoneNumber) // calls the phoneValidation method and gets the status code and err
-		if err != nil {
-			ctx.JSON(statusCode, gin.H{"error": err.Error()})
-			return
-		}
-	}
+	// 	statusCode, err = uc.ValidationService.PhoneValidation(user.PhoneNumber) // calls the phoneValidation method and gets the status code and err
+	// 	if err != nil {
+	// 		ctx.JSON(statusCode, gin.H{"error": err.Error()})
+	// 		return
+	// 	}
+	// }
 
 	if user.Email != "" && user.PhoneNumber != "" {
 		ctx.JSON(400, gin.H{"error": "both email and phone number aren't allowed at registration time"})
@@ -270,8 +281,8 @@ func (uc *UserController) GetUserById(ctx *gin.Context) {
 	ctx.JSON(statusCode, user)
 }
 
-func (uc *UserController) EditUser(ctx *gin.Context){
-	user := Domain.User{}
+func (uc *UserController) EditUser(ctx *gin.Context) {
+	user := Domain.UserProfile{}
 
 	err := ctx.ShouldBindJSON(&user)
 	if err != nil {
@@ -279,20 +290,28 @@ func (uc *UserController) EditUser(ctx *gin.Context){
 		return
 	}
 
-	// // process other struct validation
-	// err = uc.V.Struct(user)
-	// if err != nil {
-	// 	ctx.JSON(400, gin.H{"error": "invalid request payload"})
-	// 	return
-	// }
+	// validate the names
+	if code, err := uc.ValidationService.NameValidation(user.FirstName); err != nil {
+		ctx.JSON(code, gin.H{"error": err.Error()})
+		return
+	}
 
-	if user.PhoneNumber != "" {
-		statusCode, err := uc.ValidationService.PhoneValidation(user.PhoneNumber) // calls the phoneValidation method and gets the status code and err
+	if code, err := uc.ValidationService.NameValidation(user.LastName); err != nil {
+		ctx.JSON(code, gin.H{"error": err.Error()})
+		return
+	}
+
+	// validate the favourite agencies whether the agencies exist or not
+	for _, agencyID := range user.FavouriteAgencies {
+		_, code, err := uc.AgencyUseCase.GetAgencyByUniqueID(agencyID)
 		if err != nil {
-			ctx.JSON(statusCode, gin.H{"error": err.Error()})
+			ctx.JSON(code, gin.H{"error": err.Error()})
 			return
 		}
 	}
+
+	// email validation
+	// phone number validation
 
 	statusCode, err := uc.UserUseCase.EditUser(&user)
 	if err != nil {
@@ -303,12 +322,27 @@ func (uc *UserController) EditUser(ctx *gin.Context){
 	ctx.JSON(statusCode, gin.H{"message": "user edited successfully"})
 }
 
-func (uc *UserController) UpdateUserPassword(ctx *gin.Context) {
+func (uc *UserController) ResetPassword(ctx *gin.Context) {
 	changeCredential := Domain.ChangeCredential{}
+	// validate the credential struct
 	err := ctx.ShouldBindJSON(&changeCredential)
 	if err != nil {
 		ctx.JSON(400, gin.H{"error": "invalid request payload"})
 		return
 	}
-	
+
+	// validate the new passwords
+	statusCode, err := uc.ValidationService.ValidatePassword(changeCredential.NewPassword)
+	if err != nil {
+		ctx.JSON(statusCode, gin.H{"error": err.Error()})
+		return
+	}
+
+	statusCode, err = uc.UserUseCase.ResetPassword(&changeCredential)
+	if err != nil {
+		ctx.JSON(statusCode, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(statusCode, gin.H{"message": "password reset successfully"})
 }

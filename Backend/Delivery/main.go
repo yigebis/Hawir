@@ -113,10 +113,10 @@ func main() {
 	duc := UseCase.NewDestinationUseCase(dr, es)
 
 	// setting up the controllers
-	user_controller := Controller.NewUserController(uuc, ts, oauthService, ps, vs, rx, websiteDomainName)
+	user_controller := Controller.NewUserController(uuc, aguc, ts, oauthService, ps, vs, rx, websiteDomainName)
 	agency_controller := Controller.NewAgencyController(aguc, ts, ps, vs, rx, websiteDomainName)
 	travel_controller := Controller.NewTravelController(tuc)
-	admin_controller := Controller.NewAdminController(auc, vs)
+	admin_controller := Controller.NewAdminController(auc, aguc, vs)
 	booking_controller := Controller.NewBookingController(buc)
 	destination_controller := Controller.NewDestinationController(duc)
 

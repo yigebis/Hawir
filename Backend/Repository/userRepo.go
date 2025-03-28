@@ -98,18 +98,19 @@ func (ur *UserRepository) GetUserById(id string) (*Domain.User, error) {
 	return &user, nil
 }
 
-func (ur *UserRepository) EditUser(user *Domain.User) error {
+func (ur *UserRepository) EditUser(user *Domain.UserProfile) error {
 	objID, err := primitive.ObjectIDFromHex(user.ID.Hex())
 	if err != nil {
 		return err
 	}
 
 	filter := bson.M{"_id": objID}
-	updateData := bson.M {
-		"first_name": user.FirstName,
-		"last_name": user.LastName,
-		"email": user.Email,
-		"phone_number": user.PhoneNumber,
+	updateData := bson.M{
+		"first_name":         user.FirstName,
+		"last_name":          user.LastName,
+		"favourite_agencies": user.FavouriteAgencies,
+		// "email": user.Email,
+		// "phone_number": user.PhoneNumber,
 		"profile_photo": user.ProfilePhoto,
 	}
 
@@ -120,9 +121,22 @@ func (ur *UserRepository) EditUser(user *Domain.User) error {
 		return err
 	}
 
-	if result.MatchedCount == 0{
+	if result.MatchedCount == 0 {
 		return errors.New("user not found")
 	}
 
 	return nil
+}
+
+func (ur *UserRepository) ChangePassword(id primitive.ObjectID, password string) error {
+	filter := bson.M{"_id": id}
+	update := bson.M{"$set": bson.M{"password": password}}
+
+	result, err := ur.Collection.UpdateOne(ur.DbCtx, filter, update)
+
+	if result.MatchedCount == 0 {
+		return errors.New("user not found")
+	}
+
+	return err
 }

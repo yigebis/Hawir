@@ -15,7 +15,8 @@ var ErrPendingVerification = errors.New("registration is waiting email verificat
 var ErrInvalidToken = errors.New("invalid token")
 var ErrUserNotFound = errors.New("not found")
 var ErrInvalidEmailPassword = errors.New("invalid email or password")
-var ErrInvalidUserNamePassword = errors.New("invalid username or password")
+
+// var ErrInvalidUserNamePassword = errors.New("invalid username or password")
 var ErrInvalidEmailRefresher = errors.New("invalid email or refresher")
 var ErrNotVerified = errors.New("unverified user")
 var ErrSamePassword = errors.New("old and new password should be different")
@@ -25,6 +26,7 @@ var ErrPasswordTooShort = errors.New("password should be at least 8 characters")
 var ErrMissingValidPasswordChar = errors.New("password should contain at least one uppercase, one lowercase, one number, and one special character")
 
 var ErrInvalidPhoneNumber = errors.New("invalid Phone Number")
+var ErrInvalidName = errors.New("invalid name")
 
 // agency user errors
 var ErrInvalidEmailAgencyIDPassword = errors.New("invalid email or agency ID or password")
@@ -83,9 +85,9 @@ func (e *Error) InvalidEmailPassword() (int, error) {
 	return http.StatusBadRequest, ErrInvalidEmailPassword
 }
 
-func (e *Error) InvalidUserNamePassword() (int, error) {
-	return http.StatusBadRequest, ErrInvalidUserNamePassword
-}
+// func (e *Error) InvalidUserNamePassword() (int, error) {
+// 	return http.StatusBadRequest, ErrInvalidUserNamePassword
+// }
 
 func (e *Error) InvalidEmailRefresher() (int, error) {
 	return http.StatusBadRequest, ErrInvalidEmailRefresher
@@ -113,6 +115,10 @@ func (e *Error) MissingValidPasswordChar() (int, error) {
 
 func (e *Error) InvalidPhoneNumber() (int, error) {
 	return http.StatusBadRequest, ErrInvalidPhoneNumber
+}
+
+func (e *Error) InvalidName() (int, error) {
+	return http.StatusBadRequest, ErrInvalidName
 }
 
 // Travel errors

@@ -270,10 +270,53 @@ func (uuc *UserUseCase) GetUserById(id string) (*Domain.User, int, error) {
 	return user, code, err
 }
 
-func (uuc *UserUseCase) EditUser(user *Domain.User) (int, error) {
+func (uuc *UserUseCase) EditUser(user *Domain.UserProfile) (int, error) {
 	err := uuc.UserRepo.EditUser(user)
 	if err != nil {
 		return uuc.ErrorService.UserNotFound()
 	}
+	return uuc.ErrorService.NoError()
+}
+
+func (uuc *UserUseCase) ResetPassword(credential *Domain.ChangeCredential) (int, error) {
+	// get the user from the database
+	user, err := uuc.UserRepo.GetUserByEmail(credential.Email)
+	if err != nil {
+		return uuc.ErrorService.InvalidEmailPassword()
+	}
+
+	// check if the user is verified
+	if !user.Verified {
+		return uuc.ErrorService.PendingVerification()
+	}
+
+	// check if the old password is empty and user's password is also empty
+	var empty1, empty2 = 0, 0
+	if user.Password == "" {
+		empty1 = 1
+	}
+	if credential.OldPassword == "" {
+		empty2 = 1
+	}
+	if empty1^empty2 == 1 {
+		return uuc.ErrorService.InvalidEmailPassword()
+	}
+
+	// check if the old password is correct
+	if uuc.PasswordService.VerifyPassword(user.Password, credential.OldPassword) != nil {
+		return uuc.ErrorService.InvalidEmailPassword()
+	}
+
+	// hash the new password
+	hashedPassword, err := uuc.PasswordService.HashPassword(credential.NewPassword)
+	if err != nil {
+		return uuc.ErrorService.InternalServer()
+	}
+
+	err = uuc.UserRepo.ChangePassword(user.ID, hashedPassword)
+	if err != nil {
+		return uuc.ErrorService.InternalServer()
+	}
+
 	return uuc.ErrorService.NoError()
 }
