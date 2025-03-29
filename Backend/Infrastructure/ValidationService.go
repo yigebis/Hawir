@@ -58,7 +58,7 @@ func (vs *ValidationService) PhoneValidation(phoneNumber string) (int, error) {
 
 func (vs *ValidationService) NameValidation(name string) (int, error) {
 	for _, ch := range name {
-		if ch < 'a' || ch > 'z' {
+		if !((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')) {
 			return vs.ErrorService.InvalidName()
 		}
 	}
