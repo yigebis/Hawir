@@ -223,3 +223,36 @@ func (b *BookingRepository) GetAllBookings(travelID string) (*[]Domain.Booking, 
 
 	return &bookings, nil
 }
+
+func (b *BookingRepository) GetBookingsForTraveler(travlerID string) (*[]Domain.Booking, error) {
+	// objID, err := primitive.ObjectIDFromHex(travlerID)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	filter := bson.M{"traveler_id": travlerID}
+
+	var bookings []Domain.Booking
+
+	cursor, err := b.BookingCollection.Find(b.DbCtx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	defer cursor.Close(b.DbCtx)
+	for cursor.Next(b.DbCtx) {
+		var booking Domain.Booking
+		err := cursor.Decode(&booking)
+		if err != nil {
+			return nil, err
+		}
+
+		bookings = append(bookings, booking)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return &bookings, nil
+}
