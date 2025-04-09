@@ -42,7 +42,7 @@ func (agc *AgencyController) LoginAgencyAdmin(ctx *gin.Context) {
 
 	code, err := agc.ValidationService.ValidatePassword(credentials.Password)
 	if err != nil {
-		ctx.JSON(code, gin.H{"error": "invalid password"})
+		ctx.JSON(code, gin.H{"error": "invalid email or agencyId or password"})
 		return
 	}
 

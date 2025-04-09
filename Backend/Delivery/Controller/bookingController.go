@@ -145,11 +145,11 @@ func (bc *BookingController) GetBooking(ctx *gin.Context) {
 }
 
 func (bc *BookingController) GetAllBookings(ctx *gin.Context) {
-	travelID := ctx.Param("id")
+	travelID := ctx.Param("travelId")
 
 	if travelID == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "missing travel ID"})
-
+		return
 	}
 
 	bookings, statusCode, err := bc.BookingUseCase.GetAllBookings(travelID)
