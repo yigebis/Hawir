@@ -1,0 +1,81 @@
+.recent-activity {
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 0 15px;
+  border-radius: 8px;
+  margin: 0;
+  width: 100%;
+}
+
+/* Header section */
+.recent-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.recent-header h3 {
+  margin: 0;
+}
+
+.addTrip {
+  background: #2a7f24;
+  color: #ffffff;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.addTrip:hover {
+  background: #25691e;
+}
+
+/* Trip card styling */
+.trip-card {
+  border: 1px solid #2a7f24;
+  border-radius: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  margin: 5px 0;
+}
+
+.trip-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.trip-title {
+  margin-bottom: 5px;
+}
+
+.trip-card p {
+  margin: 3px 0;
+}
+
+/* Price styling */
+.trip-price {
+  font-weight: bold;
+  color: black;
+  white-space: nowrap;
+}
+
+/* View All Button */
+.view-all {
+  background: none;
+  color: black;
+  padding: 10px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  align-self: flex-end; /* Align to bottom right */
+}
+
+.view-all:hover {
+  text-decoration: underline;
+}

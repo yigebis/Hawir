@@ -1,14 +1,14 @@
 import React from 'react'
-import Header from '../Components/Header';
+import TravelerHeader from '../Components/TravelerHeader';
 import Footer from '../Components/Footer';
 
 function TravelView() {
   return (
     <div>
-          <Header />
-          <Footer />
+      <TravelerHeader />
+      <Footer />
     </div>
-  )
+  );
 }
 
 export default TravelView;

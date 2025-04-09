@@ -1,0 +1,22 @@
+.stats{
+  display: flex;
+  justify-content: space-between;
+  margin: 30px 0;
+  gap: 20px;
+}
+
+.stats-card {
+  flex: 1;
+  text-align: center;
+  padding: 15px;
+  border-radius: 8px;
+  font-weight: bold;
+  /* color: white; */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+}
+
+.stascardRed { color: red; }
+.stascardGreen { color: green; }
+.stascardOrange { color: orange; }
+.stascardGray { color: gray; }

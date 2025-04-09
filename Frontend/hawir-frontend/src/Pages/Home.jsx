@@ -1,8 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import './Home.css';
-import hawirLogo from "./assets/logo.jpg";
-import bus from "./assets/Bus.png";
+import '../styles/Home.css';
+import hawirLogo from "../assets/logo.jpg";
+import bus from "../assets/Bus.png";
+import Footer from '../Components/Footer';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -16,7 +17,7 @@ const Home = () => {
             src={hawirLogo}
             alt="HaWir Logo"
           />
-          <span>HAWIR</span>
+          <span>HAWIR</span>    
         </div>
         <ul className="nav-links">
           <li><a href="/">Home</a></li>
@@ -49,6 +50,8 @@ const Home = () => {
           />
         </div>
       </div>
+      {/*footer*/}
+      <Footer />
     </div>
   );
 };

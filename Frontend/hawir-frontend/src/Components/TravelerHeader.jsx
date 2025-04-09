@@ -1,9 +1,9 @@
 import React from "react";
 import hawirLogo from "../assets/logo.jpg";
-import "../Styles/Header.css";
+import "../Styles/TravelerHeader.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
-const Header = () => {
+const TravelerHeader = () => {
   return (
     <header className="header container">
       <div className="logo container1">
@@ -43,4 +43,4 @@ const Header = () => {
   );
 };
 
-export default Header;
+export default TravelerHeader;

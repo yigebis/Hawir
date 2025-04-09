@@ -4,8 +4,8 @@ import Login from "./Pages/Login";
 import Registration from "./Pages/Registration";
 import MessagePage from "./Pages/MessagePage";
 import Home from "./Pages/Home";
-import TravelView from "./Pages/TravelView";
-// import Dashboard from "./Dashboard"; // Example: A protected route after login
+import TravelView from "./Pages/TravelView"; //
+import MainDashboard from "./Pages/Agency/MainDashboard"; // Example: A protected route after login
 
 const App = () => {
   return (
@@ -15,8 +15,8 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Registration />} />
         <Route path="/message" element={<MessagePage />} />
-        <Route path="/travelview" element={<TravelView />} />
-        {/* <Route path="/dashboard" element={<Dashboard />} /> */}
+        {/* <Route path="/travelview" element={<TravelView />} /> */}
+        <Route path="/Maindashboard/*" element={<MainDashboard />} />
       </Routes>
     </Router>
   );
