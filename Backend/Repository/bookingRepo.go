@@ -192,12 +192,7 @@ func (b *BookingRepository) GetBookingByTravelerID(travelerID, travelID string) 
 
 // GetAllBookings implements UseCase.IBookingRepository.
 func (b *BookingRepository) GetAllBookings(travelID string) (*[]Domain.Booking, error) {
-	objID, err := primitive.ObjectIDFromHex(travelID)
-	if err != nil {
-		return nil, err
-	}
-
-	filter := bson.M{"travel_id": objID}
+	filter := bson.M{"travel_id": travelID}
 
 	var bookings []Domain.Booking
 
@@ -225,11 +220,6 @@ func (b *BookingRepository) GetAllBookings(travelID string) (*[]Domain.Booking, 
 }
 
 func (b *BookingRepository) GetBookingsForTraveler(travlerID string) (*[]Domain.Booking, error) {
-	// objID, err := primitive.ObjectIDFromHex(travlerID)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
 	filter := bson.M{"traveler_id": travlerID}
 
 	var bookings []Domain.Booking
