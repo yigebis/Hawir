@@ -52,7 +52,7 @@ func (r *Router) Run() {
 	router.GET("/auth/callback", r.UserController.GoogleCallback)     // Handles Google callback
 	router.GET("/user/:id", r.UserController.GetUserById)
 	router.PUT("/user/edit", r.UserController.EditUser)
-	router.PUT("/user/password/reset", r.UserController.ResetPassword)
+	router.PUT("/user/password/reset/asd", r.UserController.ResetPassword)
 
 	// agency endpoints
 	router.POST("/agency/login", r.AgencyController.LoginAgencyAdmin)
