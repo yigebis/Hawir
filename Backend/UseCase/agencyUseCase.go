@@ -71,7 +71,6 @@ func (aguc *AgencyUseCase) ResetAgencyAdminPassword(passwordReset *Domain.Passwo
 	if err != nil {
 		return aguc.ErrorService.InvalidEmailAgencyIDPassword()
 	}
-
 	// verify the password
 	if aguc.PasswordService.VerifyPassword(agency.Password, passwordReset.OldPassword) != nil {
 		return aguc.ErrorService.InvalidEmailAgencyIDPassword()
@@ -83,10 +82,7 @@ func (aguc *AgencyUseCase) ResetAgencyAdminPassword(passwordReset *Domain.Passwo
 		return aguc.ErrorService.InternalServer()
 	}
 
-	// update the password
-	agency.Password = newHashedPassword
-	err = aguc.AgencyRepo.ResetAgencyAdminPassword(agency.ID, agency.Password)
-
+	err = aguc.AgencyRepo.ResetAgencyAdminPassword(agency.UniqueID, newHashedPassword)
 	if err != nil {
 		return aguc.ErrorService.InternalServer()
 	}

@@ -3,7 +3,7 @@ package UseCase
 import (
 	"Hawir/Domain"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	// "go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type IAgencyUseCase interface {
@@ -25,6 +25,6 @@ type IAgencyRepository interface {
 	EditAgencyAdmin(admin *Domain.Admins) error
 	GetAgencyByUniqueID(uniqueID string) (*Domain.Agency, error)
 	GetAgencyAdmin(email string) (*Domain.Admins, error)
-	ResetAgencyAdminPassword(primitive.ObjectID, string) error
 	GetAgencyForUserById(string) (*Domain.AgencyDisplay, error)
+	ResetAgencyAdminPassword(string, string) error
 }

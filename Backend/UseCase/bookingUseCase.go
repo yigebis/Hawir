@@ -152,3 +152,14 @@ func (buc *BookingUseCase) GetAllBookings(travelID string) (*[]Domain.Booking, i
 	statusCode, err := buc.ErrorService.NoError()
 	return bookings, statusCode, err
 }
+
+func (buc *BookingUseCase) GetBookingsForTraveler(travelerID string) (*[]Domain.Booking, int, error) {
+	bookings, err := buc.BookingRepo.GetBookingsForTraveler(travelerID)
+	if err != nil {
+		statusCode, err := buc.ErrorService.TravelNotFound()
+		return nil, statusCode, err
+	}
+
+	statusCode, err := buc.ErrorService.NoError()
+	return bookings, statusCode, err
+}

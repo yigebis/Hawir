@@ -14,6 +14,7 @@ type IBookingUseCase interface {
 	EditBook(booking *Domain.Booking) (int, error)
 	GetBooking(bookingID string) (*Domain.Booking, int, error)
 	GetAllBookings(travelID string) (*[]Domain.Booking, int, error)
+	GetBookingsForTraveler(travelerID string) (*[]Domain.Booking, int, error)
 }
 
 type IBookingRepository interface {
@@ -29,4 +30,5 @@ type IBookingRepository interface {
 	GetBooking(bookingID string) (*Domain.Booking, error)
 	GetBookingByTravelerID(travelerID string, travelID string) (*Domain.Booking, error)
 	GetAllBookings(travelID string) (*[]Domain.Booking, error)
+	GetBookingsForTraveler(travelerID string) (*[]Domain.Booking, error)
 }

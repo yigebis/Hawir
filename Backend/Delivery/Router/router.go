@@ -35,7 +35,7 @@ func (r *Router) Run() {
 
 	// Apply CORS middleware before defining routes
 	config := cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "https://hawir.netlify.app"}, // Frontend URL
+		AllowOrigins:     []string{"http://localhost:5173", "https://hawir.netlify.app", "http://localhost:8081","http://localhost:63966"}, // Frontend URL
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},            // HTTP methods to allow
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},            // Headers to allow
 		ExposeHeaders:    []string{"Content-Length"},                                     // Headers to expose to frontend
@@ -84,6 +84,7 @@ func (r *Router) Run() {
 	router.DELETE("/booking/cancel", r.BookingController.CancelBook)
 	router.GET("/booking/:id", r.BookingController.GetBooking)
 	router.GET("/booking/all/:travelId", r.BookingController.GetAllBookings)
+	router.GET("/booking/traveler/:travelerId", r.BookingController.GetBookingsForTraveler)
 
 	//destination endpoints
 	router.POST("/destination/add", r.DestinationController.AddDestination)
