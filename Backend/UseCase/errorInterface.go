@@ -18,6 +18,11 @@ type IErrorService interface {
 	MissingValidPasswordChar() (int, error)
 	InvalidPhoneNumber() (int, error)
 	InvalidName() (int, error)
+	UnableToOpenFile() (int, error)
+	UnableToCreateFile() (int, error)
+	UnableToSeekFile() (int, error)
+	UnableToCopyFile() (int, error)
+	UnableToUploadFile() (int, error)
 
 	// agency user errors
 	InvalidEmailAgencyIDPassword() (int, error)

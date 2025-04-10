@@ -30,6 +30,13 @@ type UserProfile struct {
 	FavouriteAgencies []string `json:"favourite_agencies" bson:"favourite_agencies"`
 }
 
+type UserDisplay struct {
+	ID           primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	FirstName    string             `json:"first_name" bson:"first_name" validate:"required,min=1,max=50"`
+	LastName     string             `json:"last_name" bson:"last_name" validate:"required,min=1,max=50"`
+	ProfilePhoto string             `json:"profile_photo" bson:"profile_photo"`
+}
+
 type EmailCredential struct {
 	Email    string `json:"email" bson:"email" validate:"required,email"`
 	Password string `json:"password" bson:"password" validate:"required"`

@@ -2,6 +2,7 @@ package Router
 
 import (
 	"Hawir/Delivery/Controller"
+	"Hawir/Infrastructure"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -51,11 +52,14 @@ func (r *Router) Run() {
 	router.GET("/auth/with/google", r.UserController.LoginWithGoogle) // Redirects to Google login page
 	router.GET("/auth/callback", r.UserController.GoogleCallback)     // Handles Google callback
 	router.GET("/user/:id", r.UserController.GetUserById)
-	router.PUT("/user/edit", r.UserController.EditUser)
-	router.PUT("/user/password/reset", r.UserController.ResetPassword)
+
+	router.GET("/user/my/:id", Infrastructure.UserMiddleware(r.JWTSigner), r.UserController.MyProfile)             //user middleware
+	router.PUT("/user/edit", Infrastructure.UserMiddleware(r.JWTSigner), r.UserController.EditUser)                //user middleware
+	router.PUT("/user/password/reset", Infrastructure.UserMiddleware(r.JWTSigner), r.UserController.ResetPassword) //user middleware
 
 	// agency endpoints
 	router.POST("/agency/login", r.AgencyController.LoginAgencyAdmin)
+
 	router.POST("/agency/password/reset", r.AgencyController.ResetAgencyAdminPassword)
 	router.GET("/agency/:id", r.AgencyController.GetAgencyByUniqueID)
 	router.GET("/agency/all", r.AgencyController.GetAllAgencies)

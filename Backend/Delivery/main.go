@@ -86,6 +86,7 @@ func main() {
 	timeService := Infrastructure.NewTimeService()
 	ms := Infrastructure.NewMailService(os.Getenv("SENDER_EMAIL"), os.Getenv("EMAIL_PASSWORD"), os.Getenv("FROM"), websiteDomainName)
 	vs := Infrastructure.NewValidationService(es)
+	cs := Infrastructure.NewCloudinaryService()
 
 	email_duration := os.Getenv("EMAIL_EXPIRY")
 	token_duration := os.Getenv("TOKEN_EXPIRY")
@@ -105,7 +106,7 @@ func main() {
 
 	oauthService := Infrastructure.NewOAuth(oauthState, oauthClientID, oauthClientSecret, websiteDomainName)
 
-	uuc := UseCase.NewUserUseCase(ur, ps, ts, ms, es, ex, tx, rx)
+	uuc := UseCase.NewUserUseCase(ur, ps, ts, ms, es, cs, ex, tx, rx)
 	aguc := UseCase.NewAgencyUseCase(agr, ps, ts, es, ex, tx, rx)
 	tuc := UseCase.NewTravelUseCase(tr, tsr, agr, es)
 	auc := UseCase.NewAdminUseCase(agr, ps, es)

@@ -171,7 +171,7 @@ func (agr *AgencyRepository) EditAgencyAdmin(admin *Domain.Admins) error {
 	return err
 }
 
-func (agr *AgencyRepository) GetAgencyByIdForUser(agencyId string) (*Domain.AgencyUser, error) {
+func (agr *AgencyRepository) GetAgencyForUserById(agencyId string) (*Domain.AgencyDisplay, error) {
 	objId, err := primitive.ObjectIDFromHex(agencyId)
 	if err != nil {
 		return nil, errors.New("invalid agency ID format")
@@ -191,13 +191,13 @@ func (agr *AgencyRepository) GetAgencyByIdForUser(agencyId string) (*Domain.Agen
 		return nil, err
 	}
 
-	var agencyUser Domain.AgencyUser
-	agencyUser.ID = agency.ID
-	agencyUser.Name = agency.Name
-	agencyUser.Services = agency.Services
-	agencyUser.LogoURL = agency.LogoURL
-	agencyUser.Description = agency.Description
-	agencyUser.Contact = agency.Contact
+	var agencyDisplay Domain.AgencyDisplay
+	agencyDisplay.ID = agency.ID
+	agencyDisplay.Name = agency.Name
+	agencyDisplay.Services = agency.Services
+	agencyDisplay.LogoURL = agency.LogoURL
+	agencyDisplay.Description = agency.Description
+	agencyDisplay.Contact = agency.Contact
 
-	return &agencyUser, nil
+	return &agencyDisplay, nil
 }

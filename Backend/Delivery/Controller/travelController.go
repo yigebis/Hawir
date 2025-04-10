@@ -103,7 +103,7 @@ func (tc *TravelController) SearchTravel(ctx *gin.Context) {
 	searchParams.AgencyID = ctx.Query("agency_id")
 	searchParams.Destination = ctx.Query("destination")
 	searchParams.StartLocation = ctx.Query("start_location")
-	searchParams.HasPayBack = ctx.Query("has_payback") == "true"
+	// searchParams.HasPayBack = ctx.Query("has_payback") == "true"
 	searchParams.PriceMin = ctx.Query("price_min")
 	searchParams.PriceMax = ctx.Query("price_max")
 
