@@ -25,5 +25,6 @@ type IAgencyRepository interface {
 	EditAgencyAdmin(admin *Domain.Admins) error
 	GetAgencyByUniqueID(uniqueID string) (*Domain.Agency, error)
 	GetAgencyAdmin(email string) (*Domain.Admins, error)
+	GetAgencyForUserById(string) (*Domain.AgencyDisplay, error)
 	ResetAgencyAdminPassword(string, string) error
 }

@@ -48,14 +48,14 @@ func (aguc *AgencyUseCase) LoginAgencyAdmin(credentials *Domain.AgencyAdminCrede
 	}
 
 	// create an access token
-	accessToken, err := aguc.TokenService.GenerateAgencyToken(admin.Email, admin.Role, admin.AgencyID, aguc.TokenExpiry)
+	accessToken, err := aguc.TokenService.GenerateAgencyToken(admin.Email, "agency", admin.AgencyID, admin.Role, aguc.TokenExpiry)
 	if err != nil {
 		code, err := aguc.ErrorService.InternalServer()
 		return "", "", code, err
 	}
 
 	// create a refresher token
-	refresherToken, err := aguc.TokenService.GenerateAgencyToken(admin.Email, admin.Role, admin.AgencyID, aguc.RefresherExpiry)
+	refresherToken, err := aguc.TokenService.GenerateAgencyToken(admin.Email, "agency", admin.AgencyID, admin.Role, aguc.RefresherExpiry)
 	if err != nil {
 		code, err := aguc.ErrorService.InternalServer()
 		return "", "", code, err

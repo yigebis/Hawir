@@ -2,6 +2,7 @@ package UseCase
 
 import (
 	"Hawir/Domain"
+	"mime/multipart"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -14,8 +15,9 @@ type IUserUseCase interface {
 	Register(user *Domain.User) (int, error)
 	VerifyEmail(email, token string) (int, error)
 	RejectEmail(email, token string) (int, error)
-	GetUserById(id string) (*Domain.User, int, error)
-	EditUser(user *Domain.UserProfile) (int, error)
+	GetUserById(id string) (*Domain.UserDisplay, int, error)
+	MyProfile(id string) (*Domain.User, int, error)
+	EditUser(user *Domain.UserProfile, fileHeader *multipart.FileHeader) (int, error)
 	ResetPassword(credential *Domain.ChangeCredential) (int, error)
 }
 
@@ -36,13 +38,17 @@ type IPasswordService interface {
 }
 
 type ITokenService interface {
-	GenerateToken(id, firstName string, expiryDuration int64) (string, error)
+	GenerateToken(id, firstName, role string, expiryDuration int64) (string, error)
 	GenerateEmailToken(email string, expiryDuration int64) (string, error)
-	GenerateAgencyToken(email, role, agencyID string, expiryDuration int64) (string, error)
+	GenerateAgencyToken(email, role, agencyID, admin_role string, expiryDuration int64) (string, error)
 	ValidateToken(token string) (map[string]interface{}, error)
 }
 
 type IMailService interface {
 	SendVerificationEmail(to, token string) error
 	SendPasswordResetEmail(to, resetToken string) error
+}
+
+type ICloudService interface {
+	UploadToCloudinary(fileHeader *multipart.FileHeader) (string, error)
 }

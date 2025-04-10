@@ -21,6 +21,15 @@ type Agency struct {
 	Password         string             `json:"password" bson:"password,omitempty" validate:"required"`
 }
 
+type AgencyDisplay struct {
+	ID          primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	Name        string             `json:"name" bson:"name,omitempty"`
+	Services    []string           `json:"services" bson:"services,omitempty"`
+	LogoURL     string             `json:"logo_url" bson:"logo_url,omitempty"`
+	Description string             `json:"description" bson:"description,omitempty"`
+	Contact     []string           `json:"contact" bson:"contact,omitempty"`
+}
+
 type Admins struct {
 	AgencyID string `json:"agency_id" bson:"agency_id,omitempty" validate:"required"`
 	Role     string `json:"role" bson:"role,omitempty" validate:"required"`
@@ -38,13 +47,4 @@ type PasswordReset struct {
 	UniqueID    string `json:"agency_id"`
 	OldPassword string `json:"old_password"`
 	NewPassword string `json:"new_password"`
-}
-
-type AgencyUser struct {
-	ID               primitive.ObjectID `json:"id" bson:"_id,omitempty"`
-	Name             string             `json:"name" bson:"name,omitempty" validate:"required"`
-	Services         []string           `json:"services" bson:"services,omitempty"`
-	LogoURL          string             `json:"logo_url" bson:"logo_url,omitempty"`
-	Description      string             `json:"description" bson:"description,omitempty" validate:"required"`
-	Contact          []string           `json:"contact" bson:"contact,omitempty" validate:"required"`
 }

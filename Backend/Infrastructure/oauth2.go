@@ -20,7 +20,7 @@ func NewOAuth(oauthState string, oauthClientID string, oauthClientSecret string,
 			ClientID:     oauthClientID,                        // Replace with your Client ID
 			ClientSecret: oauthClientSecret,                    // Replace with your Client Secret
 			RedirectURL:  websiteDomainName + "/auth/callback", // Replace with your redirect URI
-			Scopes:       []string{"https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email"},
+			Scopes:       []string{"https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/drive.file"},
 			Endpoint:     google.Endpoint,
 		},
 	}

@@ -6,10 +6,13 @@ import (
 	"Hawir/UseCase"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type UserController struct {
@@ -27,6 +30,7 @@ type UserController struct {
 func NewUserController(u UseCase.IUserUseCase, auc UseCase.IAgencyUseCase, ts UseCase.ITokenService, oauthService *Infrastructure.OAuth, ps UseCase.IPasswordService, vs *Infrastructure.ValidationService, rx int64, wsn string) *UserController {
 	return &UserController{
 		UserUseCase:       u,
+		AgencyUseCase:     auc,
 		V:                 validator.New(),
 		TokenService:      ts,
 		OAuthService:      oauthService,
@@ -42,6 +46,7 @@ func (uc *UserController) Register(ctx *gin.Context) {
 
 	err := ctx.ShouldBindJSON(&user)
 	if err != nil {
+		fmt.Println("binding")
 		ctx.JSON(400, gin.H{"error": "invalid request payload"})
 		return
 	}
@@ -49,16 +54,19 @@ func (uc *UserController) Register(ctx *gin.Context) {
 	// process other struct validation
 	err = uc.V.Struct(user)
 	if err != nil {
+		fmt.Println("struct")
 		ctx.JSON(400, gin.H{"error": "invalid request payload"})
 		return
 	}
 
 	// validate the names
 	if code, err := uc.ValidationService.NameValidation(user.FirstName); err != nil {
+		fmt.Println("firstname")
 		ctx.JSON(code, gin.H{"error": err.Error()})
 		return
 	}
 	if code, err := uc.ValidationService.NameValidation(user.LastName); err != nil {
+		fmt.Println("lastname")
 		ctx.JSON(code, gin.H{"error": err.Error()})
 		return
 	}
@@ -66,6 +74,7 @@ func (uc *UserController) Register(ctx *gin.Context) {
 	//validate password
 	statusCode, err := uc.ValidationService.ValidatePassword(user.Password)
 	if err != nil {
+		fmt.Println("password")
 		ctx.JSON(statusCode, gin.H{"error": err.Error()})
 		return
 	}
@@ -281,14 +290,60 @@ func (uc *UserController) GetUserById(ctx *gin.Context) {
 	ctx.JSON(statusCode, user)
 }
 
+func (uc *UserController) MyProfile(ctx *gin.Context) {
+	id := ctx.Param("id")
+
+	claims, exists := ctx.Get("user")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	if claims.(jwt.MapClaims)["id"] != id {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	if id == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "missing user id"})
+		return
+	}
+
+	user, statusCode, err := uc.UserUseCase.MyProfile(id)
+	if err != nil {
+		ctx.JSON(statusCode, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(statusCode, user)
+}
+
 func (uc *UserController) EditUser(ctx *gin.Context) {
 	user := Domain.UserProfile{}
 
-	err := ctx.ShouldBindJSON(&user)
-	if err != nil {
+	// err := ctx.Request.ParseMultipartForm(10 << 20) // 10 MB limit
+	// if err != nil {
+	// 	ctx.JSON(400, gin.H{"error": "unable to parse form"})
+	// 	return
+	// }
+
+	// get the user id from the request context
+	id := ctx.PostForm("id")
+	if id == "" {
+		fmt.Println("id")
 		ctx.JSON(400, gin.H{"error": "invalid request payload"})
 		return
 	}
+
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		fmt.Println("objID")
+		ctx.JSON(400, gin.H{"error": "invalid request payload"})
+		return
+	}
+
+	firstName := ctx.PostForm("first_name")
+	lastName := ctx.PostForm("last_name")
 
 	// validate the names
 	if code, err := uc.ValidationService.NameValidation(user.FirstName); err != nil {
@@ -301,8 +356,11 @@ func (uc *UserController) EditUser(ctx *gin.Context) {
 		return
 	}
 
+	favouriteAgencies := ctx.PostFormArray("favourite_agencies")
+
 	// validate the favourite agencies whether the agencies exist or not
-	for _, agencyID := range user.FavouriteAgencies {
+	for _, agencyID := range favouriteAgencies {
+		fmt.Println(agencyID)
 		_, code, err := uc.AgencyUseCase.GetAgencyByUniqueID(agencyID)
 		if err != nil {
 			ctx.JSON(code, gin.H{"error": err.Error()})
@@ -310,10 +368,27 @@ func (uc *UserController) EditUser(ctx *gin.Context) {
 		}
 	}
 
+	user.ID = objID
+	user.FirstName = firstName
+	user.LastName = lastName
+	user.FavouriteAgencies = favouriteAgencies
+
+	fileHeader, err := ctx.FormFile("profile_photo")
+	if err != nil && err != http.ErrMissingFile { // No file uploaded is okay
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "unable to parse file"})
+		return
+	}
+
+	// err = ctx.ShouldBindJSON(&user)
+	// if err != nil {
+	// 	ctx.JSON(400, gin.H{"error": "invalid request payload"})
+	// 	return
+	// }
+
 	// email validation
 	// phone number validation
 
-	statusCode, err := uc.UserUseCase.EditUser(&user)
+	statusCode, err := uc.UserUseCase.EditUser(&user, fileHeader)
 	if err != nil {
 		ctx.JSON(statusCode, gin.H{"error": err.Error()})
 		return

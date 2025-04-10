@@ -3,6 +3,7 @@ package UseCase
 import (
 	"Hawir/Domain"
 	"fmt"
+	"mime/multipart"
 	"time"
 )
 
@@ -12,19 +13,21 @@ type UserUseCase struct {
 	TokenService    ITokenService
 	MailService     IMailService
 	ErrorService    IErrorService
+	CloudService    ICloudService
 
 	EmailExpiry     int64
 	TokenExpiry     int64
 	RefresherExpiry int64
 }
 
-func NewUserUseCase(ur IUserRepository, ps IPasswordService, ts ITokenService, ms IMailService, es IErrorService, ex, tx, rx int64) IUserUseCase {
+func NewUserUseCase(ur IUserRepository, ps IPasswordService, ts ITokenService, ms IMailService, es IErrorService, cs ICloudService, ex, tx, rx int64) IUserUseCase {
 	return &UserUseCase{
 		UserRepo:        ur,
 		PasswordService: ps,
 		TokenService:    ts,
 		MailService:     ms,
 		ErrorService:    es,
+		CloudService:    cs,
 		EmailExpiry:     ex,
 		TokenExpiry:     tx,
 		RefresherExpiry: rx,
@@ -200,7 +203,7 @@ func (uuc *UserUseCase) Login(user *Domain.User, password string) (string, strin
 	}
 
 	// creating an accessToken
-	accessToken, err := uuc.TokenService.GenerateToken(user.ID.Hex(), user.FirstName, uuc.TokenExpiry)
+	accessToken, err := uuc.TokenService.GenerateToken(user.ID.Hex(), user.FirstName, "user", uuc.TokenExpiry)
 
 	if err != nil {
 		statusCode, err := uuc.ErrorService.InternalServer()
@@ -208,7 +211,7 @@ func (uuc *UserUseCase) Login(user *Domain.User, password string) (string, strin
 	}
 
 	// creating a refreshToken
-	refresherToken, err := uuc.TokenService.GenerateToken(user.ID.Hex(), user.FirstName, uuc.RefresherExpiry)
+	refresherToken, err := uuc.TokenService.GenerateToken(user.ID.Hex(), user.FirstName, "user", uuc.RefresherExpiry)
 
 	if err != nil {
 		statusCode, err := uuc.ErrorService.InternalServer()
@@ -242,14 +245,14 @@ func (uuc *UserUseCase) LoginByAuth(user *Domain.User) (string, string, int, err
 	}
 
 	//create an access token
-	accessToken, err := uuc.TokenService.GenerateToken(user.ID.Hex(), user.FirstName, uuc.TokenExpiry)
+	accessToken, err := uuc.TokenService.GenerateToken(user.ID.Hex(), user.FirstName, "user", uuc.TokenExpiry)
 	if err != nil {
 		code, err := uuc.ErrorService.InternalServer()
 		return "", "", code, err
 	}
 
 	//create a refresher token
-	refresherToken, err := uuc.TokenService.GenerateToken(user.ID.Hex(), user.FirstName, uuc.RefresherExpiry)
+	refresherToken, err := uuc.TokenService.GenerateToken(user.ID.Hex(), user.FirstName, "user", uuc.RefresherExpiry)
 	if err != nil {
 		code, err := uuc.ErrorService.InternalServer()
 		return "", "", code, err
@@ -259,10 +262,28 @@ func (uuc *UserUseCase) LoginByAuth(user *Domain.User) (string, string, int, err
 	return accessToken, refresherToken, code, err
 }
 
-func (uuc *UserUseCase) GetUserById(id string) (*Domain.User, int, error) {
+func (uuc *UserUseCase) GetUserById(id string) (*Domain.UserDisplay, int, error) {
 	user, err := uuc.UserRepo.GetUserById(id)
+	userDisplay := &Domain.UserDisplay{
+		ID:           user.ID,
+		FirstName:    user.FirstName,
+		LastName:     user.LastName,
+		ProfilePhoto: user.ProfilePhoto,
+	}
+
 	if err != nil {
 		code, err := uuc.ErrorService.InternalServer()
+		return nil, code, err
+	}
+
+	code, err := uuc.ErrorService.NoError()
+	return userDisplay, code, err
+}
+
+func (uuc *UserUseCase) MyProfile(id string) (*Domain.User, int, error) {
+	user, err := uuc.UserRepo.GetUserById(id)
+	if err != nil {
+		code, err := uuc.ErrorService.UserNotFound()
 		return nil, code, err
 	}
 
@@ -270,7 +291,51 @@ func (uuc *UserUseCase) GetUserById(id string) (*Domain.User, int, error) {
 	return user, code, err
 }
 
-func (uuc *UserUseCase) EditUser(user *Domain.UserProfile) (int, error) {
+func (uuc *UserUseCase) EditUser(user *Domain.UserProfile, fileHeader *multipart.FileHeader) (int, error) {
+	var filePath string
+
+	if fileHeader != nil {
+		// upload to cloudinary
+		url, err := uuc.CloudService.UploadToCloudinary(fileHeader)
+		if err != nil {
+			return uuc.ErrorService.UnableToUploadFile()
+		}
+		filePath = url
+
+		// file, err := fileHeader.Open()
+		// if err != nil {
+		// 	code, err := uuc.ErrorService.UnableToOpenFile()
+		// 	return code, err
+		// }
+		// defer file.Close()
+
+		// ext := filepath.Ext(fileHeader.Filename)
+		// fileName := uuid.New().String() + ext
+		// localPath := filepath.Join("uploads", fileName)
+
+		// out, err := os.Create(localPath)
+		// if err != nil {
+		// 	code, err := uuc.ErrorService.UnableToCreateFile()
+		// 	return code, err
+		// }
+		// defer out.Close()
+
+		// _, err = file.Seek(0, 0)
+		// if err != nil {
+		// 	code, err := uuc.ErrorService.UnableToSeekFile()
+		// 	return code, err
+		// }
+
+		// _, err = out.ReadFrom(file)
+		// if err != nil {
+		// 	code, err := uuc.ErrorService.UnableToCopyFile()
+		// 	return code, err
+		// }
+
+		// filePath = "/static/" + fileName
+	}
+
+	user.ProfilePhoto = filePath
 	err := uuc.UserRepo.EditUser(user)
 	if err != nil {
 		return uuc.ErrorService.UserNotFound()

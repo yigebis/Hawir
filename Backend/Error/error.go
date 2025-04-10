@@ -28,6 +28,12 @@ var ErrMissingValidPasswordChar = errors.New("password should contain at least o
 var ErrInvalidPhoneNumber = errors.New("invalid Phone Number")
 var ErrInvalidName = errors.New("invalid name")
 
+var ErrOpeningFile = errors.New("error opening file")
+var ErrCopyingFile = errors.New("error copying file")
+var ErrSeekingFile = errors.New("error seeking file")
+var ErrCreatingFile = errors.New("error creating file")
+var ErrUploadingFile = errors.New("error uploading file")
+
 // agency user errors
 var ErrInvalidEmailAgencyIDPassword = errors.New("invalid email or agency ID or password")
 
@@ -119,6 +125,26 @@ func (e *Error) InvalidPhoneNumber() (int, error) {
 
 func (e *Error) InvalidName() (int, error) {
 	return http.StatusBadRequest, ErrInvalidName
+}
+
+func (e *Error) UnableToCopyFile() (int, error) {
+	return http.StatusInternalServerError, ErrCopyingFile
+}
+
+func (e *Error) UnableToCreateFile() (int, error) {
+	return http.StatusInternalServerError, ErrCreatingFile
+}
+
+func (e *Error) UnableToOpenFile() (int, error) {
+	return http.StatusInternalServerError, ErrOpeningFile
+}
+
+func (e *Error) UnableToSeekFile() (int, error) {
+	return http.StatusInternalServerError, ErrSeekingFile
+}
+
+func (e *Error) UnableToUploadFile() (int, error) {
+	return http.StatusInternalServerError, ErrUploadingFile
 }
 
 // Travel errors
