@@ -27,3 +27,13 @@ type Seat struct {
 	SeatNo     int       `json:"seat_no" bson:"seat_no,omitempty" validate:"required"`
 	MaxTime    time.Time `json:"max_time" bson:"max_time,omitempty"`
 }
+
+type TravelBookings struct {
+	TravelerName string `json:"traveler_name"`
+	SeatNo int `json:"seat_no"`
+	Phone string `json:"phone"`
+	Email string `json:"email"`
+	BookTime time.Time `json:"book_time"`
+	BookTimeLimit time.Time `json:"book_time_limit"`
+	PayStatus string `json:"pay_status"`
+}
