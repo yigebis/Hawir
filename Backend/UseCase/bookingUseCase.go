@@ -142,7 +142,7 @@ func (buc *BookingUseCase) GetBooking(bookingID string) (*Domain.Booking, int, e
 	return booking, statusCode, err
 }
 
-func (buc *BookingUseCase) GetAllBookings(travelID string) (*[]Domain.Booking, int, error) {
+func (buc *BookingUseCase) GetAllBookings(travelID string) (*[]Domain.TravelBookings, int, error) {
 	bookings, err := buc.BookingRepo.GetAllBookings(travelID)
 	if err != nil {
 		statusCode, err := buc.ErrorService.TravelNotFound()
