@@ -1,0 +1,217 @@
+/* General container styling */
+.manage-agencies-container {
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+  background-color: #f9f9f9;
+  font-family: Arial, sans-serif;
+}
+
+.manage-agencies-main {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+h1 {
+  font-size: 2rem;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+/* Header actions (search bar) */
+.header-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+.search-input {
+  padding: 10px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 300px;
+}
+
+/* Agency list grid */
+.agency-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+/* Agency card styling */
+.agency-card {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.agency-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.agency-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.agency-logo-container {
+  width: 50px;
+  height: 50px;
+  margin-right: 15px;
+}
+
+.agency-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.agency-name {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.agency-description {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 15px;
+}
+
+.linebreak {
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 10px 0;
+}
+
+/* Contact details */
+.agency-contact p {
+  font-size: 0.9rem;
+  color: #555;
+  margin: 5px 0;
+}
+
+.agency-contact i {
+  margin-right: 8px;
+  color: #4caf50;
+}
+
+/* Actions (Edit/Delete buttons) */
+.agency-actions {
+  display: flex;
+  justify-content: space-between;
+}
+
+.edit-btn,
+.delete-btn {
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.edit-btn {
+  background-color: #4caf50;
+  color: white;
+}
+
+.edit-btn:hover {
+  background-color: #45a049;
+}
+
+.delete-btn {
+  background-color: #f44336;
+  color: white;
+}
+
+.delete-btn:hover {
+  background-color: #d32f2f;
+}
+
+/* Delete Modal */
+.delete-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.modal-actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-around;
+}
+
+.cancel-btn,
+.confirm-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.cancel-btn {
+  background: #ccc;
+  color: #333;
+}
+
+.confirm-btn {
+  background: #f44336;
+  color: white;
+}
+
+.confirm-btn:hover {
+  background: #d32f2f;
+}
+
+/* Undo Notification */
+.undo-notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #4caf50;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 4px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.undo-notification button {
+  background: white;
+  color: #4caf50;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 10px;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.undo-notification button:hover {
+  background: #f1f1f1;
+}

@@ -1,0 +1,157 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* body {
+  background-color: #f7f7f7;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+} */
+
+.container {
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  padding: 1.5rem;
+  margin: 50px auto;
+  width: 100%;
+  max-width: 420px;
+}
+
+.logo-container {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.logo-container img {
+  height: 60px;
+}
+
+.logo-container h2 {
+  color: #006400;
+  font-weight: bold;
+  font-size: 1.8rem;
+  margin-top: 0.5rem;
+  letter-spacing: 1px;
+}
+
+h3 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-size: 1.4rem;
+  color: #333;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.7rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+.form-group input:focus {
+  border-color: #006400;
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.checkbox-group input {
+  margin-right: 0.5rem;
+}
+
+.checkbox-group label {
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.login-button {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #006400;
+  color: white;
+  font-size: 1rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 0.5rem;
+}
+
+.login-button:hover {
+  background-color: #004d00;
+}
+
+.divider {
+  text-align: center;
+  margin: 1.5rem 0;
+  font-size: 0.9rem;
+  color: #999;
+  position: relative;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  height: 1px;
+  background-color: #ccc;
+}
+
+.divider::before {
+  left: 0;
+}
+
+.divider::after {
+  right: 0;
+}
+
+.google-button {
+  width: 100%;
+  padding: 0.7rem;
+  background-color: white;
+  color: #333;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+}
+
+.google-button:hover {
+  background-color: #f0f0f0;
+}
+
+.google-button img {
+  height: 20px;
+}
