@@ -36,6 +36,12 @@
   border-radius: 4px;
 }
 
+.sidebar-menu li a {
+  color: white;
+  text-decoration: none;
+  font-size: 16px;
+}
+
 .sidebar-menu li.active,
 .sidebar-menu li:hover {
   background-color: #006400;

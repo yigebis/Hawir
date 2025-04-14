@@ -1,37 +1,18 @@
 import React, { useState, useMemo } from "react";
-import "./Dashboard.css";
 import Sidebar from "../Sidebar/Sidebar";
-import logo from "../../assets/logo.jpg";
 import AddAgency from "../AddAgency/AddAgency";
 import EditAgency from "../EditAgency/EditAgency";
+import "./ManageAgencies.css";
 
-const Dashboard = ({ agencies, setAgencies }) => {
-  // const [agencies, setAgencies] = useState([
-  //   {
-  //     id: 1,
-  //     name: "Selam Bus",
-  //     logo: logo,
-  //     description: "Leading national bus service provider.",
-  //     services: ["Luxury Buses", "Online Booking", "Parcel Delivery"],
-  //     contact: ["+251-911-123456", "info@selambus.com"],
-  //     superAdminEmail: "admin@selambus.com", // Add this field
-  //   },
-  //   {
-  //     id: 2,
-  //     name: "Golden Bus",
-  //     logo: logo,
-  //     description: "Reliable regional transport services.",
-  //     services: ["Affordable Fares", "Group Travel"],
-  //     contact: ["+251-922-654321", "support@goldenbus.com"],
-  //     superAdminEmail: "admin@goldenbus.com", // Add this field
-  //   },
-  // ]);
-
+const ManageAgencies = ({ agencies, setAgencies }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOption, setSortOption] = useState("newest");
   const [showAddModal, setShowAddModal] = useState(false);
-  // const [showEditModal, setShowEditModal] = useState(false);
-  // const [selectedAgency, setSelectedAgency] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedAgency, setSelectedAgency] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [agencyToDelete, setAgencyToDelete] = useState(null);
+  const [undoTimeout, setUndoTimeout] = useState(null);
 
   const filteredAgencies = useMemo(() => {
     let filtered = agencies.filter((agency) =>
@@ -59,24 +40,52 @@ const Dashboard = ({ agencies, setAgencies }) => {
     setAgencies((prev) => [...prev, agencyWithId]);
   };
 
-  // const handleEditAgency = (updatedAgency) => {
-  //   setAgencies((prev) =>
-  //     prev.map((agency) =>
-  //       agency.id === updatedAgency.id
-  //         ? { ...agency, ...updatedAgency }
-  //         : agency
-  //     )
-  //   );
-  //   setShowEditModal(false);
-  // };
+  const handleEditClick = (agency) => {
+    setSelectedAgency(agency);
+    setShowEditModal(true);
+  };
 
-  // const handleEditClick = (agency) => {
-  //   setSelectedAgency(agency);
-  //   setShowEditModal(true);
-  // };
+  const handleEditAgency = (updatedAgency) => {
+    setAgencies((prev) =>
+      prev.map((agency) =>
+        agency.id === updatedAgency.id
+          ? { ...agency, ...updatedAgency }
+          : agency
+      )
+    );
+    setShowEditModal(false);
+  };
+
+  const handleDeleteClick = (agency) => {
+    setAgencyToDelete(agency);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteAgency = () => {
+    setShowDeleteModal(false);
+
+    // Temporarily remove the agency
+    const updatedAgencies = agencies.filter(
+      (agency) => agency.id !== agencyToDelete.id
+    );
+    setAgencies(updatedAgencies);
+
+    // Allow undo for 5 seconds
+    const timeout = setTimeout(() => {
+      setAgencyToDelete(null); // Finalize deletion
+    }, 5000);
+
+    setUndoTimeout(timeout);
+  };
+
+  const undoDeleteAgency = () => {
+    clearTimeout(undoTimeout);
+    setAgencies((prev) => [...prev, agencyToDelete]);
+    setAgencyToDelete(null);
+  };
 
   return (
-    <div className="dashboard-container">
+    <div className="manage-agencies-container">
       <Sidebar />
 
       {showAddModal && (
@@ -86,20 +95,52 @@ const Dashboard = ({ agencies, setAgencies }) => {
         />
       )}
 
-      {/* {showEditModal && selectedAgency && (
+      {showEditModal && selectedAgency && (
         <EditAgency
           agencyData={selectedAgency}
           onClose={() => setShowEditModal(false)}
           onSave={handleEditAgency}
         />
-      )} */}
+      )}
 
-      <main className="dashboard-main">
-        <div className="dashboard-header">
-          <div className="dashboard-title-actions">
-            <h1>Travel Agencies</h1>
+      {showDeleteModal && (
+        <div className="delete-modal">
+          <div className="modal-content">
+            <h3>Confirm Deletion</h3>
+            <p>
+              Are you sure you want to delete the agency{" "}
+              <strong>{agencyToDelete?.name}</strong>?
+            </p>
+            <div className="modal-actions">
+              <button
+                className="cancel-btn"
+                onClick={() => setShowDeleteModal(false)}
+              >
+                Cancel
+              </button>
+              <button className="confirm-btn" onClick={confirmDeleteAgency}>
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {agencyToDelete && (
+        <div className="undo-notification">
+          <p>
+            Agency <strong>{agencyToDelete.name}</strong> deleted.{" "}
+            <button onClick={undoDeleteAgency}>Undo</button>
+          </p>
+        </div>
+      )}
+
+      <main className="manage-agencies-main">
+        <div className="header">
+          <div className="title-actions">
+            <h1>Manage Agencies</h1>
             <button className="add-btn" onClick={() => setShowAddModal(true)}>
-              Add Agency
+              <i className="fas fa-plus"></i> Add Agency
             </button>
           </div>
 
@@ -116,7 +157,6 @@ const Dashboard = ({ agencies, setAgencies }) => {
                 <option value="name">Name (A-Z)</option>
               </select>
             </label>
-
             <input
               type="text"
               placeholder="Search agencies..."
@@ -155,19 +195,17 @@ const Dashboard = ({ agencies, setAgencies }) => {
               <hr className="linebreak" />
 
               <div className="agency-actions">
-                {/* <button
+                <button
                   className="edit-btn"
                   onClick={() => handleEditClick(agency)}
                 >
                   <i className="fas fa-edit"></i> Edit
-                </button> */}
+                </button>
                 <button
-                  className="view-details-btn"
-                  onClick={() => {
-                    console.log(`View details for agency: ${agency.name}`);
-                  }}
+                  className="delete-btn"
+                  onClick={() => handleDeleteClick(agency)}
                 >
-                  <i className="fas fa-eye"></i> View Details
+                  <i className="fas fa-trash"></i> Delete
                 </button>
               </div>
             </div>
@@ -178,4 +216,4 @@ const Dashboard = ({ agencies, setAgencies }) => {
   );
 };
 
-export default Dashboard;
+export default ManageAgencies;
