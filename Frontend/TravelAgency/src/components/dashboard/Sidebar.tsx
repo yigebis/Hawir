@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
@@ -7,12 +6,26 @@ import {
   Users, 
   FileBarChart, 
   Map, 
-  Bus 
+  Bus,
+  ChevronDown,
+  User,
+  Lock,
+  LogOut
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-const Sidebar: React.FC = () => {
+const Sidebar = () => {
   const location = useLocation();
   const path = location.pathname;
+  const { user, logout } = useAuth();
 
   const isActive = (routePath: string) => {
     if (routePath === '/' && path === '/') {
@@ -27,12 +40,45 @@ const Sidebar: React.FC = () => {
   return (
     <aside className="bg-[#F3F6FA] flex w-[260px] min-w-[260px] h-screen flex-col items-stretch text-black pt-[30px] pb-[30px] border-r border-gray-200">
       <div className="flex items-center gap-[13px] text-[15px] font-semibold leading-none ml-6 mb-8">
-        <img
-          src="https://cdn.builder.io/api/v1/image/assets/091e50b0e3084a89a54855377607a220/641273b6196bb7c5fbc8634b7c433a5e44d67b761f08127ff70cd2a1af3bdcfa?placeholderIfAbsent=true"
-          alt="Selam Bus Logo"
-          className="aspect-[0.95] object-contain w-9 shrink-0"
-        />
-        <div className="my-auto">Selam Bus</div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center space-x-2 hover:bg-gray-100 rounded-lg p-1 px-2">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src="/lovable-uploads/660fb2a5-c2d9-4b43-80bb-40e54215ee9d.png" alt="Selam Bus" />
+                <AvatarFallback>SB</AvatarFallback>
+              </Avatar>
+              <div className="flex items-center">
+                <span className="text-sm font-medium mr-1">{user.name}</span>
+                <ChevronDown className="h-4 w-4 text-gray-500" />
+              </div>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <div className="px-2 py-1.5">
+              <p className="text-sm font-medium">{user?.name}</p>
+              <p className="text-xs text-gray-500">{user?.email}</p>
+              <p className="text-xs text-gray-500">Agency ID: {user?.agencyId}</p>
+            </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link to="/profile" className="flex cursor-pointer items-center">
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/change-password" className="flex cursor-pointer items-center">
+                <Lock className="mr-2 h-4 w-4" />
+                <span>Change Password</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={logout} className="text-red-600 cursor-pointer">
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Log out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       <div className="border-t border-gray-200 mb-6"></div>
 
