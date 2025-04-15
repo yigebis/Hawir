@@ -1,10 +1,12 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import TravelCalendar, { CalendarViewMode } from "@/components/travels/TravelCalendar";
 import AddTripModal from "@/components/trips/AddTripModal";
 import { ChevronLeft, ChevronRight, Plus, Search, LayoutGrid } from "lucide-react";
 import { format } from "date-fns";
+import { TravelEventType } from "@/components/travels/TravelEvent";
+import { toast } from "@/hooks/use-toast";
 
 const ManageTravels: React.FC = () => {
   const [showAddTripModal, setShowAddTripModal] = useState(false);
@@ -12,9 +14,11 @@ const ManageTravels: React.FC = () => {
   const [selectedDateTime, setSelectedDateTime] = useState<{
     date?: Date;
     time?: string;
+    editEvent?: TravelEventType;
   }>({});
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<CalendarViewMode>("day");
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const handleNextDay = () => {
     const nextDay = new Date(currentDate);
@@ -28,13 +32,25 @@ const ManageTravels: React.FC = () => {
     setCurrentDate(prevDay);
   };
 
-  const handleAddTrip = (dateTime?: { date?: Date; time?: string }) => {
+  const handleAddTrip = (dateTime?: { 
+    date?: Date; 
+    time?: string;
+    editEvent?: TravelEventType;
+  }) => {
     if (dateTime) {
       setSelectedDateTime(dateTime);
+      setIsEditMode(!!dateTime.editEvent);
     } else {
       setSelectedDateTime({ date: currentDate });
+      setIsEditMode(false);
     }
     setShowAddTripModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowAddTripModal(false);
+    setIsEditMode(false);
+    setSelectedDateTime({});
   };
 
   const toggleSearch = () => {
@@ -43,6 +59,24 @@ const ManageTravels: React.FC = () => {
 
   const toggleViewMode = () => {
     setViewMode(viewMode === "yearly" ? "day" : "yearly");
+  };
+
+  const handleSaveTrip = (tripData: any) => {
+    setShowAddTripModal(false);
+    if (tripData.deleted) {
+      toast({
+        title: "Trip deleted",
+        description: "The trip has been removed from the calendar.",
+      });
+    } else {
+      toast({
+        title: isEditMode ? "Trip updated" : "Trip added",
+        description: isEditMode 
+          ? "Your changes have been saved to the calendar." 
+          : "Your new trip has been added to the calendar.",
+      });
+    }
+    // Calendar component will refresh its events after the save
   };
 
   return (
@@ -137,14 +171,12 @@ const ManageTravels: React.FC = () => {
         
         <AddTripModal 
           isOpen={showAddTripModal} 
-          onClose={() => setShowAddTripModal(false)} 
+          onClose={handleCloseModal} 
           initialDate={selectedDateTime.date}
           initialTime={selectedDateTime.time}
-          onSave={(tripData) => {
-            setShowAddTripModal(false);
-            // TODO: Add trip to calendar
-            console.log("Trip saved:", tripData);
-          }}
+          editMode={isEditMode}
+          tripToEdit={selectedDateTime.editEvent}
+          onSave={handleSaveTrip}
         />
       </div>
     </DashboardLayout>

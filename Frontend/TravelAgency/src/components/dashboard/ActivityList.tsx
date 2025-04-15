@@ -1,74 +1,53 @@
 
-import React, { useState } from "react";
-import TravelItem from "./TravelItem";
-import AddTripModal from "../trips/AddTripModal";
-import { Plus } from "lucide-react";
+import React, { ReactNode } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import TravelItem from "@/components/dashboard/TravelItem";
 
-const ActivityList: React.FC = () => {
-  const [showAddTripModal, setShowAddTripModal] = useState(false);
-  const [travelItems, setTravelItems] = useState([
-    {
-      title: "Hawassa Trip",
-      departureDate: "2024-03-15",
-      id: "TR928",
-      price: "1500 Birr",
-    },
-    {
-      title: "Gondar Trip",
-      departureDate: "2024-03-16",
-      id: "TR929",
-      price: "2200 Birr",
-    },
-  ]);
+// Sample travel data
+const recentTravels = [
+  {
+    id: "TR-7890",
+    title: "Addis Ababa to Bahir Dar",
+    departureDate: "15 Mar 2024, 08:00 AM",
+    price: "ETB 1,200"
+  },
+  {
+    id: "TR-4567",
+    title: "Addis Ababa to Hawassa",
+    departureDate: "14 Mar 2024, 07:30 AM",
+    price: "ETB 850"
+  },
+  {
+    id: "TR-2345",
+    title: "Bahir Dar to Gondar",
+    departureDate: "13 Mar 2024, 10:15 AM",
+    price: "ETB 650"
+  }
+];
 
-  const handleSaveTrip = (tripData: any) => {
-    setShowAddTripModal(false);
-    
-    // Create a new travel item from the trip data
-    const newItem = {
-      title: `${tripData.departureCity} → ${tripData.arrivalCity}`,
-      departureDate: tripData.departureDate.toISOString().split('T')[0],
-      id: `TR${Math.floor(Math.random() * 1000)}`,
-      price: `${tripData.price} Birr`,
-    };
-    
-    // Add to travel items
-    setTravelItems(prev => [...prev, newItem]);
-  };
+interface ActivityListProps {
+  headerRight?: ReactNode;
+}
 
+const ActivityList: React.FC<ActivityListProps> = ({ headerRight }) => {
   return (
-    <section className="mt-6">
-      <div className="flex w-full items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-gray-900">
-          Recent Activity
-        </h2>
-        <button 
-          onClick={() => setShowAddTripModal(true)}
-          className="bg-green-600 flex items-center gap-1 text-sm text-white font-medium px-4 py-2 rounded-lg"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add New</span>
-        </button>
-      </div>
-
-      <div className="space-y-4">
-        {travelItems.map((item, index) => (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-lg font-bold">Recent Activity</CardTitle>
+        {headerRight}
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {recentTravels.map((travel) => (
           <TravelItem
-            key={index}
-            title={item.title}
-            departureDate={item.departureDate}
-            id={item.id}
-            price={item.price}
+            key={travel.id}
+            id={travel.id}
+            title={travel.title}
+            departureDate={travel.departureDate}
+            price={travel.price}
           />
         ))}
-      </div>
-      
-      <AddTripModal 
-        isOpen={showAddTripModal} 
-        onClose={() => setShowAddTripModal(false)} 
-        onSave={handleSaveTrip}
-      />
-    </section>
+      </CardContent>
+    </Card>
   );
 };
 
