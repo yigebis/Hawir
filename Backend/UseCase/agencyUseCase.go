@@ -111,8 +111,20 @@ func (aguc *AgencyUseCase) GetAgencyByUniqueID(id string) (*Domain.Agency, int, 
 	code, err := aguc.ErrorService.NoError()
 	return agency, code, err
 }
+
 func (aguc *AgencyUseCase) GetAllAgencies() (*[]Domain.Agency, int, error) {
 	agency, err := aguc.AgencyRepo.GetAllAgencies()
+	if err != nil {
+		code, err := aguc.ErrorService.AgencyNotFound()
+		return nil, code, err
+	}
+
+	code, err := aguc.ErrorService.NoError()
+	return agency, code, err
+}
+
+func (aguc *AgencyUseCase) GetAgencyForUser(id string) (*Domain.AgencyDisplay, int, error) {
+	agency, err := aguc.AgencyRepo.GetAgencyForUserById(id)
 	if err != nil {
 		code, err := aguc.ErrorService.AgencyNotFound()
 		return nil, code, err

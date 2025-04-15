@@ -12,6 +12,7 @@ type IAgencyUseCase interface {
 	GetAllAgencies() (*[]Domain.Agency, int, error)
 	GetAgency(id string) (*Domain.Agency, int, error)
 	GetAgencyByUniqueID(id string) (*Domain.Agency, int, error)
+	GetAgencyForUser(id string) (*Domain.AgencyDisplay, int, error)
 }
 
 type IAgencyRepository interface {
@@ -27,4 +28,5 @@ type IAgencyRepository interface {
 	GetAgencyAdmin(email string) (*Domain.Admins, error)
 	GetAgencyForUserById(string) (*Domain.AgencyDisplay, error)
 	ResetAgencyAdminPassword(string, string) error
+	
 }

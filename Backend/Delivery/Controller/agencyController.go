@@ -103,3 +103,15 @@ func (agc *AgencyController) GetAllAgencies(ctx *gin.Context) {
 
 	ctx.JSON(code, agencies)
 }
+
+func (agc *AgencyController) GetAgencyForUser(ctx *gin.Context) {
+	agencyID := ctx.Param("id")
+
+	agency, code, err := agc.AgencyUseCase.GetAgencyForUser(agencyID)
+	if err != nil {
+		ctx.JSON(code, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(code, agency)
+}
