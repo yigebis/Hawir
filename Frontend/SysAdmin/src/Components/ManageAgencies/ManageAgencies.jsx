@@ -13,6 +13,7 @@ const ManageAgencies = ({ agencies, setAgencies }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [agencyToDelete, setAgencyToDelete] = useState(null);
   const [undoTimeout, setUndoTimeout] = useState(null);
+  const [undoAvailable, setUndoAvailable] = useState(false); //  new state
 
   const filteredAgencies = useMemo(() => {
     let filtered = agencies.filter((agency) =>
@@ -64,15 +65,16 @@ const ManageAgencies = ({ agencies, setAgencies }) => {
   const confirmDeleteAgency = () => {
     setShowDeleteModal(false);
 
-    // Temporarily remove the agency
+    // Remove the agency
     const updatedAgencies = agencies.filter(
       (agency) => agency.id !== agencyToDelete.id
     );
     setAgencies(updatedAgencies);
 
-    // Allow undo for 5 seconds
+    setUndoAvailable(true); //  enable undo
     const timeout = setTimeout(() => {
       setAgencyToDelete(null); // Finalize deletion
+      setUndoAvailable(false); // Hide undo after timeout
     }, 5000);
 
     setUndoTimeout(timeout);
@@ -82,6 +84,7 @@ const ManageAgencies = ({ agencies, setAgencies }) => {
     clearTimeout(undoTimeout);
     setAgencies((prev) => [...prev, agencyToDelete]);
     setAgencyToDelete(null);
+    setUndoAvailable(false); //  reset undo
   };
 
   return (
@@ -114,7 +117,11 @@ const ManageAgencies = ({ agencies, setAgencies }) => {
             <div className="modal-actions">
               <button
                 className="cancel-btn"
-                onClick={() => setShowDeleteModal(false)}
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setAgencyToDelete(null); //  cancel clears state
+                  setUndoAvailable(false); //  prevent undo
+                }}
               >
                 Cancel
               </button>
@@ -126,7 +133,7 @@ const ManageAgencies = ({ agencies, setAgencies }) => {
         </div>
       )}
 
-      {agencyToDelete && (
+      {undoAvailable && agencyToDelete && (
         <div className="undo-notification">
           <p>
             Agency <strong>{agencyToDelete.name}</strong> deleted.{" "}
@@ -137,7 +144,7 @@ const ManageAgencies = ({ agencies, setAgencies }) => {
 
       <main className="manage-agencies-main">
         <div className="header">
-          <div className="title-actions">
+          <div className="dashboard-title-actions">
             <h1>Manage Agencies</h1>
             <button className="add-btn" onClick={() => setShowAddModal(true)}>
               <i className="fas fa-plus"></i> Add Agency

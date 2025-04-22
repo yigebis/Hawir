@@ -12,11 +12,18 @@
   padding: 20px;
   overflow-y: auto;
 }
-
+/* 
 h1 {
   font-size: 2rem;
   color: #333;
   margin-bottom: 20px;
+} */
+
+.title-actions{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  /* gap: 1px; */
 }
 
 /* Header actions (search bar) */

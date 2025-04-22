@@ -55,6 +55,17 @@ const Dashboard = ({ agencies, setAgencies }) => {
   }, [agencies, searchQuery, sortOption]);
 
   const handleAddAgency = (newAgency) => {
+    if (
+      !newAgency.name?.trim() ||
+      !newAgency.contact?.[0]?.trim() ||
+      !newAgency.contact?.[1]?.trim() ||
+      !newAgency.superAdminEmail?.trim() ||
+      !newAgency.password?.trim()
+    ) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+
     const agencyWithId = { ...newAgency, id: Date.now() };
     setAgencies((prev) => [...prev, agencyWithId]);
   };

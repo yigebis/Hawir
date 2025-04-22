@@ -5,6 +5,7 @@ import SignIn from "./Components/SignIn/SignIn";
 import Dashboard from "./Components/Dashboard/Dashboard";
 import ManageAgencies from "./Components/ManageAgencies/ManageAgencies";
 import logo from "./assets/logo.jpg";
+import ManageEvents from "./Components/ManageEvents/ManageEvents";
 
 const App = () => {
   const [agencies, setAgencies] = useState([
@@ -41,6 +42,10 @@ const App = () => {
           element={
             <ManageAgencies agencies={agencies} setAgencies={setAgencies} />
           }
+        />
+        <Route
+          path="/manage-events"
+          element={<ManageEvents/>}
         />
       </Routes>
     </Router>

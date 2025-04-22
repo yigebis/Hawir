@@ -4,7 +4,6 @@ import "./AddAgency.css";
 const AddAgency = ({ onClose, onSave }) => {
   const [formData, setFormData] = useState({
     name: "",
-    logo: "",
     description: "",
     services: "",
     contactEmail: "",
@@ -63,15 +62,16 @@ const AddAgency = ({ onClose, onSave }) => {
     if (!validateForm()) return;
 
     const newAgency = {
-      Name: formData.name,
-      Services: formData.services
+      name: formData.name,
+      services: formData.services
         ? formData.services.split(",").map((s) => s.trim())
         : [],
-      Description: formData.description,
-      Contact: [formData.contactPhone, formData.contactEmail].filter(Boolean),
-      SuperAdminEmail: formData.superAdminEmail,
-      Password: formData.password,
+      description: formData.description,
+      contact: [formData.contactPhone, formData.contactEmail].filter(Boolean),
+      superAdminEmail: formData.superAdminEmail,
+      password: formData.password,
     };
+
 
     onSave(newAgency);
     onClose();
