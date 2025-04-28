@@ -8,7 +8,7 @@ import (
 
 type Travel struct {
 	ID                primitive.ObjectID `json:"id" bson:"_id,omitempty"`
-	AgencyId          string             `json:"agency_id" bson:"agency_id,omitempty" validate:"required"`
+	AgencyId          string             `json:"agency_id" bson:"agency_id,omitempty"`
 	StartLocation     string             `json:"start_location" bson:"start_location,omitempty" validate:"required"`
 	PickupLocations   []string           `json:"pickup_locations" bson:"pickup_locations,omitempty" validate:"required"`
 	Destination       string             `json:"destination" bson:"destination,omitempty" validate:"required"`
@@ -21,7 +21,7 @@ type Travel struct {
 	TotalSeats int    `json:"total_seats" bson:"total_seats,omitempty" validate:"required,min=20"`
 	BusRef     string `json:"bus_ref" bson:"bus_ref,omitempty"`
 	// HasPayBack        bool               `json:"has_pay_back" bson:"has_pay_back,omitempty" validate:"required"`
-	DriverName  string    `json:"driver_name" bson:"driver_name,omitempty"`
+	DriverID    string    `json:"driver_id" bson:"driver_id,omitempty"`
 	PostTime    time.Time `json:"post_time" bson:"post_time,omitempty"`
 	LastModTime time.Time `json:"last_mod_time" bson:"last_mod_time,omitempty"`
 	Status      string    `json:"status" bson:"status,omitempty"`

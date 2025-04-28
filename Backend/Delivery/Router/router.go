@@ -2,7 +2,6 @@ package Router
 
 import (
 	"Hawir/Delivery/Controller"
-	"Hawir/Infrastructure"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -15,17 +14,28 @@ type Router struct {
 	AdminController       *Controller.AdminController
 	BookingController     *Controller.BookingController
 	DestinationController *Controller.DestinationController
+	DriverController      *Controller.DriverController
 	JWTSigner             string
 }
 
-func NewRouter(uc *Controller.UserController, agc *Controller.AgencyController, tc *Controller.TravelController, ac *Controller.AdminController, bc *Controller.BookingController, destinationController *Controller.DestinationController, jwtSigner string) *Router {
+func NewRouter(
+	uc *Controller.UserController,
+	agc *Controller.AgencyController,
+	tc *Controller.TravelController,
+	ac *Controller.AdminController,
+	bc *Controller.BookingController,
+	desc *Controller.DestinationController,
+	dc *Controller.DriverController,
+	jwtSigner string,
+) *Router {
 	return &Router{
 		UserController:        uc,
 		AgencyController:      agc,
 		TravelController:      tc,
 		AdminController:       ac,
 		BookingController:     bc,
-		DestinationController: destinationController,
+		DestinationController: desc,
+		DriverController:      dc,
 		JWTSigner:             jwtSigner,
 	}
 }
@@ -35,62 +45,31 @@ func (r *Router) Run() {
 
 	// Apply CORS middleware before defining routes
 	config := cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "https://hawir.netlify.app", "http://localhost:8081","http://localhost:62720"}, // Frontend URL
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},            // HTTP methods to allow
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},            // Headers to allow
-		ExposeHeaders:    []string{"Content-Length"},                                     // Headers to expose to frontend
-		AllowCredentials: true,                                                           // Allow cookies or authentication headers
+		// AllowOrigins:     []string{"http://localhost:5173", "https://hawir.netlify.app", "http://localhost:8081", "http://localhost:63966", "http://localhost:53939"}, // Frontend URL
+		AllowOrigins:     []string{"*"},                                       // Allow all origins for development
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}, // HTTP methods to allow
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"}, // Headers to allow
+		ExposeHeaders:    []string{"Content-Length"},                          // Headers to expose to frontend
+		AllowCredentials: true,                                                // Allow cookies or authentication headers
 	}
 	router.Use(cors.New(config))
+	// router.Use(cors.Default())
 
-	// Define routes after middleware is applied
-	router.POST("/api/register", r.UserController.Register)
-	router.POST("/api/login/email", r.UserController.LoginByEmail)
-	router.POST("/api/login/phone_number", r.UserController.LoginByPhoneNumber)
-	router.GET("/verify", r.UserController.VerifyEmail)
-	router.GET("/email/reject", r.UserController.RejectEmail)
-	router.GET("/auth/with/google", r.UserController.LoginWithGoogle) // Redirects to Google login page
-	router.GET("/auth/callback", r.UserController.GoogleCallback)     // Handles Google callback
-	router.GET("/user/:id", r.UserController.GetUserById)
+	userRouter := NewUserRouter(r.UserController)
+	agencyRouter := NewAgencyRouter(r.AgencyController)
+	adminRouter := NewAdminRouter(r.AdminController)
+	travelRouter := NewTravelRouter(r.TravelController)
+	bookingRouter := NewBookingRouter(r.BookingController)
+	destinationRouter := NewDestinationRouter(r.DestinationController)
+	driverRouter := NewDriverRouter(r.DriverController)
 
-	router.GET("/user/my/:id", Infrastructure.UserMiddleware(r.JWTSigner), r.UserController.MyProfile)             //user middleware
-	router.PUT("/user/edit", Infrastructure.UserMiddleware(r.JWTSigner), r.UserController.EditUser)                //user middleware
-	router.PUT("/user/password/reset", Infrastructure.UserMiddleware(r.JWTSigner), r.UserController.ResetPassword) //user middleware
+	userRouter.Run(router, r.JWTSigner)
+	agencyRouter.Run(router, r.JWTSigner)
+	adminRouter.Run(router)
+	travelRouter.Run(router, r.JWTSigner)
+	bookingRouter.Run(router)
+	destinationRouter.Run(router)
+	driverRouter.Run(router, r.JWTSigner)
 
-	// agency endpoints
-	router.POST("/agency/login", r.AgencyController.LoginAgencyAdmin)
-
-	router.POST("/agency/password/reset", r.AgencyController.ResetAgencyAdminPassword)
-	router.GET("/agency/:id", r.AgencyController.GetAgencyByUniqueID)
-	router.GET("/agency/all", r.AgencyController.GetAllAgencies)
-	router.GET("/agency/get/:id", r.AgencyController.GetAgencyForUser)
-	// router.POST("/agency/edit", r.UserController.EditAgency)
-
-	router.POST("/travel/add", r.TravelController.CreateTravel)                //agency authorization
-	router.PUT("/travel/edit", r.TravelController.EditTravel)                  //agency authorization
-	router.GET("/travel/:id", r.TravelController.ViewTravelById)               //no authorization
-	router.GET("/travels/:agencyID", r.TravelController.ViewTravelsByAgencyId) //no authorization
-	router.GET("/travels/search", r.TravelController.SearchTravel)             //no authorization
-	router.DELETE("/travel/cancel/:id", r.TravelController.CancelTravel)       //agency authorization
-
-	//admin-side endpoints
-	router.POST("/agency/add", r.AdminController.AddAgency)
-	router.DELETE("/agency/delete/:id", r.AdminController.DeleteAgency)
-	router.PUT("/agency/edit/:id", r.AdminController.EditAgency)
-
-	//booking endpoints
-	router.POST("/booking/seat/choose", r.BookingController.ChooseSeat)
-	router.POST("/booking/add", r.BookingController.Book)
-	router.PUT("/booking/edit/:id", r.BookingController.EditBook)
-	router.DELETE("/booking/cancel", r.BookingController.CancelBook)
-	router.GET("/booking/:id", r.BookingController.GetBooking)
-	router.GET("/booking/all/:travelId", r.BookingController.GetAllBookings)
-	router.GET("/booking/traveler/:travelerId", r.BookingController.GetBookingsForTraveler)
-
-	//destination endpoints
-	router.POST("/destination/add", r.DestinationController.AddDestination)
-	router.GET("/destination/:id", r.DestinationController.GetDestinationByID)
-	router.PUT("/destination/edit", r.DestinationController.EditDestination)
-	router.GET("/destination/all", r.DestinationController.ViewAllDestinations)
 	router.Run()
 }

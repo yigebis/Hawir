@@ -58,17 +58,20 @@ func main() {
 	seat_collection := client.Database("Hawir").Collection("seats")
 	agency_collection := client.Database("Hawir").Collection("agencies")
 	booking_collection := client.Database("Hawir").Collection("Booking")
-	adminCollection := client.Database("Hawir").Collection("Admins")
+	admin_collection := client.Database("Hawir").Collection("Admins")
 	destination_collection := client.Database("Hawir").Collection("destinations")
+	bus_collection := client.Database("Hawir").Collection("buses")
+	driver_collection := client.Database("Hawir").Collection("Drivers")
 
 	user_context := context.TODO()
 	travel_context := context.TODO()
 	agency_context := context.TODO()
 	booking_context := context.TODO()
 	destination_context := context.TODO()
+	driver_context := context.TODO()
 
 	ur := Repository.NewUserRepository(user_context, user_collection)
-	agr := Repository.NewAgencyRepository(agency_context, agency_collection, adminCollection)
+	agr := Repository.NewAgencyRepository(agency_context, agency_collection, admin_collection, bus_collection)
 	tr := Repository.NewTravelRepository(travel_context, travel_collection)
 	tsr := Repository.NewTravelStatsRepo(travel_context, travel_stat_collection)
 	br := Repository.NewBookingRepository(
@@ -79,6 +82,7 @@ func main() {
 		user_collection,
 	)
 	dr := Repository.NewDestinationRepository(destination_context, destination_collection)
+	drr := Repository.NewDriverRepository(driver_context, driver_collection)
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	es := Error.NewErrorService()
@@ -108,11 +112,12 @@ func main() {
 	oauthService := Infrastructure.NewOAuth(oauthState, oauthClientID, oauthClientSecret, websiteDomainName)
 
 	uuc := UseCase.NewUserUseCase(ur, ps, ts, ms, es, cs, ex, tx, rx)
-	aguc := UseCase.NewAgencyUseCase(agr, ps, ts, es, ex, tx, rx)
-	tuc := UseCase.NewTravelUseCase(tr, tsr, agr, es)
+	aguc := UseCase.NewAgencyUseCase(agr, drr, ps, ts, es, ms, ex, tx, rx)
+	tuc := UseCase.NewTravelUseCase(tr, tsr, agr, drr, es)
 	auc := UseCase.NewAdminUseCase(agr, ps, es)
 	buc := UseCase.NewBookingUseCase(br, tr, es)
 	duc := UseCase.NewDestinationUseCase(dr, es)
+	druc := UseCase.NewDriverUseCase(drr, es, ps, ts, ms, tx, rx)
 
 	// setting up the controllers
 	user_controller := Controller.NewUserController(uuc, aguc, ts, oauthService, ps, vs, rx, websiteDomainName)
@@ -121,8 +126,9 @@ func main() {
 	admin_controller := Controller.NewAdminController(auc, aguc, vs)
 	booking_controller := Controller.NewBookingController(buc)
 	destination_controller := Controller.NewDestinationController(duc)
+	driver_controller := Controller.NewDriverController(druc, vs, rx, websiteDomainName)
 
 	// setting up the router
-	router := Router.NewRouter(user_controller, agency_controller, travel_controller, admin_controller, booking_controller, destination_controller, jwtSecret)
+	router := Router.NewRouter(user_controller, agency_controller, travel_controller, admin_controller, booking_controller, destination_controller, driver_controller, jwtSecret)
 	router.Run()
 }

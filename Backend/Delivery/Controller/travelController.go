@@ -3,6 +3,7 @@ package Controller
 import (
 	"Hawir/Domain"
 	"Hawir/UseCase"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -31,6 +32,16 @@ func (tc *TravelController) CreateTravel(ctx *gin.Context) {
 		ctx.JSON(400, gin.H{"error": "invalid request payload" /*, "details": err.Error()*/})
 		return
 	}
+
+	claims := getAgencyClaims(ctx.Get("agency"))
+	// fmt.Println(claims)
+	if claims == nil {
+		fmt.Println("claims is nil")
+		ctx.JSON(400, gin.H{"error": "invalid token claims"})
+		return
+	}
+
+	travel.AgencyId = claims["agency_id"].(string)
 
 	err = tc.V.Struct(travel)
 	if err != nil {

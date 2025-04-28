@@ -15,13 +15,15 @@ type AgencyRepository struct {
 	DbCtx            context.Context
 	AgencyCollection *mongo.Collection
 	AdminCollection  *mongo.Collection
+	BusCollection    *mongo.Collection
 }
 
-func NewAgencyRepository(dbctx context.Context, agencyCollection *mongo.Collection, adminCollection *mongo.Collection) UseCase.IAgencyRepository {
+func NewAgencyRepository(dbctx context.Context, agencyCollection *mongo.Collection, adminCollection *mongo.Collection, busCollection *mongo.Collection) UseCase.IAgencyRepository {
 	return &AgencyRepository{
 		DbCtx:            dbctx,
 		AgencyCollection: agencyCollection,
 		AdminCollection:  adminCollection,
+		BusCollection:    busCollection,
 	}
 }
 
@@ -148,17 +150,18 @@ func (agr *AgencyRepository) GetAllAgencies() (*[]Domain.Agency, error) {
 
 }
 
-func (agr *AgencyRepository) CheckAgency(agencyID string) (bool, error) {
+func (agr *AgencyRepository) CheckAgencyByUniqueID(agencyID string) (bool, error) {
 	var agency Domain.Agency
 
-	objID, err := primitive.ObjectIDFromHex(agencyID)
+	filter := bson.M{"unique_id": agencyID}
+	err := agr.AgencyCollection.FindOne(agr.DbCtx, filter).Decode(&agency)
 	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return false, nil // Agency not found
+		}
 		return false, err
 	}
-
-	filter := bson.M{"_id": objID}
-	err = agr.AgencyCollection.FindOne(agr.DbCtx, filter).Decode(&agency)
-	return true, err
+	return true, nil
 }
 
 func (agr *AgencyRepository) AddAgencyAdmin(admin *Domain.Admins) error {
@@ -205,4 +208,50 @@ func (agr *AgencyRepository) GetAgencyForUserById(agencyId string) (*Domain.Agen
 	agencyDisplay.Contact = agency.Contact
 
 	return &agencyDisplay, nil
+}
+
+func (agr *AgencyRepository) AddBus(bus *Domain.Bus) error {
+	_, err := agr.BusCollection.InsertOne(agr.DbCtx, bus)
+	return err
+}
+
+func (agr *AgencyRepository) EditBus(bus *Domain.Bus) error {
+	filter := bson.M{"plate_number": bus.PlateNumber}
+	update := bson.M{"$set": bus}
+	_, err := agr.BusCollection.UpdateOne(agr.DbCtx, filter, update)
+	return err
+}
+
+func (agr *AgencyRepository) DeleteBus(plateNumber string) error {
+	filter := bson.M{"plate_number": plateNumber}
+	_, err := agr.BusCollection.DeleteOne(agr.DbCtx, filter)
+	return err
+}
+
+func (agr *AgencyRepository) GetBusByPlateNumber(plateNumber string) (*Domain.Bus, error) {
+	var bus Domain.Bus
+	filter := bson.M{"plate_number": plateNumber}
+	err := agr.BusCollection.FindOne(agr.DbCtx, filter).Decode(&bus)
+	if err != nil {
+		return nil, err
+	}
+	return &bus, nil
+}
+
+func (agr *AgencyRepository) GetAllBusesByAgencyID(agencyID primitive.ObjectID) (*[]Domain.Bus, error) {
+	var buses []Domain.Bus
+
+	filter := bson.M{"agency_id": agencyID}
+	cursor, err := agr.BusCollection.Find(agr.DbCtx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(agr.DbCtx)
+
+	err = cursor.All(agr.DbCtx, &buses)
+	if err != nil {
+		return nil, err
+	}
+
+	return &buses, nil
 }

@@ -2,25 +2,32 @@ package UseCase
 
 import (
 	"Hawir/Domain"
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type AgencyUseCase struct {
 	AgencyRepo      IAgencyRepository
+	DriverRepo      IDriverRepository
 	PasswordService IPasswordService
 	TokenService    ITokenService
 	ErrorService    IErrorService
+	MailService     IMailService
 
 	EmailExpiry     int64
 	TokenExpiry     int64
 	RefresherExpiry int64
 }
 
-func NewAgencyUseCase(agr IAgencyRepository, ps IPasswordService, ts ITokenService, es IErrorService, ex, tx, rx int64) IAgencyUseCase {
+func NewAgencyUseCase(agr IAgencyRepository, drr IDriverRepository, ps IPasswordService, ts ITokenService, es IErrorService, ms IMailService, ex, tx, rx int64) IAgencyUseCase {
 	return &AgencyUseCase{
 		AgencyRepo:      agr,
+		DriverRepo:      drr,
 		PasswordService: ps,
 		TokenService:    ts,
 		ErrorService:    es,
+		MailService:     ms,
 		EmailExpiry:     ex,
 		TokenExpiry:     tx,
 		RefresherExpiry: rx,
@@ -123,6 +130,72 @@ func (aguc *AgencyUseCase) GetAllAgencies() (*[]Domain.Agency, int, error) {
 	return agency, code, err
 }
 
+func (aguc *AgencyUseCase) AddBus(bus *Domain.Bus) (int, error) {
+	// panic("unimplemented")
+	// check if the bus with the same plate number exists
+	_, err := aguc.AgencyRepo.GetBusByPlateNumber(bus.PlateNumber)
+
+	if err == nil {
+		// return aguc.ErrorService.BusAlreadyExists()
+		return aguc.ErrorService.IncorrectPlateNo()
+	}
+
+	bus.IsReserved = false
+	bus.RegistrationDate = time.Now()
+	bus.CurrentTrips = []string{}
+
+	err = aguc.AgencyRepo.AddBus(bus)
+	if err != nil {
+		return aguc.ErrorService.InternalServer()
+	}
+
+	return aguc.ErrorService.NoError()
+}
+
+func (aguc *AgencyUseCase) EditBus(bus *Domain.Bus) (int, error) {
+	err := aguc.AgencyRepo.EditBus(bus)
+	if err != nil {
+		return aguc.ErrorService.InternalServer()
+	}
+
+	return aguc.ErrorService.NoError()
+}
+
+func (aguc *AgencyUseCase) DeleteBus(plateNumber string) (int, error) {
+	err := aguc.AgencyRepo.DeleteBus(plateNumber)
+	if err != nil {
+		return aguc.ErrorService.InternalServer()
+	}
+
+	return aguc.ErrorService.NoError()
+}
+
+func (aguc *AgencyUseCase) GetBusByPlateNumber(plateNumber string) (*Domain.Bus, int, error) {
+	panic("unimplemented")
+	bus, err := aguc.AgencyRepo.GetBusByPlateNumber(plateNumber)
+	if err != nil {
+		// code, err := aguc.ErrorService.BusNotFound()
+		code, err := aguc.ErrorService.NoError()
+		return nil, code, err
+	}
+
+	code, err := aguc.ErrorService.NoError()
+	return bus, code, err
+}
+
+func (aguc *AgencyUseCase) GetAllBusesByAgencyID(agencyID primitive.ObjectID) (*[]Domain.Bus, int, error) {
+	panic("unimplemented")
+	buses, err := aguc.AgencyRepo.GetAllBusesByAgencyID(agencyID)
+	if err != nil {
+		// code, err := aguc.ErrorService.BusNotFound()
+		code, err := aguc.ErrorService.NoError()
+    return nil, code, err
+  }
+  
+  code, err := aguc.ErrorService.NoError()
+  return buses, code, err
+}
+
 func (aguc *AgencyUseCase) GetAgencyForUser(id string) (*Domain.AgencyDisplay, int, error) {
 	agency, err := aguc.AgencyRepo.GetAgencyForUserById(id)
 	if err != nil {
@@ -131,5 +204,39 @@ func (aguc *AgencyUseCase) GetAgencyForUser(id string) (*Domain.AgencyDisplay, i
 	}
 
 	code, err := aguc.ErrorService.NoError()
-	return agency, code, err
+  return agency, code, err
+}
+
+func (aguc *AgencyUseCase) AddDriver(driver *Domain.Driver) (int, error) {
+	// check if the driver with the same email exists
+	_, err := aguc.DriverRepo.GetDriverByEmail(driver.Email)
+	if err == nil {
+		return aguc.ErrorService.UserExists()
+	}
+
+	driver.RegistrationDate = time.Now()
+	driver.CurrentTrips = []string{}
+	driver.Verified = false
+
+	// send email verification
+	token, err := aguc.TokenService.GenerateEmailToken(driver.Email, aguc.EmailExpiry)
+	if err != nil {
+		return aguc.ErrorService.InternalServer()
+	}
+	aguc.MailService.SendVerificationEmail(driver.Email, token, "/driver")
+
+	// hash the password
+	hashedPassword, err := aguc.PasswordService.HashPassword(driver.Password)
+	if err != nil {
+		return aguc.ErrorService.InternalServer()
+	}
+	driver.Password = hashedPassword
+
+	err = aguc.DriverRepo.AddDriver(driver)
+	if err != nil {
+		// fmt.Println("repo", err.Error())
+		return aguc.ErrorService.InternalServer()
+	}
+
+	return aguc.ErrorService.NoError()
 }
