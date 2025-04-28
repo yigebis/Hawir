@@ -152,13 +152,13 @@ func (bc *BookingController) GetAllBookings(ctx *gin.Context) {
 		return
 	}
 
-	bookings, statusCode, err := bc.BookingUseCase.GetAllBookings(travelID)
+	travelBookings, statusCode, err := bc.BookingUseCase.GetAllBookings(travelID)
 	if err != nil {
 		ctx.JSON(statusCode, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(statusCode, bookings)
+	ctx.JSON(statusCode, travelBookings)
 }
 
 func (bc *BookingController) GetBookingsForTraveler(ctx *gin.Context) {

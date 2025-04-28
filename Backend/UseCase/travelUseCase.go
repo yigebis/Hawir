@@ -114,6 +114,8 @@ func (tuc *TravelUseCase) CreateTravel(travel *Domain.Travel) (int, error) {
 	travel.PostTime = time.Now()
 	travel.LastModTime = travel.PostTime
 	travel.Status = "upcoming"
+	travel.ActualStartTime = travel.PlannedStartTime
+	travel.ActualArrivalTime = travel.EstArrivalTime
 
 	travelID, err := tuc.TravelRepo.CreateTravel(travel)
 	if err != nil {
@@ -156,6 +158,7 @@ func (tuc *TravelUseCase) EditTravel(travel *Domain.Travel) (int, error) {
 	}
 
 	travel.LastModTime = time.Now()
+
 	err = tuc.TravelRepo.EditTravel(travel)
 	if err != nil {
 		return tuc.ErrorService.TravelNotFound()

@@ -17,14 +17,16 @@ type BookingRepository struct {
 	BookingCollection     *mongo.Collection
 	TravelStatsCollection *mongo.Collection
 	SeatCollection        *mongo.Collection
+	UserCollection        *mongo.Collection
 }
 
-func NewBookingRepository(dbCtx context.Context, bookingCollection, travelStatsCollection, SeatCollection *mongo.Collection) UseCase.IBookingRepository {
+func NewBookingRepository(dbCtx context.Context, bookingCollection, travelStatsCollection, SeatCollection, UserCollection *mongo.Collection) UseCase.IBookingRepository {
 	return &BookingRepository{
 		DbCtx:                 dbCtx,
 		BookingCollection:     bookingCollection,
 		TravelStatsCollection: travelStatsCollection,
 		SeatCollection:        SeatCollection,
+		UserCollection:        UserCollection,
 	}
 }
 
@@ -191,7 +193,7 @@ func (b *BookingRepository) GetBookingByTravelerID(travelerID, travelID string) 
 }
 
 // GetAllBookings implements UseCase.IBookingRepository.
-func (b *BookingRepository) GetAllBookings(travelID string) (*[]Domain.Booking, error) {
+func (b *BookingRepository) GetAllBookings(travelID string) (*[]Domain.TravelBookings, error) {
 	filter := bson.M{"travel_id": travelID}
 
 	var bookings []Domain.Booking
@@ -216,7 +218,32 @@ func (b *BookingRepository) GetAllBookings(travelID string) (*[]Domain.Booking, 
 		return nil, err
 	}
 
-	return &bookings, nil
+	var travelBookings []Domain.TravelBookings
+	for _, booking := range bookings {
+		objId, err := primitive.ObjectIDFromHex(booking.TravelerID)
+		if err != nil {
+			return nil, errors.New("invalid traveller ID format")
+		}
+
+		filter = bson.M{"_id": primitive.ObjectID(objId)}
+		var user Domain.User
+		err = b.UserCollection.FindOne(b.DbCtx, filter).Decode(&user)
+		if err != nil {
+			return nil, err
+		}
+
+		travelBookings = append(travelBookings, Domain.TravelBookings{
+			TravelerName:  user.FirstName + " " + user.LastName,
+			SeatNo:        booking.SeatNo,
+			Phone:         user.PhoneNumber,
+			Email:         user.Email,
+			BookTime:      booking.BookTime,
+			BookTimeLimit: booking.BookTimeLimit,
+			PayStatus:     booking.Status,
+		})
+	}
+
+	return &travelBookings, nil
 }
 
 func (b *BookingRepository) GetBookingsForTraveler(travlerID string) (*[]Domain.Booking, error) {

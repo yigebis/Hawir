@@ -79,6 +79,7 @@ func main() {
 		booking_collection,
 		travel_stat_collection,
 		seat_collection,
+		user_collection,
 	)
 	dr := Repository.NewDestinationRepository(destination_context, destination_collection)
 	drr := Repository.NewDriverRepository(driver_context, driver_collection)
