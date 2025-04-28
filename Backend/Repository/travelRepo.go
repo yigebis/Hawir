@@ -27,7 +27,7 @@ func NewTravelRepository(dbCtx context.Context, collection *mongo.Collection) Us
 }
 
 func (tr *TravelRepository) CreateTravel(travel *Domain.Travel) (string, error) {
-	fmt.Println("inside repo!")
+	// fmt.Println("inside repo!")
 	result, err := tr.Collection.InsertOne(tr.DbCtx, travel)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -59,7 +59,7 @@ func (tr *TravelRepository) EditTravel(travel *Domain.Travel) error {
 		// "notice":             travel.Notice,
 		"bus_ref": travel.BusRef,
 		// "has_pay_back":       travel.HasPayBack,
-		"driver_name": travel.DriverName,
+		"driver_id": travel.DriverID,
 		// Automatically set last_mod_time to now on update
 		"last_mod_time": time.Now(),
 		"status":        travel.Status,

@@ -91,7 +91,7 @@ func (uuc *UserUseCase) Register(user *Domain.User) (int, error) {
 		return uuc.ErrorService.InternalServer()
 	}
 
-	err = uuc.MailService.SendVerificationEmail(user.Email, token)
+	err = uuc.MailService.SendVerificationEmail(user.Email, token, "/user")
 
 	if err != nil {
 		fmt.Println("verification")
@@ -112,20 +112,7 @@ func (uuc *UserUseCase) VerifyEmail(email, token string) (int, error) {
 		return uuc.ErrorService.InvalidToken()
 	}
 
-	// check if the user is already verified
-	fmt.Println(email, token)
-	user, err := uuc.UserRepo.GetUserByEmail(email)
-	if err != nil {
-		return uuc.ErrorService.InternalServer()
-	}
-
-	if user.Verified {
-		return uuc.ErrorService.UserExists()
-	}
-
-	user.Verified = true
-
-	err = uuc.UserRepo.VerifyUser(user)
+	err = uuc.UserRepo.VerifyUser(email)
 
 	if err != nil {
 		return uuc.ErrorService.InternalServer()

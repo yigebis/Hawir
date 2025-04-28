@@ -22,7 +22,7 @@ func (ts *TokenService) GenerateToken(id string, firstName string, role string, 
 		"id":         id,
 		"first_name": firstName,
 		"role":       role,
-		"exp":        expiryDuration,
+		"exp":        time.Now().Add(time.Duration(expiryDuration) * time.Second).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -38,7 +38,7 @@ func (ts *TokenService) GenerateToken(id string, firstName string, role string, 
 func (ts *TokenService) GenerateEmailToken(email string, expiryDuration int64) (string, error) {
 	claims := jwt.MapClaims{
 		"email": email,
-		"exp":   expiryDuration,
+		"exp":   time.Now().Add(time.Duration(expiryDuration) * time.Second).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -54,7 +54,7 @@ func (ts *TokenService) GenerateEmailToken(email string, expiryDuration int64) (
 func (ts *TokenService) GenerateAgencyToken(email string, role string, agencyID string, admin_role string, expiryDuration int64) (string, error) {
 	claims := jwt.MapClaims{
 		"email":     email,
-		"exp":       expiryDuration,
+		"exp":       time.Now().Add(time.Duration(expiryDuration) * time.Second).Unix(),
 		"role":      role,
 		"agency_id": agencyID,
 	}

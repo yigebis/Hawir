@@ -24,15 +24,15 @@ func NewMailService(sender, password, from, websiteDomainName string) UseCase.IM
 	}
 }
 
-func (ms *MailService) SendVerificationEmail(to, token string) error {
+func (ms *MailService) SendVerificationEmail(to, token, api string) error {
 	m := gomail.NewMessage()
 
 	m.SetHeader("From", ms.From)
 	m.SetHeader("To", to)
 	m.SetHeader("Subject", "Verify your Email")
 
-	verifyLink := fmt.Sprintf(ms.WebsiteDomainName+"/verify?email=%s&token=%s", to, token)
-	rejectLink := fmt.Sprintf(ms.WebsiteDomainName+"/email/reject?email=%s&token=%s", to, token)
+	verifyLink := fmt.Sprintf(ms.WebsiteDomainName+api+"/verify?email=%s&token=%s", to, token)
+	rejectLink := fmt.Sprintf(ms.WebsiteDomainName+api+"/reject?email=%s&token=%s", to, token)
 
 	body := fmt.Sprintf(`
 	<!DOCTYPE html>
@@ -78,6 +78,6 @@ func (ms *MailService) SendVerificationEmail(to, token string) error {
 	return err
 }
 
-func (ms *MailService) SendPasswordResetEmail(to, resetToken string) error {
+func (ms *MailService) SendPasswordResetEmail(to, resetToken, api string) error {
 	return nil
 }

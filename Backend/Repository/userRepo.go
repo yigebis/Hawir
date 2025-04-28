@@ -58,14 +58,14 @@ func (ur *UserRepository) GetUserByPhoneNumber(phoneNumber string) (*Domain.User
 	return &user, nil
 }
 
-func (ur *UserRepository) VerifyUser(user *Domain.User) error {
-	filter := bson.M{"email": user.Email}
+func (ur *UserRepository) VerifyUser(email string) error {
+	filter := bson.M{"email": email}
 	update := bson.M{"$set": bson.M{
 		"verified": true,
 	}}
 
 	_, err := ur.Collection.UpdateOne(ur.DbCtx, filter, update)
-	fmt.Println(err)
+	// fmt.Println(err)
 	return err
 }
 
