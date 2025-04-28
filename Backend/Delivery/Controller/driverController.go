@@ -144,5 +144,5 @@ func (dc *DriverController) ChangePassword(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(code, gin.H{"message": "password chaneged successfully"})
+	ctx.JSON(code, gin.H{"message": "password changed successfully"})
 }
