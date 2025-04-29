@@ -1,10 +1,12 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Sidebar from "../Sidebar/Sidebar";
 import AddAgency from "../AddAgency/AddAgency";
 import EditAgency from "../EditAgency/EditAgency";
+import { addAgency, editAgency, deleteAgency, API_BASE_URL } from "../../api/api";
 import "./ManageAgencies.css";
 
-const ManageAgencies = ({ agencies, setAgencies }) => {
+const ManageAgencies = () => {
+  const [agencies, setAgencies] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOption, setSortOption] = useState("newest");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -12,8 +14,21 @@ const ManageAgencies = ({ agencies, setAgencies }) => {
   const [selectedAgency, setSelectedAgency] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [agencyToDelete, setAgencyToDelete] = useState(null);
-  const [undoTimeout, setUndoTimeout] = useState(null);
-  const [undoAvailable, setUndoAvailable] = useState(false); //  new state
+
+  // Fetch agencies from the backend when the component loads
+  useEffect(() => {
+    const loadAgencies = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/agency/all`); 
+        const data = await response.json();
+        setAgencies(data);
+      } catch (error) {
+        console.error("Error fetching agencies:", error);
+      }
+    };
+
+    loadAgencies();
+  }, []);
 
   const filteredAgencies = useMemo(() => {
     let filtered = agencies.filter((agency) =>
@@ -36,25 +51,29 @@ const ManageAgencies = ({ agencies, setAgencies }) => {
     return filtered;
   }, [agencies, searchQuery, sortOption]);
 
-  const handleAddAgency = (newAgency) => {
-    const agencyWithId = { ...newAgency, id: Date.now() };
-    setAgencies((prev) => [...prev, agencyWithId]);
+  const handleAddAgency = async (newAgency) => {
+    try {
+      const addedAgency = await addAgency(newAgency); // Call the backend API
+      setAgencies((prev) => [...prev, addedAgency]); // Update the state with the new agency
+    } catch (error) {
+      console.error("Error adding agency:", error);
+      alert("Failed to add agency. Please try again.");
+    }
   };
 
-  const handleEditClick = (agency) => {
-    setSelectedAgency(agency);
-    setShowEditModal(true);
-  };
-
-  const handleEditAgency = (updatedAgency) => {
-    setAgencies((prev) =>
-      prev.map((agency) =>
-        agency.id === updatedAgency.id
-          ? { ...agency, ...updatedAgency }
-          : agency
-      )
-    );
-    setShowEditModal(false);
+  const handleEditAgency = async (updatedAgency) => {
+    try {
+      const editedAgency = await editAgency(updatedAgency.id, updatedAgency); // Call the backend API
+      setAgencies((prev) =>
+        prev.map((agency) =>
+          agency.id === updatedAgency.id ? editedAgency : agency
+        )
+      ); // Update the state with the edited agency
+      setShowEditModal(false); // Close the edit modal
+    } catch (error) {
+      console.error("Error editing agency:", error);
+      alert("Failed to edit agency. Please try again.");
+    }
   };
 
   const handleDeleteClick = (agency) => {
@@ -62,29 +81,18 @@ const ManageAgencies = ({ agencies, setAgencies }) => {
     setShowDeleteModal(true);
   };
 
-  const confirmDeleteAgency = () => {
-    setShowDeleteModal(false);
-
-    // Remove the agency
-    const updatedAgencies = agencies.filter(
-      (agency) => agency.id !== agencyToDelete.id
-    );
-    setAgencies(updatedAgencies);
-
-    setUndoAvailable(true); //  enable undo
-    const timeout = setTimeout(() => {
-      setAgencyToDelete(null); // Finalize deletion
-      setUndoAvailable(false); // Hide undo after timeout
-    }, 5000);
-
-    setUndoTimeout(timeout);
-  };
-
-  const undoDeleteAgency = () => {
-    clearTimeout(undoTimeout);
-    setAgencies((prev) => [...prev, agencyToDelete]);
-    setAgencyToDelete(null);
-    setUndoAvailable(false); //  reset undo
+  const confirmDeleteAgency = async () => {
+    try {
+      await deleteAgency(agencyToDelete.id); // Call the backend API
+      setAgencies((prev) =>
+        prev.filter((agency) => agency.id !== agencyToDelete.id)
+      ); // Remove the agency from the state
+      setShowDeleteModal(false); // Close the delete modal
+      setAgencyToDelete(null); // Clear the selected agency
+    } catch (error) {
+      console.error("Error deleting agency:", error);
+      alert("Failed to delete agency. Please try again.");
+    }
   };
 
   return (
@@ -117,11 +125,7 @@ const ManageAgencies = ({ agencies, setAgencies }) => {
             <div className="modal-actions">
               <button
                 className="cancel-btn"
-                onClick={() => {
-                  setShowDeleteModal(false);
-                  setAgencyToDelete(null); //  cancel clears state
-                  setUndoAvailable(false); //  prevent undo
-                }}
+                onClick={() => setShowDeleteModal(false)}
               >
                 Cancel
               </button>
@@ -133,18 +137,9 @@ const ManageAgencies = ({ agencies, setAgencies }) => {
         </div>
       )}
 
-      {undoAvailable && agencyToDelete && (
-        <div className="undo-notification">
-          <p>
-            Agency <strong>{agencyToDelete.name}</strong> deleted.{" "}
-            <button onClick={undoDeleteAgency}>Undo</button>
-          </p>
-        </div>
-      )}
-
       <main className="manage-agencies-main">
         <div className="header">
-          <div className="dashboard-title-actions">
+          <div className="title-actions">
             <h1>Manage Agencies</h1>
             <button className="add-btn" onClick={() => setShowAddModal(true)}>
               <i className="fas fa-plus"></i> Add Agency
@@ -204,7 +199,10 @@ const ManageAgencies = ({ agencies, setAgencies }) => {
               <div className="agency-actions">
                 <button
                   className="edit-btn"
-                  onClick={() => handleEditClick(agency)}
+                  onClick={() => {
+                    setSelectedAgency(agency);
+                    setShowEditModal(true);
+                  }}
                 >
                   <i className="fas fa-edit"></i> Edit
                 </button>

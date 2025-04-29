@@ -4,39 +4,42 @@ import AddEvent from "../AddEvent/AddEvent";
 import EditEvent from "../EditEvent/EditEvent"; // Import EditEvent component
 import "./ManageEvents.css";
 
-const ManageEvents = () => {
-  const [events, setEvents] = useState([
-    {
-      id: 1,
-      name: "Annual Tech Conference",
-      description: "A gathering of tech enthusiasts and startups.",
-      location: "San Francisco",
-      startDate: "2025-05-01",
-      endDate: "2025-05-03",
-      attendees: 340,
-      status: "Educational & Business",
-      image:
-        "https://images.unsplash.com/photo-1694878873244-fa81446faba8?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    },
-    {
-      id: 2,
-      name: "AI Innovation Day",
-      description: "Showcase of AI-driven projects.",
-      location: "New York",
-      startDate: "2025-04-10",
-      endDate: "2025-04-10",
-      attendees: 150,
-      status: "IT and Technology",
-      image:
-        "https://images.unsplash.com/photo-1694878981873-42a9d5538b52?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjB8fHBsYWNlaG9sZGVyfGVufDB8fDB8fHww",
-    },
-  ]);
+const ManageEvents = ({ events, setEvents }) => {
+  // const [events, setEvents] = useState([
+  //   {
+  //     id: 1,
+  //     name: "Annual Tech Conference",
+  //     description: "A gathering of tech enthusiasts and startups.",
+  //     location: "San Francisco",
+  //     startDate: "2025-05-01",
+  //     endDate: "2025-05-03",
+  //     attendees: 340,
+  //     status: "Educational & Business",
+  //     image:
+  //       "https://images.unsplash.com/photo-1694878873244-fa81446faba8?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  //   },
+  //   {
+  //     id: 2,
+  //     name: "AI Innovation Day",
+  //     description: "Showcase of AI-driven projects.",
+  //     location: "New York",
+  //     startDate: "2025-04-10",
+  //     endDate: "2025-04-10",
+  //     attendees: 150,
+  //     status: "IT and Technology",
+  //     image:
+  //       "https://images.unsplash.com/photo-1694878981873-42a9d5538b52?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjB8fHBsYWNlaG9sZGVyfGVufDB8fDB8fHww",
+  //   },
+  // ]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOption, setSortOption] = useState("newest");
+  const [deletedEvent, setDeletedEvent] = useState(null); // Store the deleted event for undo
+  const [undoTimeout, setUndoTimeout] = useState(null); // Timeout for undo
+  const [undoAvailable, setUndoAvailable] = useState(false); // Undo state
 
   const filteredEvents = useMemo(() => {
     let filtered = events.filter((event) =>
@@ -84,9 +87,39 @@ const ManageEvents = () => {
   };
 
   const confirmDeleteEvent = () => {
-    setEvents((prev) => prev.filter((event) => event.id !== selectedEvent.id));
     setShowDeleteModal(false);
+
+    // Remove the event
+    const updatedEvents = events.filter(
+      (event) => event.id !== selectedEvent.id
+    );
+    setEvents(updatedEvents);
+
+    // Store the deleted event for undo
+    setDeletedEvent(selectedEvent);
+    setUndoAvailable(true);
+
+    // Set a timeout for undo
+    const timeout = setTimeout(() => {
+      console.log("Undo timeout expired"); // Debugging
+      setDeletedEvent(null); // Finalize deletion
+      setUndoAvailable(false); // Hide undo after timeout
+    }, 5000);
+
+    setUndoTimeout(timeout);
     setSelectedEvent(null);
+
+    console.log("Event deleted:", selectedEvent); // Debugging
+    console.log("Undo available:", undoAvailable); // Debugging
+  };
+
+  const undoDeleteEvent = () => {
+    clearTimeout(undoTimeout); // Clear the timeout
+    setEvents((prev) => [...prev, deletedEvent]); // Restore the deleted event
+    setDeletedEvent(null); // Clear the deleted event
+    setUndoAvailable(false); // Reset undo state
+
+    console.log("Undo performed, event restored:", deletedEvent); // Debugging
   };
 
   return (
@@ -128,6 +161,15 @@ const ManageEvents = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {undoAvailable && deletedEvent && (
+        <div className="undo-notification">
+          <p>
+            Event <strong>{deletedEvent.name}</strong> deleted.{" "}
+            <button onClick={undoDeleteEvent}>Undo</button>
+          </p>
         </div>
       )}
 
@@ -192,7 +234,8 @@ const ManageEvents = () => {
                     <i className="fas fa-map-marker-alt"></i> {event.location}
                   </p>
                   <p className="event-attendees">
-                    <i className="fas fa-users"></i> {event.attendees} Interested
+                    <i className="fas fa-users"></i> {event.attendees}{" "}
+                    Interested
                   </p>
                 </div>
                 <div className="event-actions">

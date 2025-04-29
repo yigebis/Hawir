@@ -8,6 +8,7 @@
 .manage-events-main {
   flex: 1;
   padding: 1rem;
+  overflow-y: auto;
 }
 
 .dashboard-header {
@@ -24,7 +25,7 @@
 }
 
 .add-btn {
-  background-color: #007bff;
+  background-color: #006400;
   color: white;
   padding: 10px 16px;
   border: none;
@@ -36,7 +37,7 @@
 }
 
 .add-btn:hover {
-  background-color: #0056b3;
+  background-color: #004d00
 }
 
 .add-btn i {
@@ -169,4 +170,30 @@
   margin-top: 2rem;
   color: #666;
   font-size: 16px;
+}
+
+.undo-notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #4caf50;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 4px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+}
+
+.undo-notification button {
+  background: white;
+  color: #4caf50;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 10px;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.undo-notification button:hover {
+  background: #f1f1f1;
 }

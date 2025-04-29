@@ -8,7 +8,7 @@ const AddAgency = ({ onClose, onSave }) => {
     services: "",
     contactEmail: "",
     contactPhone: "",
-    superAdminEmail: "",
+    super_admin_email: "",
     password: "",
   });
 
@@ -42,8 +42,8 @@ const AddAgency = ({ onClose, onSave }) => {
   const validateForm = () => {
     const newErrors = {};
     if (!formData.name) newErrors.name = "Name is required.";
-    if (!formData.superAdminEmail)
-      newErrors.superAdminEmail = "Super Admin Email is required.";
+    if (!formData.super_admin_email)
+      newErrors.super_admin_email = "Super Admin Email is required.";
     if (!formData.password) {
       newErrors.password = "Password is required.";
     } else {
@@ -68,13 +68,12 @@ const AddAgency = ({ onClose, onSave }) => {
         : [],
       description: formData.description,
       contact: [formData.contactPhone, formData.contactEmail].filter(Boolean),
-      superAdminEmail: formData.superAdminEmail,
+      super_admin_email: formData.super_admin_email,
       password: formData.password,
     };
 
-
-    onSave(newAgency);
-    onClose();
+    onSave(newAgency); // Call the onSave function passed from ManageAgencies
+    onClose(); // Close the modal
   };
 
   return (
@@ -124,13 +123,13 @@ const AddAgency = ({ onClose, onSave }) => {
 
           <input
             type="email"
-            name="superAdminEmail"
+            name="super_admin_email"
             placeholder="Super Admin Email *"
-            value={formData.superAdminEmail}
+            value={formData.super_admin_email}
             onChange={handleChange}
           />
-          {errors.superAdminEmail && (
-            <span className="error">{errors.superAdminEmail}</span>
+          {errors.super_admin_email && (
+            <span className="error">{errors.super_admin_email}</span>
           )}
 
           <input

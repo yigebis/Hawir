@@ -1,136 +1,45 @@
 import React, { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
 import "./Dashboard.css";
 import Sidebar from "../Sidebar/Sidebar";
-import logo from "../../assets/logo.jpg";
-import AddAgency from "../AddAgency/AddAgency";
-import EditAgency from "../EditAgency/EditAgency";
 
-const Dashboard = ({ agencies, setAgencies }) => {
-  // const [agencies, setAgencies] = useState([
-  //   {
-  //     id: 1,
-  //     name: "Selam Bus",
-  //     logo: logo,
-  //     description: "Leading national bus service provider.",
-  //     services: ["Luxury Buses", "Online Booking", "Parcel Delivery"],
-  //     contact: ["+251-911-123456", "info@selambus.com"],
-  //     superAdminEmail: "admin@selambus.com", // Add this field
-  //   },
-  //   {
-  //     id: 2,
-  //     name: "Golden Bus",
-  //     logo: logo,
-  //     description: "Reliable regional transport services.",
-  //     services: ["Affordable Fares", "Group Travel"],
-  //     contact: ["+251-922-654321", "support@goldenbus.com"],
-  //     superAdminEmail: "admin@goldenbus.com", // Add this field
-  //   },
-  // ]);
-
+const Dashboard = ({ agencies, events, locations }) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortOption, setSortOption] = useState("newest");
-  const [showAddModal, setShowAddModal] = useState(false);
-  // const [showEditModal, setShowEditModal] = useState(false);
-  // const [selectedAgency, setSelectedAgency] = useState(null);
+  const navigate = useNavigate(); // Initialize navigation
 
+  // Filter logic for agencies, events, and locations
   const filteredAgencies = useMemo(() => {
-    let filtered = agencies.filter((agency) =>
+    return agencies.filter((agency) =>
       agency.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
+  }, [agencies, searchQuery]);
 
-    switch (sortOption) {
-      case "name":
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case "oldest":
-        filtered.sort((a, b) => a.id - b.id);
-        break;
-      case "newest":
-      default:
-        filtered.sort((a, b) => b.id - a.id);
-        break;
-    }
+  const filteredEvents = useMemo(() => {
+    return events.filter((event) =>
+      event.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [events, searchQuery]);
 
-    return filtered;
-  }, [agencies, searchQuery, sortOption]);
-
-  const handleAddAgency = (newAgency) => {
-    if (
-      !newAgency.name?.trim() ||
-      !newAgency.contact?.[0]?.trim() ||
-      !newAgency.contact?.[1]?.trim() ||
-      !newAgency.superAdminEmail?.trim() ||
-      !newAgency.password?.trim()
-    ) {
-      alert("Please fill in all required fields.");
-      return;
-    }
-
-    const agencyWithId = { ...newAgency, id: Date.now() };
-    setAgencies((prev) => [...prev, agencyWithId]);
-  };
-
-  // const handleEditAgency = (updatedAgency) => {
-  //   setAgencies((prev) =>
-  //     prev.map((agency) =>
-  //       agency.id === updatedAgency.id
-  //         ? { ...agency, ...updatedAgency }
-  //         : agency
-  //     )
-  //   );
-  //   setShowEditModal(false);
-  // };
-
-  // const handleEditClick = (agency) => {
-  //   setSelectedAgency(agency);
-  //   setShowEditModal(true);
-  // };
+  const filteredLocations = useMemo(() => {
+    return locations.filter((location) =>
+      location.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [locations, searchQuery]);
 
   return (
     <div className="dashboard-container">
       <Sidebar />
 
-      {showAddModal && (
-        <AddAgency
-          onClose={() => setShowAddModal(false)}
-          onSave={handleAddAgency}
-        />
-      )}
-
-      {/* {showEditModal && selectedAgency && (
-        <EditAgency
-          agencyData={selectedAgency}
-          onClose={() => setShowEditModal(false)}
-          onSave={handleEditAgency}
-        />
-      )} */}
-
       <main className="dashboard-main">
         <div className="dashboard-header">
           <div className="dashboard-title-actions">
-            <h1>Travel Agencies</h1>
-            <button className="add-btn" onClick={() => setShowAddModal(true)}>
-              Add Agency
-            </button>
+            <h1>Dashboard</h1>
           </div>
 
           <div className="header-actions">
-            <label className="sort-label">
-              Sort By:
-              <select
-                className="sort-select"
-                value={sortOption}
-                onChange={(e) => setSortOption(e.target.value)}
-              >
-                <option value="newest">Newest First</option>
-                <option value="oldest">Oldest First</option>
-                <option value="name">Name (A-Z)</option>
-              </select>
-            </label>
-
             <input
               type="text"
-              placeholder="Search agencies..."
+              placeholder="Search..."
               className="search-input"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -138,52 +47,121 @@ const Dashboard = ({ agencies, setAgencies }) => {
           </div>
         </div>
 
-        <div className="agency-list grid">
-          {filteredAgencies.map((agency) => (
-            <div className="agency-card" key={agency.id}>
-              <div className="agency-header">
-                <div className="agency-logo-container">
-                  <img
-                    src={agency.logo}
-                    alt={agency.name}
-                    className="agency-logo"
-                  />
+        {/* Agencies Section */}
+        <section className="dashboard-section">
+          <h2>Travel Agencies</h2>
+          <div className="agency-list grid">
+            {filteredAgencies.map((agency) => (
+              <div className="agency-card" key={agency.id}>
+                <div className="agency-header">
+                  <div className="agency-logo-container">
+                    <img
+                      src={agency.logo}
+                      alt={agency.name}
+                      className="agency-logo"
+                    />
+                  </div>
+                  <h3 className="agency-name">{agency.name}</h3>
                 </div>
-                <h3 className="agency-name">{agency.name}</h3>
-              </div>
 
-              <p className="agency-description">{agency.description}</p>
-              <hr className="linebreak" />
+                <p className="agency-description">{agency.description}</p>
+                <hr className="linebreak" />
 
-              <div className="agency-contact">
-                <p>
-                  <i className="fas fa-envelope"></i> {agency.contact[1]}
-                </p>
-                <p>
-                  <i className="fas fa-phone"></i> {agency.contact[0]}
-                </p>
-              </div>
-              <hr className="linebreak" />
+                <div className="agency-contact">
+                  <p>
+                    <i className="fas fa-envelope"></i> {agency.contact[1]}
+                  </p>
+                  <p>
+                    <i className="fas fa-phone"></i> {agency.contact[0]}
+                  </p>
+                </div>
+                <hr className="linebreak" />
 
-              <div className="agency-actions">
-                {/* <button
-                  className="edit-btn"
-                  onClick={() => handleEditClick(agency)}
-                >
-                  <i className="fas fa-edit"></i> Edit
-                </button> */}
-                <button
-                  className="view-details-btn"
-                  onClick={() => {
-                    console.log(`View details for agency: ${agency.name}`);
-                  }}
-                >
-                  <i className="fas fa-eye"></i> View Details
-                </button>
+                <div className="agency-actions">
+                  <button
+                    className="view-details-btn"
+                    onClick={() => navigate(`/agency-details/${agency.id}`)}
+                  >
+                    <i className="fas fa-eye"></i> View Details
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+            {filteredAgencies.length === 0 && <p>No agencies found.</p>}
+          </div>
+          <button
+            className="view-more-btn"
+            onClick={() => navigate("/manage-agencies")}
+          >
+            View More
+          </button>
+        </section>
+
+        {/* Events Section */}
+        <section className="dashboard-section">
+          <h2>Events</h2>
+          <div className="event-list grid">
+            {filteredEvents.map((event) => (
+              <div className="event-card" key={event.id}>
+                <div className="event-image">
+                  <img src={event.image} alt={event.name} />
+                </div>
+                <div className="event-content">
+                  <h3 className="event-name">{event.name}</h3>
+                  <p className="event-description">{event.description}</p>
+                  <p className="event-date">
+                    {new Date(event.startDate).toLocaleDateString()} -{" "}
+                    {new Date(event.endDate).toLocaleDateString()}
+                  </p>
+                  <button
+                    className="view-details-btn"
+                    onClick={() => navigate(`/event-details/${event.id}`)}
+                  >
+                    View Details
+                  </button>
+                </div>
+              </div>
+            ))}
+            {filteredEvents.length === 0 && <p>No events found.</p>}
+          </div>
+          <button
+            className="view-more-btn"
+            onClick={() => navigate("/manage-events")}
+          >
+            View More
+          </button>
+        </section>
+
+        {/* Locations Section */}
+        <section className="dashboard-section">
+          <h2>Locations</h2>
+          <div className="location-list grid">
+            {filteredLocations.map((location) => (
+              <div className="location-card" key={location.id}>
+                <div className="location-image">
+                  <img src={location.imageUrl} alt={location.name} />
+                </div>
+                <div className="location-details">
+                  <h3 className="location-name">{location.name}</h3>
+                  <p className="location-desc">{location.desc}</p>
+                  <button
+                    className="view-details-btn"
+                    onClick={() => navigate(`/location-details/${location.id}`)}
+                  >
+                    View Details
+                  </button>
+                </div>
+              </div>
+            ))}
+            {filteredLocations.length === 0 && <p>No locations found.</p>}
+          </div>
+          <button
+            className="view-more-btn"
+            onClick={() => navigate("/manage-locations")}
+          >
+            View More
+          </button>
+        </section>
       </main>
     </div>
   );

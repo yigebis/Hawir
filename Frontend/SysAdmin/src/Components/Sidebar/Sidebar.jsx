@@ -24,6 +24,9 @@ function Sidebar({ agencies, setAgencies }) {
         <li className={location.pathname === "/manage-events" ? "active" : ""}>
           <Link to="/manage-events">Manage Evnets</Link>
         </li>
+        <li className={location.pathname === "/manage-locations" ? "active" : ""}>
+          <Link to="/manage-locations">Manage Locations</Link>
+        </li>
         <li>
           <Link to="/logout">Logout</Link>
         </li>
