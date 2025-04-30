@@ -9,7 +9,7 @@ const EditAgency = ({ agencyData, onClose, onSave }) => {
     services: agencyData.services ? agencyData.services.join(", ") : "",
     contactEmail: agencyData.contact[1] || "", // Extract email from contact array
     contactPhone: agencyData.contact[0] || "", // Extract phone from contact array
-    superAdminEmail: agencyData.superAdminEmail || "", // Pre-fill Super Admin Email
+    super_admin_email: agencyData.super_admin_email || "", // Pre-fill Super Admin Email
     password: "", // Leave blank for security reasons
   });
 
@@ -42,8 +42,8 @@ const EditAgency = ({ agencyData, onClose, onSave }) => {
   const validateForm = () => {
     const newErrors = {};
     if (!formData.name) newErrors.name = "Name is required.";
-    if (!formData.superAdminEmail)
-      newErrors.superAdminEmail = "Super Admin Email is required.";
+    if (!formData.super_admin_email)
+      newErrors.super_admin_email = "Super Admin Email is required.";
     if (formData.password) {
       const { length, upper, lower, digit, special } = passwordValidations;
       if (!(length && upper && lower && digit && special)) {
@@ -68,7 +68,7 @@ const EditAgency = ({ agencyData, onClose, onSave }) => {
         ? formData.services.split(",").map((s) => s.trim())
         : [],
       contact: [formData.contactPhone, formData.contactEmail].filter(Boolean),
-      superAdminEmail: formData.superAdminEmail,
+      super_admin_email: formData.super_admin_email,
       password: formData.password || undefined, // Only include if updated
     };
 
@@ -123,13 +123,13 @@ const EditAgency = ({ agencyData, onClose, onSave }) => {
 
           <input
             type="email"
-            name="superAdminEmail"
+            name="super_admin_email"
             placeholder="Super Admin Email *"
-            value={formData.superAdminEmail}
+            value={formData.super_admin_email}
             onChange={handleChange}
           />
-          {errors.superAdminEmail && (
-            <span className="error">{errors.superAdminEmail}</span>
+          {errors.super_admin_email && (
+            <span className="error">{errors.super_admin_email}</span>
           )}
 
           <input
