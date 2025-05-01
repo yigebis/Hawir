@@ -85,7 +85,7 @@ func (uuc *UserUseCase) Register(user *Domain.User) (int, error) {
 	}
 
 	// send verification email
-	token, err := uuc.TokenService.GenerateEmailToken(user.Email, uuc.EmailExpiry)
+	token, err := uuc.TokenService.GenerateEmailToken(user.Email, uuc.EmailExpiry, "user")
 	if err != nil {
 		fmt.Println("token_mail")
 		return uuc.ErrorService.InternalServer()

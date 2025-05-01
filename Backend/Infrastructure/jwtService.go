@@ -35,8 +35,9 @@ func (ts *TokenService) GenerateToken(id string, firstName string, role string, 
 	return jwtToken, nil
 }
 
-func (ts *TokenService) GenerateEmailToken(email string, expiryDuration int64) (string, error) {
+func (ts *TokenService) GenerateEmailToken(email string, expiryDuration int64, role string) (string, error) {
 	claims := jwt.MapClaims{
+		"role":  role,
 		"email": email,
 		"exp":   time.Now().Add(time.Duration(expiryDuration) * time.Second).Unix(),
 	}
