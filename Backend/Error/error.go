@@ -60,6 +60,7 @@ var ErrIncorrectSeatNumber = errors.New("seat number is incorrect")
 
 // Destination errors
 var ErrDestinationNotFound = errors.New("destination not found")
+var ErrDestinationAlreadyExists = errors.New("destination already exists")
 
 type Error struct{}
 
@@ -213,4 +214,8 @@ func (e *Error) InvalidEmailAgencyIDPassword() (int, error) {
 // Destination errors
 func (e *Error) DestinationNotFound() (int, error) {
 	return http.StatusNotFound, ErrDestinationNotFound
+}
+
+func (e *Error) DestinationAlreadyExists() (int, error) {
+	return http.StatusConflict, ErrDestinationAlreadyExists
 }

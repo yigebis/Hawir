@@ -8,17 +8,68 @@ import (
 )
 
 type AdminUseCase struct {
+	AdminRepo       IAdminRepo
 	AgencyRepo      IAgencyRepository
 	PasswordService IPasswordService
 	ErrorService    IErrorService
+	TokenService    ITokenService
+	TokenExpiry     int64
+	RefresherExpiry int64
 }
 
-func NewAdminUseCase(repo IAgencyRepository, ps IPasswordService, es IErrorService) IAdminUseCase {
+func NewAdminUseCase(adminRepo IAdminRepo, agencyRepo IAgencyRepository, ps IPasswordService, es IErrorService, ts ITokenService, tx, rx int64) IAdminUseCase {
 	return &AdminUseCase{
-		AgencyRepo:      repo,
+		AdminRepo:       adminRepo,
+		AgencyRepo:      agencyRepo,
 		PasswordService: ps,
 		ErrorService:    es,
+		TokenService:    ts,
+		TokenExpiry:     tx,
+		RefresherExpiry: rx,
 	}
+}
+
+func (auc *AdminUseCase) Login(admin *Domain.Admin) (string, string, int, error) {
+	// check if the admin exists in the database
+	adminData, err := auc.AdminRepo.GetAdminByEmail(admin.Email)
+	if err != nil {
+		fmt.Println("Error fetching admin data:", err.Error())
+		code, err := auc.ErrorService.InvalidEmailPassword()
+		return "", "", code, err
+	}
+
+	// check if the first password is correct
+	err = auc.PasswordService.VerifyPassword(adminData.Password, admin.Password)
+	if err != nil {
+		fmt.Println("Error verifying password:", err.Error())
+		code, err := auc.ErrorService.InvalidEmailPassword()
+		return "", "", code, err
+	}
+
+	// check if the second password is correct
+	err = auc.PasswordService.VerifyPassword(adminData.Password2, admin.Password2)
+	if err != nil {
+		fmt.Println("Error verifying password2:", err.Error())
+		code, err := auc.ErrorService.InvalidEmailPassword()
+		return "", "", code, err
+	}
+
+	// generate a token for the admin
+	token, err := auc.TokenService.GenerateEmailToken(adminData.Email, auc.TokenExpiry, "admin")
+	if err != nil {
+		code, err := auc.ErrorService.InternalServer()
+		return "", "", code, err
+	}
+
+	// generate a refresher token for the admin
+	refresher, err := auc.TokenService.GenerateEmailToken(adminData.Email, auc.RefresherExpiry, "admin")
+	if err != nil {
+		code, err := auc.ErrorService.InternalServer()
+		return "", "", code, err
+	}
+
+	code, err := auc.ErrorService.NoError()
+	return token, refresher, code, err
 }
 
 func (auc *AdminUseCase) AddAgency(agency *Domain.Agency) (int, error) {
@@ -91,8 +142,19 @@ func (auc *AdminUseCase) EditAgency(agency *Domain.Agency) (int, error) {
 	return auc.ErrorService.NoError()
 }
 
-func (auc *AdminUseCase) DeleteAgency(id string) (int, error) {
-	err := auc.AgencyRepo.DeleteAgency(id)
+func (auc *AdminUseCase) DeleteAgency(id, adminEmail, password string) (int, error) {
+	// check for the admin credentials
+	admin, err := auc.AdminRepo.GetAdminByEmail(adminEmail)
+	if err != nil {
+		return auc.ErrorService.InvalidEmailPassword()
+	}
+
+	err = auc.PasswordService.VerifyPassword(admin.Password, password)
+	if err != nil {
+		return auc.ErrorService.InvalidEmailPassword()
+	}
+
+	err = auc.AgencyRepo.DeleteAgency(id)
 
 	if err != nil {
 		return auc.ErrorService.AgencyNotFound()

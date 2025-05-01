@@ -208,7 +208,7 @@ func (aguc *AgencyUseCase) AddDriver(driver *Domain.Driver) (int, error) {
 	driver.Verified = false
 
 	// send email verification
-	token, err := aguc.TokenService.GenerateEmailToken(driver.Email, aguc.EmailExpiry)
+	token, err := aguc.TokenService.GenerateEmailToken(driver.Email, aguc.EmailExpiry, "driver")
 	if err != nil {
 		return aguc.ErrorService.InternalServer()
 	}

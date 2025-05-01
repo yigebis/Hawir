@@ -20,6 +20,14 @@ func (dr *DestinationRouter) Run(router *gin.Engine) {
 	//destination endpoints
 	router.POST("/destination/add", dr.DestinationController.AddDestination)
 	router.GET("/destination/:id", dr.DestinationController.GetDestinationByID)
-	router.PUT("/destination/edit", dr.DestinationController.EditDestination)
-	router.GET("/destination/all", dr.DestinationController.ViewAllDestinations)
+	router.PUT("/destination/edit/:id", dr.DestinationController.EditDestination)
+	router.GET("/destination/all", dr.DestinationController.GetAllDestinations)
+	router.DELETE("/destination/delete/:id", dr.DestinationController.DeleteDestination)
+
+	// separate endpoint for agencies to add stations to destinations
+	router.POST("/destination/station/add/:id", dr.DestinationController.AddDestinationStations)
+
+	//destination details endpoints
+	router.GET("/destination/details/:id", dr.DestinationController.GetDestinationDetailsByID)
+	router.PUT("/destination/details/edit", dr.DestinationController.EditDestinationDetails)
 }

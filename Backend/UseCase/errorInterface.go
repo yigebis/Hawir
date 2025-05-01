@@ -48,4 +48,5 @@ type IErrorService interface {
 
 	// Destination errors
 	DestinationNotFound() (int, error)
+	DestinationAlreadyExists() (int, error)
 }

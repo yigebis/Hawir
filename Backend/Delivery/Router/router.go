@@ -65,7 +65,7 @@ func (r *Router) Run() {
 
 	userRouter.Run(router, r.JWTSigner)
 	agencyRouter.Run(router, r.JWTSigner)
-	adminRouter.Run(router)
+	adminRouter.Run(router, r.JWTSigner)
 	travelRouter.Run(router, r.JWTSigner)
 	bookingRouter.Run(router)
 	destinationRouter.Run(router)

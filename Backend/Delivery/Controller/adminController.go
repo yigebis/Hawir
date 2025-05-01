@@ -5,6 +5,7 @@ import (
 	"Hawir/Infrastructure"
 	"Hawir/UseCase"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -15,15 +16,51 @@ type AdminController struct {
 	AgencyUseCase     UseCase.IAgencyUseCase
 	V                 *validator.Validate
 	passwordValidator *Infrastructure.ValidationService
+	RefresherExpiry   int64
+	WebsiteDomainName string
 }
 
-func NewAdminController(auc UseCase.IAdminUseCase, aguc UseCase.IAgencyUseCase, pv *Infrastructure.ValidationService) *AdminController {
+func NewAdminController(auc UseCase.IAdminUseCase, aguc UseCase.IAgencyUseCase, pv *Infrastructure.ValidationService, rx int64, wdn string) *AdminController {
 	return &AdminController{
 		AdminUseCase:      auc,
 		AgencyUseCase:     aguc,
 		V:                 validator.New(),
 		passwordValidator: pv,
+		RefresherExpiry:   rx,
+		WebsiteDomainName: wdn,
 	}
+}
+
+func (admc *AdminController) Login(ctx *gin.Context) {
+	var admin = Domain.Admin{}
+
+	err := ctx.ShouldBindJSON(&admin)
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": "invalid request payload"})
+		return
+	}
+
+	err = admc.V.Struct(admin)
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": "invalid request payload"})
+		return
+	}
+
+	// validate the admin credentials
+	code, err := admc.passwordValidator.ValidatePassword(admin.Password)
+	if err != nil {
+		ctx.JSON(code, gin.H{"error": err.Error()})
+		return
+	}
+
+	token, refresher, code, err := admc.AdminUseCase.Login(&admin)
+	if err != nil {
+		ctx.JSON(code, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(code, gin.H{"token": token})
+	ctx.SetCookie("refresher", refresher, int(admc.RefresherExpiry), "/", admc.WebsiteDomainName, false, true)
 }
 
 func (admc *AdminController) AddAgency(ctx *gin.Context) {
@@ -97,8 +134,37 @@ func (admc *AdminController) EditAgency(ctx *gin.Context) {
 
 func (admc *AdminController) DeleteAgency(ctx *gin.Context) {
 	id := ctx.Param("id")
+	claimsAny, exists := ctx.Get("admin")
+	if !exists {
+		ctx.JSON(401, gin.H{"error": "unauthorized"})
+		return
+	}
 
-	code, err := admc.AdminUseCase.DeleteAgency(id)
+	adminClaims, ok := claimsAny.(jwt.MapClaims)
+	if !ok {
+		ctx.JSON(401, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	adminEmail := adminClaims["email"].(string)
+
+	var cred = struct {
+		Password string
+	}{}
+
+	err := ctx.ShouldBindJSON(&cred)
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": "invalid request payload"})
+		return
+	}
+
+	code, err := admc.passwordValidator.ValidatePassword(cred.Password)
+	if err != nil {
+		ctx.JSON(code, gin.H{"error": err.Error()})
+		return
+	}
+
+	code, err = admc.AdminUseCase.DeleteAgency(id, adminEmail, cred.Password)
 	if err != nil {
 		ctx.JSON(code, gin.H{"error": err.Error()})
 		return
