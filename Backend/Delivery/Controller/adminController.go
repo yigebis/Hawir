@@ -172,3 +172,48 @@ func (admc *AdminController) DeleteAgency(ctx *gin.Context) {
 
 	ctx.JSON(code, gin.H{"message": "agency deleted successfully"})
 }
+
+func (admc *AdminController) ChangeAdminPassword(ctx *gin.Context) {
+	claimsAny, exists := ctx.Get("admin")
+	if !exists {
+		ctx.JSON(401, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	adminClaims, ok := claimsAny.(jwt.MapClaims)
+	if !ok {
+		ctx.JSON(401, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	adminEmail := adminClaims["email"].(string)
+
+	var cred = struct {
+		OldPassword  string `json:"old_password" validate:"required"`
+		NewPassword  string `json:"new_password" validate:"required"`
+		OldPassword2 string `json:"old_password2" validate:"required"`
+		NewPassword2 string `json:"new_password2" validate:"required"`
+	}{}
+
+	err := ctx.ShouldBindJSON(&cred)
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": "invalid request payload"})
+		return
+	}
+
+	for _, p := range []string{cred.OldPassword, cred.NewPassword, cred.OldPassword2, cred.NewPassword2} {
+		statusCode, err := admc.passwordValidator.ValidatePassword(p)
+		if err != nil {
+			ctx.JSON(statusCode, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
+	code, err := admc.AdminUseCase.ChangeAdminPassword(adminEmail, cred.OldPassword, cred.NewPassword, cred.OldPassword2, cred.NewPassword2)
+	if err != nil {
+		ctx.JSON(code, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(code, gin.H{"message": "password changed successfully"})
+}

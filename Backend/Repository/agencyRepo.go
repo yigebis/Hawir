@@ -112,8 +112,8 @@ func (agr *AgencyRepository) GetAgencyByUniqueID(uniqueID string) (*Domain.Agenc
 	return &agency, nil
 }
 
-func (agr *AgencyRepository) GetAgencyAdmin(email string) (*Domain.Admins, error) {
-	admin := Domain.Admins{}
+func (agr *AgencyRepository) GetAgencyAdmin(email string) (*Domain.AgencyAdmin, error) {
+	admin := Domain.AgencyAdmin{}
 
 	filter := bson.M{"email": email}
 	err := agr.AdminCollection.FindOne(agr.DbCtx, filter).Decode(&admin)
@@ -164,12 +164,12 @@ func (agr *AgencyRepository) CheckAgencyByUniqueID(agencyID string) (bool, error
 	return true, nil
 }
 
-func (agr *AgencyRepository) AddAgencyAdmin(admin *Domain.Admins) error {
+func (agr *AgencyRepository) AddAgencyAdmin(admin *Domain.AgencyAdmin) error {
 	_, err := agr.AdminCollection.InsertOne(agr.DbCtx, admin)
 	return err
 }
 
-func (agr *AgencyRepository) EditAgencyAdmin(admin *Domain.Admins) error {
+func (agr *AgencyRepository) EditAgencyAdmin(admin *Domain.AgencyAdmin) error {
 	filter := bson.M{"email": admin.Email}
 	update := bson.M{"$set": bson.M{
 		"email":    admin.Email,

@@ -65,6 +65,7 @@ func main() {
 	bus_collection := client.Database("Hawir").Collection("buses")
 	driver_collection := client.Database("Hawir").Collection("Drivers")
 
+	admin_context := context.TODO()
 	user_context := context.TODO()
 	travel_context := context.TODO()
 	agency_context := context.TODO()
@@ -72,7 +73,7 @@ func main() {
 	destination_context := context.TODO()
 	driver_context := context.TODO()
 
-	admr := Repository.NewAdminRepository(admin_collection)
+	admr := Repository.NewAdminRepository(admin_context, admin_collection)
 	ur := Repository.NewUserRepository(user_context, user_collection)
 	agr := Repository.NewAgencyRepository(agency_context, agency_collection, agency_admin_collection, bus_collection)
 	tr := Repository.NewTravelRepository(travel_context, travel_collection)
@@ -116,7 +117,7 @@ func main() {
 	uuc := UseCase.NewUserUseCase(ur, ps, ts, ms, es, cs, ex, tx, rx)
 	aguc := UseCase.NewAgencyUseCase(agr, drr, ps, ts, es, ms, ex, tx, rx)
 	tuc := UseCase.NewTravelUseCase(tr, tsr, agr, drr, es)
-	auc := UseCase.NewAdminUseCase(admr, agr, ps, es, ts, tx, rx)
+	auc := UseCase.NewAdminUseCase(admr, agr, ps, es, ts, ms, tx, rx)
 	buc := UseCase.NewBookingUseCase(br, tr, es)
 	duc := UseCase.NewDestinationUseCase(dr, es)
 	druc := UseCase.NewDriverUseCase(drr, es, ps, ts, ms, tx, rx)

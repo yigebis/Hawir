@@ -10,22 +10,38 @@ import (
 )
 
 type AdminRepository struct {
-	adminCollection *mongo.Collection
+	DbContext       context.Context
+	AdminCollection *mongo.Collection
 }
 
-func NewAdminRepository(admc *mongo.Collection) UseCase.IAdminRepo {
+func NewAdminRepository(dbCtx context.Context, admc *mongo.Collection) UseCase.IAdminRepo {
 	return &AdminRepository{
-		adminCollection: admc,
+		AdminCollection: admc,
+		DbContext:       dbCtx,
 	}
 }
 
 func (ar *AdminRepository) GetAdminByEmail(email string) (*Domain.Admin, error) {
 	filter := bson.M{"email": email}
 	admin := Domain.Admin{}
-	err := ar.adminCollection.FindOne(context.Background(), filter).Decode(&admin)
+	err := ar.AdminCollection.FindOne(context.Background(), filter).Decode(&admin)
 	if err != nil {
 		return nil, err
 	}
 
 	return &admin, nil
+}
+
+func (ar *AdminRepository) ChangePassword(email, hashedPassword, hashedPassword2 string) error {
+	filter := bson.M{"email": email}
+	update := bson.M{"$set": bson.M{
+		"password":  hashedPassword,
+		"password2": hashedPassword2,
+	}}
+	_, err := ar.AdminCollection.UpdateOne(ar.DbContext, filter, update)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

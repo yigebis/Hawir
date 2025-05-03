@@ -30,7 +30,7 @@ type AgencyDisplay struct {
 	Contact     []string           `json:"contact" bson:"contact,omitempty"`
 }
 
-type Admins struct {
+type AgencyAdmin struct {
 	AgencyID string `json:"agency_id" bson:"agency_id,omitempty" validate:"required"`
 	Role     string `json:"role" bson:"role,omitempty" validate:"required"`
 	Email    string `json:"email" bson:"email,omitempty" validate:"required"`

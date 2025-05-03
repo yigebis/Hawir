@@ -25,7 +25,7 @@ type DestinationDetails struct {
 	// Population         string              `json:"population" bson:"population,omitempty"`
 	TouristAttractions []TouristAttraction `json:"tourist_attractions" bson:"tourist_attractions,omitempty" validate:"dive"`
 	// Weather            string              `json:"weather" bson:"weather,omitempty"`
-	LastModTime time.Time `json:"post_date" bson:"post_date,omitempty"`
+	PostDate time.Time `json:"post_date" bson:"post_date,omitempty"`
 }
 
 type Hotel struct {
