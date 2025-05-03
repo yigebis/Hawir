@@ -78,6 +78,56 @@ func (ms *MailService) SendVerificationEmail(to, token, api string) error {
 	return err
 }
 
+func (ms *MailService) SendAgencyAdminPassword(to, uniqueID, password string) error {
+	m := gomail.NewMessage()
+
+	m.SetHeader("From", ms.From)
+	m.SetHeader("To", to)
+	m.SetHeader("Subject", "Verify your Email")
+
+	body := fmt.Sprintf(`
+	<!DOCTYPE html>
+	<html>
+	<head>
+		<style>
+			.button {
+				display: inline-block;
+				padding: 10px 20px;
+				font-size: 16px;
+				color: #fff;  /* Set text color to white */
+				background-color: #007BFF;  /* Verify button color */
+				border: none;
+				border-radius: 5px;
+				text-decoration: none;  /* Remove underline */
+				margin: 5px;
+				cursor: pointer;
+			}
+			.button.reject {
+				background-color: #dc3545;  /* Reject button color */
+			}
+		</style>
+	</head>
+	<body>
+		<p>Congratulations! Your agency has been added successfully. Please use this password to login to our website.</p>
+		<p><b>Unique ID<b> : %s</p>
+		<p><b>Password<b> : %s</p>
+		<p>Don't forget to change your password after logging in.</p>
+	</body>
+	</html>
+	`, uniqueID, password)
+
+	m.SetBody("text/html", body)
+
+	host := "smtp.gmail.com"
+	port := 587
+
+	d := gomail.NewDialer(host, port, ms.Sender, ms.Password)
+
+	err := d.DialAndSend(m)
+	fmt.Println(err)
+	return err
+}
+
 func (ms *MailService) SendPasswordResetEmail(to, resetToken, api string) error {
 	return nil
 }

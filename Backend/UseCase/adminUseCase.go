@@ -13,17 +13,19 @@ type AdminUseCase struct {
 	PasswordService IPasswordService
 	ErrorService    IErrorService
 	TokenService    ITokenService
+	MailService     IMailService
 	TokenExpiry     int64
 	RefresherExpiry int64
 }
 
-func NewAdminUseCase(adminRepo IAdminRepo, agencyRepo IAgencyRepository, ps IPasswordService, es IErrorService, ts ITokenService, tx, rx int64) IAdminUseCase {
+func NewAdminUseCase(adminRepo IAdminRepo, agencyRepo IAgencyRepository, ps IPasswordService, es IErrorService, ts ITokenService, ms IMailService, tx, rx int64) IAdminUseCase {
 	return &AdminUseCase{
 		AdminRepo:       adminRepo,
 		AgencyRepo:      agencyRepo,
 		PasswordService: ps,
 		ErrorService:    es,
 		TokenService:    ts,
+		MailService:     ms,
 		TokenExpiry:     tx,
 		RefresherExpiry: rx,
 	}
@@ -85,7 +87,8 @@ func (auc *AdminUseCase) AddAgency(agency *Domain.Agency) (int, error) {
 	agency.UniqueID = strings.ToLower(strings.Split(agency.Name, " ")[0]) + fmt.Sprintf("%d", seconds)
 
 	// hash the password of the agency
-	hashedPassword, err := auc.PasswordService.HashPassword(agency.Password)
+	plainPassword := agency.Password
+	hashedPassword, err := auc.PasswordService.HashPassword(plainPassword)
 	if err != nil {
 		return auc.ErrorService.InternalServer()
 	}
@@ -99,7 +102,7 @@ func (auc *AdminUseCase) AddAgency(agency *Domain.Agency) (int, error) {
 	}
 
 	//store the admin in database
-	admin := Domain.Admins{
+	admin := Domain.AgencyAdmin{
 		AgencyID: agency.UniqueID,
 		Role:     "super",
 		Email:    agency.SuperAdminEmail,
@@ -111,6 +114,12 @@ func (auc *AdminUseCase) AddAgency(agency *Domain.Agency) (int, error) {
 		return auc.ErrorService.InternalServer()
 	}
 
+	// send the admin an email with passwords
+	err = auc.MailService.SendAgencyAdminPassword(admin.Email, agency.UniqueID, plainPassword)
+	if err != nil {
+		fmt.Println("Error sending email:", err.Error())
+		return auc.ErrorService.InternalServer()
+	}
 	return auc.ErrorService.NoError()
 }
 
@@ -129,7 +138,7 @@ func (auc *AdminUseCase) EditAgency(agency *Domain.Agency) (int, error) {
 		agency.Password = hashedPassword
 	}
 
-	admin := Domain.Admins{
+	admin := Domain.AgencyAdmin{
 		Email:    agency.SuperAdminEmail,
 		Password: agency.Password,
 	}
@@ -158,6 +167,45 @@ func (auc *AdminUseCase) DeleteAgency(id, adminEmail, password string) (int, err
 
 	if err != nil {
 		return auc.ErrorService.AgencyNotFound()
+	}
+
+	return auc.ErrorService.NoError()
+}
+
+func (auc *AdminUseCase) ChangeAdminPassword(adminEmail, oldPassword, newPassword, oldPassword2, newPassword2 string) (int, error) {
+	// check for the admin credentials
+	admin, err := auc.AdminRepo.GetAdminByEmail(adminEmail)
+	if err != nil {
+		return auc.ErrorService.InvalidEmailPassword()
+	}
+
+	err = auc.PasswordService.VerifyPassword(admin.Password, oldPassword)
+	if err != nil {
+		return auc.ErrorService.InvalidEmailPassword()
+	}
+
+	err = auc.PasswordService.VerifyPassword(admin.Password2, oldPassword2)
+	if err != nil {
+		return auc.ErrorService.InvalidEmailPassword()
+	}
+
+	// hash the new password
+	hashedPassword, err := auc.PasswordService.HashPassword(newPassword)
+	if err != nil {
+		return auc.ErrorService.InternalServer()
+	}
+
+	hashedPassword2, err := auc.PasswordService.HashPassword(newPassword2)
+	if err != nil {
+		return auc.ErrorService.InternalServer()
+	}
+
+	admin.Password = hashedPassword
+	admin.Password2 = hashedPassword2
+
+	err = auc.AdminRepo.ChangePassword(adminEmail, hashedPassword, hashedPassword2)
+	if err != nil {
+		return auc.ErrorService.InternalServer()
 	}
 
 	return auc.ErrorService.NoError()

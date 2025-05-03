@@ -45,7 +45,7 @@ func (dr *DestinationRepository) AddDestination(destination *Domain.Destination)
 func (dr *DestinationRepository) InitializeDestinationDetails(id string) error {
 	destinationDetails := Domain.DestinationDetails{
 		DestinationID: id,
-		LastModTime:   time.Now(),
+		PostDate:      time.Now(),
 	}
 
 	_, err := dr.DetailsCollection.InsertOne(dr.DbCtx, destinationDetails)

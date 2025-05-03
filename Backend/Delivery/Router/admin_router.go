@@ -23,4 +23,5 @@ func (ar *AdminRouter) Run(router *gin.Engine, jwt_string string) {
 	router.POST("/agency/add", ar.AdminController.AddAgency)
 	router.DELETE("/agency/delete/:id", Infrastructure.AdminMiddleware(jwt_string), ar.AdminController.DeleteAgency)
 	router.PUT("/agency/edit/:id", ar.AdminController.EditAgency)
+	router.POST("/admin/password/change", Infrastructure.AdminMiddleware(jwt_string), ar.AdminController.ChangeAdminPassword)
 }

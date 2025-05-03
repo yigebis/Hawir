@@ -33,10 +33,10 @@ type IAgencyRepository interface {
 	GetAgency(agencyID string) (*Domain.Agency, error)
 	GetAllAgencies() (*[]Domain.Agency, error)
 	CheckAgencyByUniqueID(agencyID string) (bool, error)
-	AddAgencyAdmin(admin *Domain.Admins) error
-	EditAgencyAdmin(admin *Domain.Admins) error
+	AddAgencyAdmin(admin *Domain.AgencyAdmin) error
+	EditAgencyAdmin(admin *Domain.AgencyAdmin) error
 	GetAgencyByUniqueID(uniqueID string) (*Domain.Agency, error)
-	GetAgencyAdmin(email string) (*Domain.Admins, error)
+	GetAgencyAdmin(email string) (*Domain.AgencyAdmin, error)
 	GetAgencyForUserById(string) (*Domain.AgencyDisplay, error)
 	ResetAgencyAdminPassword(string, string) error
 
