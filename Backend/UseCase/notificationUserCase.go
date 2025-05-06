@@ -66,9 +66,9 @@ func (nuc *NotificationUseCase) NotifyCancelledBooking(userIDs *[]string, tripID
 					"notification_type": "trip_cancelled",
 				},
 			})
-			log.Printf("Full response: %s", response)
-			log.Printf("Response: %s",response.FailureCount)
-			log.Printf("REsponse: %s", response.SuccessCount)
+			log.Printf("Full response: %+v", response)
+			log.Printf("Response: %+v",response.FailureCount)
+			log.Printf("REsponse: %+v", response.SuccessCount)
 			if err != nil {
 				log.Printf("error sending messages to user %s for trip %s: %v", userID, tripID, err)
 			} else {
