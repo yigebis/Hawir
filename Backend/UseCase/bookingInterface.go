@@ -31,4 +31,5 @@ type IBookingRepository interface {
 	GetBookingByTravelerID(travelerID string, travelID string) (*Domain.Booking, error)
 	GetAllBookings(travelID string) (*[]Domain.TravelBookings, error)
 	GetBookingsForTraveler(travelerID string) (*[]Domain.Booking, error)
+	GetTravellersIDForTrip(travelID string) (*[]string, error)
 }

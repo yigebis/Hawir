@@ -268,6 +268,8 @@ func (uuc *UserUseCase) GetUserById(id string) (*Domain.UserDisplay, int, error)
 		ID:           user.ID,
 		FirstName:    user.FirstName,
 		LastName:     user.LastName,
+		Email:        user.Email,
+		PhoneNumber: user.PhoneNumber,
 		ProfilePhoto: user.ProfilePhoto,
 	}
 
@@ -384,4 +386,16 @@ func (uuc *UserUseCase) ResetPassword(credential *Domain.ChangeCredential) (int,
 	}
 
 	return uuc.ErrorService.NoError()
+}
+
+func (uuc *UserUseCase) StoreFCMToken(userID string, fcmToken string) error {
+	return uuc.UserRepo.StoreUserFCMToken(userID, fcmToken)
+}
+
+func (uuc *UserUseCase) RemoveFCMToken(userID string, fcmToken string) error {
+	return uuc.UserRepo.RemoveUserFCMToken(userID, fcmToken)
+}
+
+func (uuc *UserUseCase) GetUserFCMTokens(userID string) ([]string, error) {
+	return uuc.UserRepo.GetUserFCMTokens(userID)
 }

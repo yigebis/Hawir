@@ -15,10 +15,11 @@ type Router struct {
 	AdminController       *Controller.AdminController
 	BookingController     *Controller.BookingController
 	DestinationController *Controller.DestinationController
+	NotificationController *Controller.NotificationController
 	JWTSigner             string
 }
 
-func NewRouter(uc *Controller.UserController, agc *Controller.AgencyController, tc *Controller.TravelController, ac *Controller.AdminController, bc *Controller.BookingController, destinationController *Controller.DestinationController, jwtSigner string) *Router {
+func NewRouter(uc *Controller.UserController, agc *Controller.AgencyController, tc *Controller.TravelController, ac *Controller.AdminController, bc *Controller.BookingController, destinationController *Controller.DestinationController, notificationController *Controller.NotificationController, jwtSigner string) *Router {
 	return &Router{
 		UserController:        uc,
 		AgencyController:      agc,
@@ -26,6 +27,7 @@ func NewRouter(uc *Controller.UserController, agc *Controller.AgencyController, 
 		AdminController:       ac,
 		BookingController:     bc,
 		DestinationController: destinationController,
+		NotificationController: notificationController,
 		JWTSigner:             jwtSigner,
 	}
 }
@@ -35,7 +37,7 @@ func (r *Router) Run() {
 
 	// Apply CORS middleware before defining routes
 	config := cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "https://hawir.netlify.app", "http://localhost:8081","http://localhost:62720"}, // Frontend URL
+		AllowOrigins:     []string{"*"}, // Frontend URL
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},            // HTTP methods to allow
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},            // Headers to allow
 		ExposeHeaders:    []string{"Content-Length"},                                     // Headers to expose to frontend
@@ -52,6 +54,8 @@ func (r *Router) Run() {
 	router.GET("/auth/with/google", r.UserController.LoginWithGoogle) // Redirects to Google login page
 	router.GET("/auth/callback", r.UserController.GoogleCallback)     // Handles Google callback
 	router.GET("/user/:id", r.UserController.GetUserById)
+	router.POST("/user/:userId/fcm-token", r.UserController.StoreFCMTokenHandler)
+	router.DELETE("/user/:userId/fcm-token", r.UserController.RemoveFCMTokenHandler)
 
 	router.GET("/user/my/:id", Infrastructure.UserMiddleware(r.JWTSigner), r.UserController.MyProfile)             //user middleware
 	router.PUT("/user/edit", Infrastructure.UserMiddleware(r.JWTSigner), r.UserController.EditUser)                //user middleware
@@ -92,5 +96,12 @@ func (r *Router) Run() {
 	router.GET("/destination/:id", r.DestinationController.GetDestinationByID)
 	router.PUT("/destination/edit", r.DestinationController.EditDestination)
 	router.GET("/destination/all", r.DestinationController.ViewAllDestinations)
-	router.Run()
+
+	//notification endpoints
+	router.GET("/notification/:travellerId", r.NotificationController.GetNotificationsForTraveller)
+	router.PUT("/notification/:travellerId/:notificationId/read", r.NotificationController.MarkNotificationAsRead)
+	router.PUT("/notification/:travellerId/:notificationId/unread", r.NotificationController.MarkNotificationAsUnread)
+	
+	// router.Run()
+	router.Run("0.0.0.0:8080")
 }

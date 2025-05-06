@@ -13,6 +13,9 @@ import (
 	"log"
 	"os"
 
+	firebase "firebase.google.com/go/v4"
+    "google.golang.org/api/option"
+
 	// comment it for production
 	"github.com/joho/godotenv"
 
@@ -20,12 +23,31 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+var (
+    firebaseApp *firebase.App
+)
+
+func initializeFirebaseApp() *firebase.App {
+	if firebaseApp == nil {
+		opt := option.WithCredentialsFile(os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")) // Call option.WithCredentialsFile
+		app, err := firebase.NewApp(context.Background(), nil, opt)
+		if err != nil {
+			log.Fatalf("error initializing Firebase app: %v", err)
+			return nil
+		}
+		firebaseApp = app
+	}
+	return firebaseApp
+}
+
 func main() {
 	//comment it for production
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("error loading .env file")
 	}
 
+	firebaseApp = initializeFirebaseApp() // Initialize Firebase
+	
 	// domain name of the website
 	websiteDomainName := os.Getenv("WEBSITE_DOMAIN_NAME")
 
@@ -60,12 +82,14 @@ func main() {
 	booking_collection := client.Database("Hawir").Collection("Booking")
 	adminCollection := client.Database("Hawir").Collection("Admins")
 	destination_collection := client.Database("Hawir").Collection("destinations")
+	notification_collection := client.Database("Hawir").Collection("notifications")
 
 	user_context := context.TODO()
 	travel_context := context.TODO()
 	agency_context := context.TODO()
 	booking_context := context.TODO()
 	destination_context := context.TODO()
+	notification_context := context.TODO()
 
 	ur := Repository.NewUserRepository(user_context, user_collection)
 	agr := Repository.NewAgencyRepository(agency_context, agency_collection, adminCollection)
@@ -79,6 +103,7 @@ func main() {
 		user_collection,
 	)
 	dr := Repository.NewDestinationRepository(destination_context, destination_collection)
+	nr := Repository.NewNotificationRepository(notification_context, notification_collection)
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	es := Error.NewErrorService()
@@ -107,9 +132,10 @@ func main() {
 
 	oauthService := Infrastructure.NewOAuth(oauthState, oauthClientID, oauthClientSecret, websiteDomainName)
 
+	nuc := UseCase.NewNotificationUseCase(ur, nr, firebaseApp)
 	uuc := UseCase.NewUserUseCase(ur, ps, ts, ms, es, cs, ex, tx, rx)
 	aguc := UseCase.NewAgencyUseCase(agr, ps, ts, es, ex, tx, rx)
-	tuc := UseCase.NewTravelUseCase(tr, tsr, agr, es)
+	tuc := UseCase.NewTravelUseCase(tr, tsr, agr, es, br, nuc)
 	auc := UseCase.NewAdminUseCase(agr, ps, es)
 	buc := UseCase.NewBookingUseCase(br, tr, es)
 	duc := UseCase.NewDestinationUseCase(dr, es)
@@ -121,8 +147,9 @@ func main() {
 	admin_controller := Controller.NewAdminController(auc, aguc, vs)
 	booking_controller := Controller.NewBookingController(buc)
 	destination_controller := Controller.NewDestinationController(duc)
+	notification_controller := Controller.NewNotificationController(nuc)
 
 	// setting up the router
-	router := Router.NewRouter(user_controller, agency_controller, travel_controller, admin_controller, booking_controller, destination_controller, jwtSecret)
+	router := Router.NewRouter(user_controller, agency_controller, travel_controller, admin_controller, booking_controller, destination_controller, notification_controller, jwtSecret)
 	router.Run()
 }

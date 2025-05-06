@@ -19,6 +19,9 @@ type IUserUseCase interface {
 	MyProfile(id string) (*Domain.User, int, error)
 	EditUser(user *Domain.UserProfile, fileHeader *multipart.FileHeader) (int, error)
 	ResetPassword(credential *Domain.ChangeCredential) (int, error)
+	StoreFCMToken(userID string, fcmToken string) error
+	RemoveFCMToken(userID string, fcmToken string) error
+	GetUserFCMTokens(userID string) ([]string, error)
 }
 
 type IUserRepository interface {
@@ -30,6 +33,9 @@ type IUserRepository interface {
 	GetUserById(id string) (*Domain.User, error)
 	EditUser(user *Domain.UserProfile) error
 	ChangePassword(id primitive.ObjectID, password string) error
+	StoreUserFCMToken(userID string, fcmToken string) error
+	RemoveUserFCMToken(userID string, fcmToken string) error
+	GetUserFCMTokens(userID string) ([]string, error)
 }
 
 type IPasswordService interface {
