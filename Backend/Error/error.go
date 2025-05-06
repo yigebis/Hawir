@@ -43,9 +43,13 @@ var ErrInvalidEstArrivalTime = errors.New("estimated arrival time is before the 
 var ErrInvalidStartTime = errors.New("planned start time is in the past")
 var ErrStartPickupLocation = errors.New("start location is not in the pickup locations")
 var ErrInvalidPrice = errors.New("price is invalid")
+var ErrDriverBusy = errors.New("driver is busy")
 
 // Agency errors
 var ErrAgencyNotFound = errors.New("agency not found")
+
+// bus errors
+var ErrIncorrectPlateNumber = errors.New("incorrect plate number")
 
 // Booking errors
 var ErrBookingNotFound = errors.New("booking not found")
@@ -56,6 +60,7 @@ var ErrIncorrectSeatNumber = errors.New("seat number is incorrect")
 
 // Destination errors
 var ErrDestinationNotFound = errors.New("destination not found")
+var ErrDestinationAlreadyExists = errors.New("destination already exists")
 
 type Error struct{}
 
@@ -156,9 +161,17 @@ func (e *Error) InvalidPrice() (int, error) {
 	return http.StatusBadRequest, ErrInvalidPrice
 }
 
+func (e *Error) DriverBusy() (int, error) {
+	return http.StatusConflict, ErrDriverBusy
+}
+
 // Agency errors
 func (e *Error) AgencyNotFound() (int, error) {
 	return http.StatusNotFound, ErrAgencyNotFound
+}
+
+func (e *Error) IncorrectPlateNo() (int, error) {
+	return http.StatusBadRequest, ErrIncorrectPlateNumber
 }
 
 // Booking errors
@@ -201,4 +214,8 @@ func (e *Error) InvalidEmailAgencyIDPassword() (int, error) {
 // Destination errors
 func (e *Error) DestinationNotFound() (int, error) {
 	return http.StatusNotFound, ErrDestinationNotFound
+}
+
+func (e *Error) DestinationAlreadyExists() (int, error) {
+	return http.StatusConflict, ErrDestinationAlreadyExists
 }

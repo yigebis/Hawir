@@ -28,7 +28,7 @@ type IUserRepository interface {
 	CreateUser(user *Domain.User) error
 	GetUserByEmail(email string) (*Domain.User, error)
 	GetUserByPhoneNumber(phoneNumber string) (*Domain.User, error)
-	VerifyUser(user *Domain.User) error
+	VerifyUser(email string) error
 	DeleteUserByEmail(email string) error
 	GetUserById(id string) (*Domain.User, error)
 	EditUser(user *Domain.UserProfile) error
@@ -45,14 +45,9 @@ type IPasswordService interface {
 
 type ITokenService interface {
 	GenerateToken(id, firstName, role string, expiryDuration int64) (string, error)
-	GenerateEmailToken(email string, expiryDuration int64) (string, error)
+	GenerateEmailToken(email string, expiryDuration int64, role string) (string, error)
 	GenerateAgencyToken(email, role, agencyID, admin_role string, expiryDuration int64) (string, error)
 	ValidateToken(token string) (map[string]interface{}, error)
-}
-
-type IMailService interface {
-	SendVerificationEmail(to, token string) error
-	SendPasswordResetEmail(to, resetToken string) error
 }
 
 type ICloudService interface {

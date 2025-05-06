@@ -17,7 +17,7 @@ import (
     "google.golang.org/api/option"
 
 	// comment it for production
-	"github.com/joho/godotenv"
+	// "github.com/joho/godotenv"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -42,9 +42,9 @@ func initializeFirebaseApp() *firebase.App {
 
 func main() {
 	//comment it for production
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("error loading .env file")
-	}
+	// if err := godotenv.Load(); err != nil {
+	// 	log.Fatal("error loading .env file")
+	// }
 
 	firebaseApp = initializeFirebaseApp() // Initialize Firebase
 	
@@ -74,25 +74,33 @@ func main() {
 	}
 
 	fmt.Println("Connected to db!")
+	admin_collection := client.Database("Hawir").Collection("Admins")
 	user_collection := client.Database("Hawir").Collection("users")
 	travel_collection := client.Database("Hawir").Collection("travels")
 	travel_stat_collection := client.Database("Hawir").Collection("travel_stats")
 	seat_collection := client.Database("Hawir").Collection("seats")
 	agency_collection := client.Database("Hawir").Collection("agencies")
 	booking_collection := client.Database("Hawir").Collection("Booking")
-	adminCollection := client.Database("Hawir").Collection("Admins")
+	agency_admin_collection := client.Database("Hawir").Collection("AgencyAdmins")
 	destination_collection := client.Database("Hawir").Collection("destinations")
 	notification_collection := client.Database("Hawir").Collection("notifications")
+	destination_details_collection := client.Database("Hawir").Collection("destination_details")
+	bus_collection := client.Database("Hawir").Collection("buses")
+	driver_collection := client.Database("Hawir").Collection("Drivers")
 
+
+	admin_context := context.TODO()
 	user_context := context.TODO()
 	travel_context := context.TODO()
 	agency_context := context.TODO()
 	booking_context := context.TODO()
 	destination_context := context.TODO()
 	notification_context := context.TODO()
+	driver_context := context.TODO()
 
+	admr := Repository.NewAdminRepository(admin_context, admin_collection)
 	ur := Repository.NewUserRepository(user_context, user_collection)
-	agr := Repository.NewAgencyRepository(agency_context, agency_collection, adminCollection)
+	agr := Repository.NewAgencyRepository(agency_context, agency_collection, agency_admin_collection, bus_collection)
 	tr := Repository.NewTravelRepository(travel_context, travel_collection)
 	tsr := Repository.NewTravelStatsRepo(travel_context, travel_stat_collection)
 	br := Repository.NewBookingRepository(
@@ -102,8 +110,9 @@ func main() {
 		seat_collection,
 		user_collection,
 	)
-	dr := Repository.NewDestinationRepository(destination_context, destination_collection)
 	nr := Repository.NewNotificationRepository(notification_context, notification_collection)
+	dr := Repository.NewDestinationRepository(destination_context, destination_collection, destination_details_collection)
+	drr := Repository.NewDriverRepository(driver_context, driver_collection)
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	es := Error.NewErrorService()
@@ -134,22 +143,25 @@ func main() {
 
 	nuc := UseCase.NewNotificationUseCase(ur, nr, firebaseApp)
 	uuc := UseCase.NewUserUseCase(ur, ps, ts, ms, es, cs, ex, tx, rx)
-	aguc := UseCase.NewAgencyUseCase(agr, ps, ts, es, ex, tx, rx)
-	tuc := UseCase.NewTravelUseCase(tr, tsr, agr, es, br, nuc)
-	auc := UseCase.NewAdminUseCase(agr, ps, es)
+	tuc := UseCase.NewTravelUseCase(tr, tsr, agr, drr, es, br, nuc)
+	aguc := UseCase.NewAgencyUseCase(agr, drr, ps, ts, es, ms, ex, tx, rx)
+	auc := UseCase.NewAdminUseCase(admr, agr, ps, es, ts, ms, tx, rx)
 	buc := UseCase.NewBookingUseCase(br, tr, es)
 	duc := UseCase.NewDestinationUseCase(dr, es)
+	druc := UseCase.NewDriverUseCase(drr, es, ps, ts, ms, tx, rx)
 
 	// setting up the controllers
 	user_controller := Controller.NewUserController(uuc, aguc, ts, oauthService, ps, vs, rx, websiteDomainName)
 	agency_controller := Controller.NewAgencyController(aguc, ts, ps, vs, rx, websiteDomainName)
 	travel_controller := Controller.NewTravelController(tuc)
-	admin_controller := Controller.NewAdminController(auc, aguc, vs)
+	admin_controller := Controller.NewAdminController(auc, aguc, vs, rx, websiteDomainName)
 	booking_controller := Controller.NewBookingController(buc)
 	destination_controller := Controller.NewDestinationController(duc)
 	notification_controller := Controller.NewNotificationController(nuc)
+	driver_controller := Controller.NewDriverController(druc, vs, rx, websiteDomainName)
 
 	// setting up the router
-	router := Router.NewRouter(user_controller, agency_controller, travel_controller, admin_controller, booking_controller, destination_controller, notification_controller, jwtSecret)
+	router := Router.NewRouter(user_controller, agency_controller, travel_controller, admin_controller, booking_controller, destination_controller, driver_controller, notification_controller, jwtSecret)
+
 	router.Run()
 }

@@ -26,6 +26,7 @@ type IErrorService interface {
 
 	// agency user errors
 	InvalidEmailAgencyIDPassword() (int, error)
+	IncorrectPlateNo() (int, error)
 
 	// Travel errors
 	TravelNotFound() (int, error)
@@ -33,6 +34,7 @@ type IErrorService interface {
 	InvalidPlannedStartTime() (int, error)
 	InvalidEstArrivalTime() (int, error)
 	InvalidPrice() (int, error)
+	DriverBusy() (int, error)
 
 	// Agency errors
 	AgencyNotFound() (int, error)
@@ -46,4 +48,5 @@ type IErrorService interface {
 
 	// Destination errors
 	DestinationNotFound() (int, error)
+	DestinationAlreadyExists() (int, error)
 }

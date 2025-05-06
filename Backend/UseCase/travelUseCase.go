@@ -13,20 +13,65 @@ type TravelUseCase struct {
 	TravelRepo      ITravelRepository
 	TravelStatsRepo ITravelStatsRepository
 	AgencyRepo      IAgencyRepository
+	DriverRepo      IDriverRepository
 	ErrorService    IErrorService
 	BookingRepository IBookingRepository
 	NotificationService INotificationUseCase
 }
 
-func NewTravelUseCase(travelRepo ITravelRepository, travelStatsRepo ITravelStatsRepository, agencyRepo IAgencyRepository, errorService IErrorService, bookingRepo IBookingRepository, notificationService INotificationUseCase) ITravelUseCase {
+func NewTravelUseCase(travelRepo ITravelRepository, travelStatsRepo ITravelStatsRepository, agencyRepo IAgencyRepository, driverRepo IDriverRepository, errorService IErrorService, bookingRepo IBookingRepository, notificationService INotificationUseCase) ITravelUseCase {
 	return &TravelUseCase{
 		TravelRepo:      travelRepo,
 		TravelStatsRepo: travelStatsRepo,
 		AgencyRepo:      agencyRepo,
+		DriverRepo:      driverRepo,
 		ErrorService:    errorService,
 		BookingRepository: bookingRepo,
 		NotificationService: notificationService,
 	}
+}
+
+func (tuc *TravelUseCase) AssignDriver(travel *Domain.Travel, travelID string) (int, error) {
+	// check if the driver is not busy
+	driver, err := tuc.DriverRepo.GetDriverByID(travel.DriverID)
+	if err != nil {
+		fmt.Println(err.Error())
+		return tuc.ErrorService.UserNotFound()
+	}
+
+	if len(driver.CurrentTrips) > 0 {
+
+		lastTripID := driver.CurrentTrips[len(driver.CurrentTrips)-1]
+		if lastTripID != travel.ID.Hex() {
+			lastTrip, err := tuc.TravelRepo.ViewTravelById(lastTripID)
+			if err != nil {
+				return tuc.ErrorService.TravelNotFound()
+			}
+
+			lastArrivalDate := lastTrip.EstArrivalTime
+			plusOneDate := lastArrivalDate.AddDate(0, 0, 1)
+			currStartDate := lastTrip.PlannedStartTime
+
+			plusOneStr := plusOneDate.Format("2006-01-02")
+			currStartStr := currStartDate.Format("2006-01-02")
+
+			if plusOneStr <= currStartStr {
+				return tuc.ErrorService.DriverBusy()
+			}
+		}
+	}
+
+	err = tuc.DriverRepo.AssignTrip(travel.DriverID, travelID)
+	if err != nil {
+		return tuc.ErrorService.InternalServer()
+	}
+
+	return tuc.ErrorService.NoError()
+}
+
+func (tuc *TravelUseCase) AssignBus(travel *Domain.Travel, travelID string) (int, error) {
+	// todo: the same functionality as the assignDriver function.
+	return tuc.ErrorService.NoError()
 }
 
 func (tuc *TravelUseCase) TravelValidation(travel *Domain.Travel) (int, error) {
@@ -59,9 +104,14 @@ func (tuc *TravelUseCase) TravelValidation(travel *Domain.Travel) (int, error) {
 }
 
 func (tuc *TravelUseCase) CreateTravel(travel *Domain.Travel) (int, error) {
-	//check if the agency id exists
-	exists, err := tuc.AgencyRepo.CheckAgency(travel.AgencyId)
+	code, err := tuc.TravelValidation(travel)
 	if err != nil {
+		return code, err
+	}
+	//check if the agency id exists
+	exists, err := tuc.AgencyRepo.CheckAgencyByUniqueID(travel.AgencyId)
+	if err != nil {
+		fmt.Println(err.Error())
 		return tuc.ErrorService.InternalServer()
 	}
 	if !exists {
@@ -76,7 +126,18 @@ func (tuc *TravelUseCase) CreateTravel(travel *Domain.Travel) (int, error) {
 
 	travelID, err := tuc.TravelRepo.CreateTravel(travel)
 	if err != nil {
+		fmt.Println(err.Error())
 		return tuc.ErrorService.InternalServer()
+	}
+
+	code, err = tuc.AssignDriver(travel, travelID)
+	if err != nil {
+		return code, err
+	}
+
+	code, err = tuc.AssignBus(travel, travelID)
+	if err != nil {
+		return code, err
 	}
 
 	var travelStats = Domain.TravelStats{
@@ -103,13 +164,24 @@ func (tuc *TravelUseCase) EditTravel(travel *Domain.Travel) (int, error) {
 		return code, err
 	}
 
-	travel.ActualStartTime = travel.PlannedStartTime
-	travel.ActualArrivalTime = travel.EstArrivalTime
+	travel.LastModTime = time.Now()
 
 	err = tuc.TravelRepo.EditTravel(travel)
 	if err != nil {
 		return tuc.ErrorService.TravelNotFound()
 	}
+
+	// assign driver and bus
+	code, err = tuc.AssignDriver(travel, travel.ID.Hex())
+	if err != nil {
+		return code, err
+	}
+
+	code, err = tuc.AssignBus(travel, travel.ID.Hex())
+	if err != nil {
+		return code, err
+	}
+
 	return tuc.ErrorService.NoError()
 }
 
