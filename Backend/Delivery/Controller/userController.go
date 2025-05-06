@@ -421,3 +421,57 @@ func (uc *UserController) ResetPassword(ctx *gin.Context) {
 
 	ctx.JSON(statusCode, gin.H{"message": "password reset successfully"})
 }
+
+type FCMTokenRequest struct {
+	FCMToken string `json:"fcm_token"`
+}
+
+// StoreFCMTokenHandler handles the /user/{userId}/fcm-token POST request
+func (uc *UserController) StoreFCMTokenHandler(ctx *gin.Context) {
+	userID := ctx.Param("userId")
+
+	var req FCMTokenRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request payload"})
+		return
+	}
+
+	if req.FCMToken == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "FCM token cannot be empty"})
+		return
+	}
+
+	err := uc.UserUseCase.StoreFCMToken(userID, req.FCMToken)
+	if err != nil {
+		fmt.Printf("Error storing FCM token for user %s: %v\n", userID, err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to store FCM token"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "FCM token stored successfully"})
+}
+
+// RemoveFCMTokenHandler handles the /user/{userId}/fcm-token DELETE request
+func (uc *UserController) RemoveFCMTokenHandler(ctx *gin.Context) {
+	userID := ctx.Param("userId")
+
+	var req FCMTokenRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request payload"})
+		return
+	}
+
+	if req.FCMToken == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "FCM token cannot be empty"})
+		return
+	}
+
+	err := uc.UserUseCase.RemoveFCMToken(userID, req.FCMToken)
+	if err != nil {
+		fmt.Printf("Error removing FCM token for user %s: %v\n", userID, err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to remove FCM token"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "FCM token removed successfully"})
+}

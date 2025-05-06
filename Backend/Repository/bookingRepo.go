@@ -273,3 +273,31 @@ func (b *BookingRepository) GetBookingsForTraveler(travlerID string) (*[]Domain.
 
 	return &bookings, nil
 }
+
+func (b *BookingRepository) GetTravellersIDForTrip(travelID string) (*[]string, error) {
+	filter := bson.M{"travel_id": travelID}
+
+	var travellers []string
+
+	cursor, err := b.BookingCollection.Find(b.DbCtx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	defer cursor.Close(b.DbCtx)
+	for cursor.Next(b.DbCtx) {
+		var booking Domain.Booking
+		err := cursor.Decode(&booking)
+		if err != nil {
+			return nil, err
+		}
+		print("traveller id: ", booking.TravelerID, "\n")
+		travellers = append(travellers, booking.TravelerID)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return &travellers, nil
+}

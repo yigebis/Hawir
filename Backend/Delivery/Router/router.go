@@ -15,6 +15,7 @@ type Router struct {
 	BookingController     *Controller.BookingController
 	DestinationController *Controller.DestinationController
 	DriverController      *Controller.DriverController
+  NotificationController *Controller.NotificationController
 	JWTSigner             string
 }
 
@@ -26,6 +27,7 @@ func NewRouter(
 	bc *Controller.BookingController,
 	desc *Controller.DestinationController,
 	dc *Controller.DriverController,
+  notificationController *Controller.NotificationController,
 	jwtSigner string,
 ) *Router {
 	return &Router{
@@ -36,6 +38,7 @@ func NewRouter(
 		BookingController:     bc,
 		DestinationController: desc,
 		DriverController:      dc,
+    NotificationController: notificationController,
 		JWTSigner:             jwtSigner,
 	}
 }
@@ -51,10 +54,10 @@ func (r *Router) Run() {
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"}, // Headers to allow
 		ExposeHeaders:    []string{"Content-Length"},                          // Headers to expose to frontend
 		AllowCredentials: true,                                                // Allow cookies or authentication headers
+
 	}
 	router.Use(cors.New(config))
 	// router.Use(cors.Default())
-
 	userRouter := NewUserRouter(r.UserController)
 	agencyRouter := NewAgencyRouter(r.AgencyController)
 	adminRouter := NewAdminRouter(r.AdminController)
