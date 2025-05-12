@@ -54,8 +54,8 @@ func (b *BookingRepository) Book(booking *Domain.Booking) error {
 	return err
 }
 
-func (b *BookingRepository) DeleteSeat(seatNo int) error {
-	filter := bson.M{"seat_no": seatNo}
+func (b *BookingRepository) DeleteSeat(travelerID, travelID string) error {
+	filter := bson.M{"traveler_id": travelerID, "travel_id": travelID}
 	_, err := b.SeatCollection.DeleteOne(b.DbCtx, filter)
 
 	return err
@@ -72,6 +72,7 @@ func (b *BookingRepository) FreeSeat(travelID string, seatNo int) error {
 	_, err = b.TravelStatsCollection.UpdateOne(b.DbCtx, filter, update)
 	return err
 }
+
 func (b *BookingRepository) CheckSeat(travelID string, seatNo int) (bool, error) {
 	// get the travel stat data
 	filter := bson.M{"travel_id": travelID}
@@ -133,10 +134,12 @@ func (b *BookingRepository) EditBook(booking *Domain.Booking) error {
 		"seat_no":        booking.SeatNo,
 		"trip_Type":      booking.TripType,
 		"start_location": booking.StartLocation,
+		"price":          booking.Price,
 		"payment_type":   booking.PaymentType,
 		"payment_ref":    booking.PaymentRef,
 		"book_time":      booking.BookTime,
 		"pay_time":       booking.PayTime,
+		"status":         Domain.BookingStatusPaid,
 	}
 
 	update := bson.M{"$set": updateData}
@@ -172,19 +175,12 @@ func (b *BookingRepository) GetBooking(bookingID string) (*Domain.Booking, error
 }
 
 func (b *BookingRepository) GetBookingByTravelerID(travelerID, travelID string) (*Domain.Booking, error) {
-	travelerObjID, err := primitive.ObjectIDFromHex(travelerID)
-	if err != nil {
-		return nil, err
-	}
-	travelObjID, err := primitive.ObjectIDFromHex(travelID)
-	if err != nil {
-		return nil, err
-	}
-
-	filter := bson.M{"traveler_id": travelerObjID, "travel_id": travelObjID}
+	filter := bson.M{"travel_id": travelID, "traveler_id": travelerID}
 
 	var booking Domain.Booking
-	err = b.BookingCollection.FindOne(b.DbCtx, filter).Decode(&booking)
+	err := b.BookingCollection.FindOne(b.DbCtx, filter).Decode(&booking)
+	print("inside getbBt")
+	print(err)
 	if err != nil {
 		return nil, err
 	}
@@ -300,4 +296,17 @@ func (b *BookingRepository) GetTravellersIDForTrip(travelID string) (*[]string, 
 	}
 
 	return &travellers, nil
+}
+
+func (b *BookingRepository) GetTravelSeats(travelID string) (*[]bool, error) {
+	filter := bson.M{"travel_id": travelID}
+
+	var travelStats Domain.TravelStats
+
+	err := b.TravelStatsCollection.FindOne(b.DbCtx, filter).Decode(&travelStats)
+	if err != nil {
+		return nil, err
+	}
+
+	return &travelStats.Seats, nil
 }
