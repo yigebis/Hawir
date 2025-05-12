@@ -27,6 +27,8 @@ func (ur *UserRouter) Run(router *gin.Engine, jwtSigner string) {
 	router.GET("/auth/with/google", ur.UserController.LoginWithGoogle) // Redirects to Google login page
 	router.GET("/auth/callback", ur.UserController.GoogleCallback)     // Handles Google callback
 	router.GET("/user/:id", ur.UserController.GetUserById)
+	router.POST("/user/:userId/fcm-token", ur.UserController.StoreFCMTokenHandler)
+	router.DELETE("/user/:userId/fcm-token", ur.UserController.RemoveFCMTokenHandler)
 
 	router.GET("/user/my/:id", Infrastructure.UserMiddleware(jwtSigner), ur.UserController.MyProfile)             //user middleware
 	router.PUT("/user/edit", Infrastructure.UserMiddleware(jwtSigner), ur.UserController.EditUser)                //user middleware

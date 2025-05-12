@@ -57,6 +57,7 @@ var ErrSeatReserved = errors.New("seat is already reserved")
 var ErrTravelerAlreadyBooked = errors.New("traveler has already booked a seat")
 var ErrSeatNotChosen = errors.New("traveler has not chosen a seat")
 var ErrIncorrectSeatNumber = errors.New("seat number is incorrect")
+var ErrSeatsNotFound = errors.New("seats not found")
 
 // Destination errors
 var ErrDestinationNotFound = errors.New("destination not found")
@@ -209,6 +210,10 @@ func (e *Error) IncorrectSeatNumber() (int, error) {
 
 func (e *Error) InvalidEmailAgencyIDPassword() (int, error) {
 	return http.StatusBadRequest, ErrInvalidEmailAgencyIDPassword
+}
+
+func (e *Error) SeatsNotFound() (int, error) {
+	return http.StatusNotFound, ErrSeatsNotFound
 }
 
 // Destination errors
