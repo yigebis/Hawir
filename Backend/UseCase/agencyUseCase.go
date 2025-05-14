@@ -2,9 +2,8 @@ package UseCase
 
 import (
 	"Hawir/Domain"
+	"mime/multipart"
 	"time"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type AgencyUseCase struct {
@@ -14,13 +13,14 @@ type AgencyUseCase struct {
 	TokenService    ITokenService
 	ErrorService    IErrorService
 	MailService     IMailService
+	CloudService    ICloudService
 
 	EmailExpiry     int64
 	TokenExpiry     int64
 	RefresherExpiry int64
 }
 
-func NewAgencyUseCase(agr IAgencyRepository, drr IDriverRepository, ps IPasswordService, ts ITokenService, es IErrorService, ms IMailService, ex, tx, rx int64) IAgencyUseCase {
+func NewAgencyUseCase(agr IAgencyRepository, drr IDriverRepository, ps IPasswordService, ts ITokenService, es IErrorService, ms IMailService, cs ICloudService, ex, tx, rx int64) IAgencyUseCase {
 	return &AgencyUseCase{
 		AgencyRepo:      agr,
 		DriverRepo:      drr,
@@ -28,6 +28,7 @@ func NewAgencyUseCase(agr IAgencyRepository, drr IDriverRepository, ps IPassword
 		TokenService:    ts,
 		ErrorService:    es,
 		MailService:     ms,
+		CloudService:    cs,
 		EmailExpiry:     ex,
 		TokenExpiry:     tx,
 		RefresherExpiry: rx,
@@ -152,8 +153,18 @@ func (aguc *AgencyUseCase) AddBus(bus *Domain.Bus) (int, error) {
 	return aguc.ErrorService.NoError()
 }
 
-func (aguc *AgencyUseCase) EditBus(bus *Domain.Bus) (int, error) {
-	err := aguc.AgencyRepo.EditBus(bus)
+func (aguc *AgencyUseCase) EditBus(bus *Domain.Bus, agencyID string) (int, error) {
+	// first get the bus info
+	busInfo, err := aguc.AgencyRepo.GetBusByID(bus.ID.Hex())
+	if err != nil {
+		return aguc.ErrorService.BusNotFound()
+	}
+
+	if busInfo.AgencyID != agencyID {
+		return aguc.ErrorService.NotAuthorized()
+	}
+
+	err = aguc.AgencyRepo.EditBus(bus)
 	if err != nil {
 		return aguc.ErrorService.InternalServer()
 	}
@@ -161,18 +172,8 @@ func (aguc *AgencyUseCase) EditBus(bus *Domain.Bus) (int, error) {
 	return aguc.ErrorService.NoError()
 }
 
-func (aguc *AgencyUseCase) DeleteBus(plateNumber string) (int, error) {
-	err := aguc.AgencyRepo.DeleteBus(plateNumber)
-	if err != nil {
-		return aguc.ErrorService.InternalServer()
-	}
-
-	return aguc.ErrorService.NoError()
-}
-
-func (aguc *AgencyUseCase) GetBusByPlateNumber(plateNumber string) (*Domain.Bus, int, error) {
-	panic("unimplemented")
-	bus, err := aguc.AgencyRepo.GetBusByPlateNumber(plateNumber)
+func (aguc *AgencyUseCase) GetBusByID(id string) (*Domain.Bus, int, error) {
+	bus, err := aguc.AgencyRepo.GetBusByID(id)
 	if err != nil {
 		// code, err := aguc.ErrorService.BusNotFound()
 		code, err := aguc.ErrorService.NoError()
@@ -183,8 +184,7 @@ func (aguc *AgencyUseCase) GetBusByPlateNumber(plateNumber string) (*Domain.Bus,
 	return bus, code, err
 }
 
-func (aguc *AgencyUseCase) GetAllBusesByAgencyID(agencyID primitive.ObjectID) (*[]Domain.Bus, int, error) {
-	panic("unimplemented")
+func (aguc *AgencyUseCase) GetAllBusesByAgencyID(agencyID string) (*[]Domain.Bus, int, error) {
 	buses, err := aguc.AgencyRepo.GetAllBusesByAgencyID(agencyID)
 	if err != nil {
 		// code, err := aguc.ErrorService.BusNotFound()
@@ -196,16 +196,31 @@ func (aguc *AgencyUseCase) GetAllBusesByAgencyID(agencyID primitive.ObjectID) (*
 	return buses, code, err
 }
 
-func (aguc *AgencyUseCase) AddDriver(driver *Domain.Driver) (int, error) {
+func (aguc *AgencyUseCase) AddDriver(driver *Domain.Driver, fileHeader *multipart.FileHeader) (int, error) {
 	// check if the driver with the same email exists
-	_, err := aguc.DriverRepo.GetDriverByEmail(driver.Email)
+	existingDriver, err := aguc.DriverRepo.GetDriverByEmail(driver.Email)
 	if err == nil {
-		return aguc.ErrorService.UserExists()
+		if existingDriver.Verified {
+			return aguc.ErrorService.UserExists()
+		}
+		driver = existingDriver
 	}
 
 	driver.RegistrationDate = time.Now()
 	driver.CurrentTrips = []string{}
 	driver.Verified = false
+
+	var filePath string
+
+	if fileHeader != nil {
+		// upload to cloudinary
+		url, err := aguc.CloudService.UploadProfileToCloud(fileHeader)
+		if err != nil {
+			return aguc.ErrorService.UnableToUploadFile()
+		}
+		filePath = url
+	}
+	driver.Photo = filePath
 
 	// send email verification
 	token, err := aguc.TokenService.GenerateEmailToken(driver.Email, aguc.EmailExpiry, "driver")
@@ -228,4 +243,83 @@ func (aguc *AgencyUseCase) AddDriver(driver *Domain.Driver) (int, error) {
 	}
 
 	return aguc.ErrorService.NoError()
+}
+
+func (aguc *AgencyUseCase) EditDriver(driver *Domain.Driver, fileHeader *multipart.FileHeader) (int, error) {
+	// first get the driver info
+	driverInfo, err := aguc.DriverRepo.GetDriverByID(driver.ID.Hex())
+	if err != nil {
+		return aguc.ErrorService.UserNotFound()
+	}
+
+	if driverInfo.AgencyID != driver.AgencyID {
+		return aguc.ErrorService.NotAuthorized()
+	}
+
+	// we should decide on this, whether to allow the agency to edit the driver info even after the driver is verified
+	// if so, we should not include this code. Otherwise, we should include it
+	// if driverInfo.Verified {
+	// 	return aguc.ErrorService.NotAuthorized()
+	// }
+
+	// hash the new password, no need to verify the old password
+	if driver.Password != "" {
+		hashedPassword, err := aguc.PasswordService.HashPassword(driver.Password)
+		if err != nil {
+			return aguc.ErrorService.InternalServer()
+		}
+		driver.Password = hashedPassword
+	} else {
+		driver.Password = driverInfo.Password
+	}
+
+	var filePath string
+
+	if fileHeader != nil {
+		// upload to cloudinary
+		url, err := aguc.CloudService.UploadProfileToCloud(fileHeader)
+		if err != nil {
+			return aguc.ErrorService.UnableToUploadFile()
+		}
+		filePath = url
+	}
+	driver.Photo = filePath
+
+	err = aguc.DriverRepo.UpdateDriver(driver.ID.Hex(), driver)
+	if err != nil {
+		return aguc.ErrorService.InternalServer()
+	}
+
+	return aguc.ErrorService.NoError()
+}
+
+func (aguc *AgencyUseCase) DeleteDriver(id, agencyID string) (int, error) {
+	// retrievt the driver info
+	driverInfo, err := aguc.DriverRepo.GetDriverByID(id)
+	if err != nil {
+		return aguc.ErrorService.UserNotFound()
+	}
+
+	if driverInfo.AgencyID != agencyID {
+		return aguc.ErrorService.NotAuthorized()
+	}
+
+	// edit the driver info in the database
+	err = aguc.DriverRepo.NullifyDriver(id)
+	if err != nil {
+		return aguc.ErrorService.InternalServer()
+	}
+
+	return aguc.ErrorService.NoError()
+}
+
+func (aguc *AgencyUseCase) GetAllDriversByAgencyID(agencyID string) (*[]Domain.Driver, int, error) {
+	drivers, err := aguc.DriverRepo.GetAllDriversByAgencyID(agencyID)
+	if err != nil {
+		code, err := aguc.ErrorService.UserNotFound()
+		return nil, code, err
+	}
+
+	code, err := aguc.ErrorService.NoError()
+	return drivers, code, err
 }

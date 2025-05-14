@@ -7,6 +7,7 @@ import (
 	"Hawir/Infrastructure"
 	"Hawir/Repository"
 	"Hawir/UseCase"
+	"strconv"
 
 	"context"
 	"fmt"
@@ -64,6 +65,7 @@ func main() {
 	destination_details_collection := client.Database("Hawir").Collection("destination_details")
 	bus_collection := client.Database("Hawir").Collection("buses")
 	driver_collection := client.Database("Hawir").Collection("Drivers")
+	event_collection := client.Database("Hawir").Collection("events")
 
 	admin_context := context.TODO()
 	user_context := context.TODO()
@@ -72,6 +74,7 @@ func main() {
 	booking_context := context.TODO()
 	destination_context := context.TODO()
 	driver_context := context.TODO()
+	event_context := context.TODO()
 
 	admr := Repository.NewAdminRepository(admin_context, admin_collection)
 	ur := Repository.NewUserRepository(user_context, user_collection)
@@ -86,6 +89,7 @@ func main() {
 	)
 	dr := Repository.NewDestinationRepository(destination_context, destination_collection, destination_details_collection)
 	drr := Repository.NewDriverRepository(driver_context, driver_collection)
+	er := Repository.NewEventRepository(event_context, event_collection)
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	es := Error.NewErrorService()
@@ -94,7 +98,8 @@ func main() {
 	timeService := Infrastructure.NewTimeService()
 	ms := Infrastructure.NewMailService(os.Getenv("SENDER_EMAIL"), os.Getenv("EMAIL_PASSWORD"), os.Getenv("FROM"), websiteDomainName)
 	vs := Infrastructure.NewValidationService(es)
-	cs := Infrastructure.NewCloudinaryService()
+	cloudinaryUrl := os.Getenv("CLOUDINARY_STRING")
+	cs := Infrastructure.NewCloudinaryService(cloudinaryUrl)
 
 	email_duration := os.Getenv("EMAIL_EXPIRY")
 	token_duration := os.Getenv("TOKEN_EXPIRY")
@@ -115,12 +120,13 @@ func main() {
 	oauthService := Infrastructure.NewOAuth(oauthState, oauthClientID, oauthClientSecret, websiteDomainName)
 
 	uuc := UseCase.NewUserUseCase(ur, ps, ts, ms, es, cs, ex, tx, rx)
-	aguc := UseCase.NewAgencyUseCase(agr, drr, ps, ts, es, ms, ex, tx, rx)
+	aguc := UseCase.NewAgencyUseCase(agr, drr, ps, ts, es, ms, cs, ex, tx, rx)
 	tuc := UseCase.NewTravelUseCase(tr, tsr, agr, drr, es)
 	auc := UseCase.NewAdminUseCase(admr, agr, ps, es, ts, ms, tx, rx)
 	buc := UseCase.NewBookingUseCase(br, tr, es)
 	duc := UseCase.NewDestinationUseCase(dr, es)
 	druc := UseCase.NewDriverUseCase(drr, es, ps, ts, ms, tx, rx)
+	euc := UseCase.NewEventUseCase(er, dr, es, cs)
 
 	// setting up the controllers
 	user_controller := Controller.NewUserController(uuc, aguc, ts, oauthService, ps, vs, rx, websiteDomainName)
@@ -131,7 +137,10 @@ func main() {
 	destination_controller := Controller.NewDestinationController(duc)
 	driver_controller := Controller.NewDriverController(druc, vs, rx, websiteDomainName)
 
+	maxPageSize, _ := strconv.Atoi(os.Getenv("MAX_SIZE_PER_PAGE"))
+	event_controller := Controller.NewEventController(euc, maxPageSize)
+
 	// setting up the router
-	router := Router.NewRouter(user_controller, agency_controller, travel_controller, admin_controller, booking_controller, destination_controller, driver_controller, jwtSecret)
+	router := Router.NewRouter(user_controller, agency_controller, travel_controller, admin_controller, booking_controller, destination_controller, driver_controller, event_controller, jwtSecret)
 	router.Run()
 }

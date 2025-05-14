@@ -283,7 +283,7 @@ func (uuc *UserUseCase) EditUser(user *Domain.UserProfile, fileHeader *multipart
 
 	if fileHeader != nil {
 		// upload to cloudinary
-		url, err := uuc.CloudService.UploadToCloudinary(fileHeader)
+		url, err := uuc.CloudService.UploadProfileToCloud(fileHeader)
 		if err != nil {
 			return uuc.ErrorService.UnableToUploadFile()
 		}

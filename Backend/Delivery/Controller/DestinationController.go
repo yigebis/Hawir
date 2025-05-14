@@ -31,13 +31,19 @@ func (dc *DestinationController) AddDestination(ctx *gin.Context) {
 		return
 	}
 
-	statusCode, err := dc.DestinationUseCase.AddDestination(&destination)
+	err = dc.V.Struct(destination)
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": "invalid request payload", "details": err.Error()})
+		return
+	}
+
+	added_destination, statusCode, err := dc.DestinationUseCase.AddDestination(&destination)
 	if err != nil {
 		ctx.JSON(statusCode, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(statusCode, gin.H{"message": "destination added successfully"})
+	ctx.JSON(statusCode, added_destination)
 }
 
 func (dc *DestinationController) GetDestinationByID(ctx *gin.Context) {

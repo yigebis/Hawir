@@ -66,6 +66,23 @@ func (dr *DriverRepository) GetDriverByEmail(email string) (*Domain.Driver, erro
 	return &driver, nil
 }
 
+func (dr *DriverRepository) GetAllDriversByAgencyID(agencyID string) (*[]Domain.Driver, error) {
+	filter := bson.M{"agency_id": agencyID}
+	cursor, err := dr.DriverCollection.Find(dr.DbCtx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(dr.DbCtx)
+	var drivers []Domain.Driver
+
+	err = cursor.All(dr.DbCtx, &drivers)
+	if err != nil {
+		return nil, err
+	}
+
+	return &drivers, nil
+}
+
 func (dr *DriverRepository) AssignTrip(driverID, tripID string) error {
 	driverObjID, err := primitive.ObjectIDFromHex(driverID)
 	if err != nil {
@@ -91,8 +108,19 @@ func (dr *DriverRepository) UpdateDriver(id string, driver *Domain.Driver) error
 	return err
 }
 
-func (dr *DriverRepository) DeleteDriverByEmail(email string) error {
-	filter := bson.M{"email": email}
-	_, err := dr.DriverCollection.DeleteOne(dr.DbCtx, filter)
+func (dr *DriverRepository) NullifyDriver(id string) error {
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+
+	filter := bson.M{"_id": objID}
+	update := bson.M{"$set": bson.M{
+		"current_trips": []string{},
+		"verified":      false,
+		"agency_id":     "",
+		"password":      "",
+	}}
+	_, err = dr.DriverCollection.UpdateOne(dr.DbCtx, filter, update)
 	return err
 }

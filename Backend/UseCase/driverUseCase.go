@@ -72,7 +72,7 @@ func (duc *DriverUseCase) RejectEmail(email, token string) (int, error) {
 	}
 
 	// delete the user from the database
-	err = duc.DriverRepo.DeleteDriverByEmail(user.Email)
+	err = duc.DriverRepo.NullifyDriver(user.ID.Hex())
 	if err != nil {
 		return duc.ErrorService.InternalServer()
 	}
@@ -129,6 +129,11 @@ func (du *DriverUseCase) GetDriverByID(id string) (*Domain.Driver, int, error) {
 		return nil, code, err
 	}
 
+	if !driver.Verified {
+		code, err := du.ErrorService.NotVerified()
+		return nil, code, err
+	}
+
 	driver.Password = ""
 
 	code, err := du.ErrorService.NoError()
@@ -141,6 +146,10 @@ func (du *DriverUseCase) ChangePassword(id string, changePassword *Domain.Driver
 	if err != nil {
 		code, err := du.ErrorService.InternalServer()
 		return code, err
+	}
+
+	if !driver.Verified {
+		return du.ErrorService.NotVerified()
 	}
 
 	err = du.PasswordService.VerifyPassword(driver.Password, changePassword.OldPassword)

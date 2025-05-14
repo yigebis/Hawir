@@ -5,10 +5,12 @@ import (
 	"Hawir/Infrastructure"
 	"Hawir/UseCase"
 	"fmt"
+	"net/http"
+	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type AgencyController struct {
@@ -19,14 +21,6 @@ type AgencyController struct {
 	ValidationService *Infrastructure.ValidationService
 	RefresherExpiry   int64
 	WebsiteDomainName string
-}
-
-func getAgencyClaims(claimsAny any, exists bool) jwt.MapClaims {
-	if !exists {
-		return nil
-	}
-	// claims := claimsAny.(map[string]interface{})
-	return claimsAny.(jwt.MapClaims)
 }
 
 func NewAgencyController(u UseCase.IAgencyUseCase, ts UseCase.ITokenService, ps UseCase.IPasswordService, vs *Infrastructure.ValidationService, rx int64, wsn string) *AgencyController {
@@ -40,6 +34,8 @@ func NewAgencyController(u UseCase.IAgencyUseCase, ts UseCase.ITokenService, ps 
 		WebsiteDomainName: wsn,
 	}
 }
+
+// main functions
 
 func (agc *AgencyController) LoginAgencyAdmin(ctx *gin.Context) {
 	credentials := Domain.AgencyAdminCredentials{}
@@ -151,12 +147,21 @@ func (agc *AgencyController) AddBus(ctx *gin.Context) {
 }
 
 func (agc *AgencyController) EditBus(ctx *gin.Context) {
+	id := ctx.Param("id")
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": "invalid bus ID"})
+		return
+	}
+
 	bus := Domain.Bus{}
-	err := ctx.ShouldBindJSON(&bus)
+	err = ctx.ShouldBindJSON(&bus)
 	if err != nil {
 		ctx.JSON(400, gin.H{"error": "invalid request payload"})
 		return
 	}
+
+	bus.ID = objID
 
 	err = agc.V.Struct(bus)
 	if err != nil {
@@ -164,7 +169,14 @@ func (agc *AgencyController) EditBus(ctx *gin.Context) {
 		return
 	}
 
-	code, err := agc.AgencyUseCase.EditBus(&bus)
+	claimsAny, exists := ctx.Get("agency")
+	claims := getAgencyClaims(claimsAny, exists)
+	if claims == nil {
+		ctx.JSON(400, gin.H{"error": "invalid token claims"})
+		return
+	}
+
+	code, err := agc.AgencyUseCase.EditBus(&bus, claims["agency_id"].(string))
 	if err != nil {
 		ctx.JSON(code, gin.H{"error": err.Error()})
 		return
@@ -173,22 +185,10 @@ func (agc *AgencyController) EditBus(ctx *gin.Context) {
 	ctx.JSON(code, gin.H{"message": "bus edited successfully"})
 }
 
-func (agc *AgencyController) DeleteBus(ctx *gin.Context) {
-	plateNumber := ctx.Param("plate_number")
+func (agc *AgencyController) GetBusByID(ctx *gin.Context) {
+	id := ctx.Param("id")
 
-	code, err := agc.AgencyUseCase.DeleteBus(plateNumber)
-	if err != nil {
-		ctx.JSON(code, gin.H{"error": err.Error()})
-		return
-	}
-
-	ctx.JSON(code, gin.H{"message": "bus deleted successfully"})
-}
-
-func (agc *AgencyController) GetBusByPlateNumber(ctx *gin.Context) {
-	plateNumber := ctx.Param("plate_number")
-
-	bus, code, err := agc.AgencyUseCase.GetBusByPlateNumber(plateNumber)
+	bus, code, err := agc.AgencyUseCase.GetBusByID(id)
 	if err != nil {
 		ctx.JSON(code, gin.H{"error": err.Error()})
 		return
@@ -197,34 +197,56 @@ func (agc *AgencyController) GetBusByPlateNumber(ctx *gin.Context) {
 	ctx.JSON(code, bus)
 }
 
-// func (agc *AgencyController) GetAllBusesByAgencyID(ctx *gin.Context) {
-// 	// TODO: get the agencyID from the token
+func (agc *AgencyController) GetAllBusesByAgencyID(ctx *gin.Context) {
+	claimsAny, exists := ctx.Get("agency")
+	claims := getAgencyClaims(claimsAny, exists)
+	if claims == nil {
+		ctx.JSON(400, gin.H{"error": "invalid token claims"})
+		return
+	}
 
-// 	// convert the agencyID to ObjectID
-// 	agencyObjID, err := Infrastructure.ConvertToObjectID(agencyID)
-// 	if err != nil {
-// 		ctx.JSON(400, gin.H{"error": "invalid agency ID format"})
-// 		return
-// 	}
+	agencyID := claims["agency_id"].(string)
 
-// 	buses, code, err := agc.AgencyUseCase.GetAllBusesByAgencyID(agencyObjID)
-// 	if err != nil {
-// 		ctx.JSON(code, gin.H{"error": err.Error()})
-// 		return
-// 	}
+	buses, code, err := agc.AgencyUseCase.GetAllBusesByAgencyID(agencyID)
+	if err != nil {
+		ctx.JSON(code, gin.H{"error": err.Error()})
+		return
+	}
 
-// 	ctx.JSON(code, buses)
-// }
+	ctx.JSON(code, buses)
+}
 
+// driver management
 func (agc *AgencyController) AddDriver(ctx *gin.Context) {
-	// panic("unimplemented")
 	driver := Domain.Driver{}
 
-	err := ctx.ShouldBindJSON(&driver)
+	driver.FirstName = ctx.PostForm("first_name")
+	driver.LastName = ctx.PostForm("last_name")
+	driver.Sex = ctx.PostForm("sex")
+	dateOfBirthStr := ctx.PostForm("date_of_birth")
+	dateOfBirth, err := time.Parse("2006-01-02", dateOfBirthStr) // Adjust format as needed
 	if err != nil {
-		fmt.Println(err.Error())
-		ctx.JSON(400, gin.H{"error": "invalid request payload"})
+		ctx.JSON(400, gin.H{"error": "invalid date format"})
 		return
+	}
+	driver.DateOfBirth = dateOfBirth
+
+	driver.Email = ctx.PostForm("email")
+	driver.Phone = ctx.PostForm("phone")
+	driver.Password = ctx.PostForm("password")
+
+	fileHeader, err := ctx.FormFile("photo")
+	if err != nil && err != http.ErrMissingFile {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "unable to parse file"})
+		return
+	}
+
+	if fileHeader != nil {
+		errMessage := checkPhotoFile(fileHeader)
+		if errMessage != "" {
+			ctx.JSON(400, gin.H{"error": errMessage})
+			return
+		}
 	}
 
 	err = agc.V.Struct(driver)
@@ -267,11 +289,144 @@ func (agc *AgencyController) AddDriver(ctx *gin.Context) {
 		return
 	}
 
-	code, err = agc.AgencyUseCase.AddDriver(&driver)
+	code, err = agc.AgencyUseCase.AddDriver(&driver, fileHeader)
 	if err != nil {
 		ctx.JSON(code, gin.H{"error": err.Error()})
 		return
 	}
 
 	ctx.JSON(code, gin.H{"message": "driver added successfully"})
+}
+
+func (agc *AgencyController) EditDriver(ctx *gin.Context) {
+	id := ctx.PostForm("id")
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": "invalid driver ID"})
+		return
+	}
+
+	driver := Domain.Driver{}
+	driver.ID = objID
+	driver.FirstName = ctx.PostForm("first_name")
+	driver.LastName = ctx.PostForm("last_name")
+	driver.Sex = ctx.PostForm("sex")
+	dateOfBirthStr := ctx.PostForm("date_of_birth")
+	dateOfBirth, err := time.Parse("2006-01-02", dateOfBirthStr) // Adjust format as needed
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": "invalid date format"})
+		return
+	}
+	driver.DateOfBirth = dateOfBirth
+
+	// changing email is not allowed
+	driver.Phone = ctx.PostForm("phone")
+	driver.Password = ctx.PostForm("password")
+
+	fileHeader, err := ctx.FormFile("photo")
+	if err != nil && err != http.ErrMissingFile { // No file uploaded is okay
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "unable to parse file"})
+		return
+	}
+	if fileHeader != nil {
+		errMessage := checkPhotoFile(fileHeader)
+		if errMessage != "" {
+			ctx.JSON(400, gin.H{"error": errMessage})
+			return
+		}
+	}
+
+	if driver.Sex != "" && driver.Sex != "M" && driver.Sex != "F" {
+		ctx.JSON(400, gin.H{"error": "invalid Sex data"})
+		return
+	}
+
+	//validate the names
+	if driver.FirstName != "" {
+		code, err := agc.ValidationService.NameValidation(driver.FirstName)
+		if err != nil {
+			ctx.JSON(code, gin.H{"error": "invalid first name"})
+			return
+		}
+	}
+	if driver.LastName != "" {
+		code, err := agc.ValidationService.NameValidation(driver.LastName)
+		if err != nil {
+			ctx.JSON(code, gin.H{"error": "invalid first name"})
+			return
+		}
+	}
+
+	//assign the agency ID from the context claims
+	claims := getAgencyClaims(ctx.Get("agency"))
+	if claims == nil {
+		ctx.JSON(400, gin.H{"error": "invalid token claims"})
+		return
+	}
+	driver.AgencyID = claims["agency_id"].(string)
+
+	//validate the password and phone numbers
+	if driver.Password != "" {
+		code, err := agc.ValidationService.ValidatePassword(driver.Password)
+		if err != nil {
+			ctx.JSON(code, gin.H{"error": "invalid password"})
+			return
+		}
+	}
+
+	if driver.Phone != "" {
+		code, err := agc.ValidationService.PhoneValidation(driver.Phone)
+		if err != nil {
+			ctx.JSON(code, gin.H{"error": "invalid phone number"})
+			return
+		}
+	}
+
+	code, err := agc.AgencyUseCase.EditDriver(&driver, fileHeader)
+	if err != nil {
+		ctx.JSON(code, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(code, gin.H{"message": "driver edited successfully"})
+}
+
+func (agc *AgencyController) DeleteDriver(ctx *gin.Context) {
+	id := ctx.Param("id")
+
+	// get the agency ID from the claims
+	claimsAny, exists := ctx.Get("agency")
+	claims := getAgencyClaims(claimsAny, exists)
+	if claims == nil {
+		ctx.JSON(400, gin.H{"error": "invalid token claims"})
+		return
+	}
+
+	code, err := agc.AgencyUseCase.DeleteDriver(id, claims["agency_id"].(string))
+	if err != nil {
+		ctx.JSON(code, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(code, gin.H{"message": "driver deleted successfully"})
+}
+
+func (agc *AgencyController) GetAllDriversByAgencyID(ctx *gin.Context) {
+	// get the agency ID from the claims
+	claimsAny, exists := ctx.Get("agency")
+	claims := getAgencyClaims(claimsAny, exists)
+	if claims == nil {
+		ctx.JSON(400, gin.H{"error": "invalid token claims"})
+		return
+	}
+
+	agencyID := claims["agency_id"].(string)
+
+	drivers, code, err := agc.AgencyUseCase.GetAllDriversByAgencyID(agencyID)
+	if err != nil {
+		ctx.JSON(code, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(code, drivers)
 }

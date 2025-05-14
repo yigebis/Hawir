@@ -27,19 +27,21 @@ func NewDestinationRepository(dbCtx context.Context, destinationCollection, deta
 }
 
 // AddDestination implements UseCase.IDestinationRepository.
-func (dr *DestinationRepository) AddDestination(destination *Domain.Destination) (string, error) {
+func (dr *DestinationRepository) AddDestination(destination *Domain.Destination) (*Domain.Destination, error) {
 	// add the destination to the repo
 	res, err := dr.DestinationCollection.InsertOne(dr.DbCtx, destination)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// return the ID of the added destination
 	objID, ok := res.InsertedID.(primitive.ObjectID)
 	if !ok {
-		return "", errors.New("failed to convert inserted ID to ObjectID")
+		return nil, errors.New("failed to convert inserted ID to ObjectID")
 	}
-	return objID.Hex(), nil
+
+	destination.ID = objID
+	return destination, nil
 }
 
 func (dr *DestinationRepository) InitializeDestinationDetails(id string) error {

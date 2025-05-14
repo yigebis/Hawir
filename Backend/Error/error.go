@@ -47,6 +47,7 @@ var ErrDriverBusy = errors.New("driver is busy")
 
 // Agency errors
 var ErrAgencyNotFound = errors.New("agency not found")
+var ErrBusNotFound = errors.New("bus not found")
 
 // bus errors
 var ErrIncorrectPlateNumber = errors.New("incorrect plate number")
@@ -61,6 +62,10 @@ var ErrIncorrectSeatNumber = errors.New("seat number is incorrect")
 // Destination errors
 var ErrDestinationNotFound = errors.New("destination not found")
 var ErrDestinationAlreadyExists = errors.New("destination already exists")
+
+// Event errors
+var ErrInvalidEventDate = errors.New("event date should be in the future")
+var ErrEventNotFound = errors.New("event not found")
 
 type Error struct{}
 
@@ -174,6 +179,10 @@ func (e *Error) IncorrectPlateNo() (int, error) {
 	return http.StatusBadRequest, ErrIncorrectPlateNumber
 }
 
+func (e *Error) BusNotFound() (int, error) {
+	return http.StatusNotFound, ErrBusNotFound
+}
+
 // Booking errors
 func (e *Error) BookingNotFound() (int, error) {
 	return http.StatusNotFound, ErrBookingNotFound
@@ -218,4 +227,13 @@ func (e *Error) DestinationNotFound() (int, error) {
 
 func (e *Error) DestinationAlreadyExists() (int, error) {
 	return http.StatusConflict, ErrDestinationAlreadyExists
+}
+
+// Event errors
+func (e *Error) InvalidEventDate() (int, error) {
+	return http.StatusBadRequest, ErrInvalidEventDate
+}
+
+func (e *Error) EventNotFound() (int, error) {
+	return http.StatusNotFound, ErrEventNotFound
 }

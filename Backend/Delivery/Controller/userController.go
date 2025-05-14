@@ -379,13 +379,13 @@ func (uc *UserController) EditUser(ctx *gin.Context) {
 		return
 	}
 
-	// err = ctx.ShouldBindJSON(&user)
-	// if err != nil {
-	// 	ctx.JSON(400, gin.H{"error": "invalid request payload"})
-	// 	return
-	// }
-
-	// email validation
+	if fileHeader != nil {
+		errMessage := checkPhotoFile(fileHeader)
+		if errMessage != "" {
+			ctx.JSON(400, gin.H{"error": errMessage})
+			return
+		}
+	}
 	// phone number validation
 
 	statusCode, err := uc.UserUseCase.EditUser(&user, fileHeader)

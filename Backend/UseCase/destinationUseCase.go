@@ -14,24 +14,28 @@ func NewDestinationUseCase(destinationRepo IDestinationRepository, errorService 
 	}
 }
 
-func (duc *DestinationUseCase) AddDestination(destination *Domain.Destination) (int, error) {
+func (duc *DestinationUseCase) AddDestination(destination *Domain.Destination) (*Domain.Destination, int, error) {
 	// check if a destination with the same name already exists
 	_, err := duc.DestinationRepo.GetDestinationByName(destination.Name)
 	if err == nil {
-		return duc.ErrorService.DestinationAlreadyExists()
+		code, err := duc.ErrorService.DestinationAlreadyExists()
+		return nil, code, err
 	}
 
-	id, err := duc.DestinationRepo.AddDestination(destination)
+	inserted_dest, err := duc.DestinationRepo.AddDestination(destination)
 	if err != nil {
-		return duc.ErrorService.InternalServer()
+		code, err := duc.ErrorService.InternalServer()
+		return nil, code, err
 	}
 
-	err = duc.DestinationRepo.InitializeDestinationDetails(id)
+	err = duc.DestinationRepo.InitializeDestinationDetails(inserted_dest.ID.Hex())
 	if err != nil {
-		return duc.ErrorService.InternalServer()
+		code, err := duc.ErrorService.InternalServer()
+		return nil, code, err
 	}
 
-	return duc.ErrorService.NoError()
+	code, err := duc.ErrorService.NoError()
+	return inserted_dest, code, err
 }
 
 // EditDestination implements IDestinationUseCase.

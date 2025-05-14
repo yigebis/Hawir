@@ -3,7 +3,7 @@ package UseCase
 import "Hawir/Domain"
 
 type IDestinationUseCase interface {
-	AddDestination(destination *Domain.Destination) (int, error)
+	AddDestination(destination *Domain.Destination) (*Domain.Destination, int, error)
 	EditDestination(destination *Domain.Destination) (int, error)
 	GetDestinationById(id string) (*Domain.Destination, int, error)
 	GetAllDestinations() (*[]Domain.Destination, int, error)
@@ -17,7 +17,7 @@ type IDestinationUseCase interface {
 }
 
 type IDestinationRepository interface {
-	AddDestination(destination *Domain.Destination) (string, error)
+	AddDestination(destination *Domain.Destination) (*Domain.Destination, error)
 	InitializeDestinationDetails(id string) error
 	DeleteDestination(id string) error
 	GetDestinationByID(id string) (*Domain.Destination, error)
