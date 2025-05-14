@@ -216,16 +216,36 @@ func (agr *AgencyRepository) AddBus(bus *Domain.Bus) error {
 }
 
 func (agr *AgencyRepository) EditBus(bus *Domain.Bus) error {
-	filter := bson.M{"plate_number": bus.PlateNumber}
+	filter := bson.M{"_id": bus.ID}
 	update := bson.M{"$set": bus}
 	_, err := agr.BusCollection.UpdateOne(agr.DbCtx, filter, update)
 	return err
 }
 
-func (agr *AgencyRepository) DeleteBus(plateNumber string) error {
-	filter := bson.M{"plate_number": plateNumber}
-	_, err := agr.BusCollection.DeleteOne(agr.DbCtx, filter)
+func (agr *AgencyRepository) DeleteBus(id string) error {
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+
+	filter := bson.M{"_id": objID}
+	_, err = agr.BusCollection.DeleteOne(agr.DbCtx, filter)
 	return err
+}
+
+func (agr *AgencyRepository) GetBusByID(id string) (*Domain.Bus, error) {
+	var bus Domain.Bus
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	filter := bson.M{"_id": objID}
+	err = agr.BusCollection.FindOne(agr.DbCtx, filter).Decode(&bus)
+	if err != nil {
+		return nil, err
+	}
+	return &bus, nil
 }
 
 func (agr *AgencyRepository) GetBusByPlateNumber(plateNumber string) (*Domain.Bus, error) {
@@ -238,10 +258,14 @@ func (agr *AgencyRepository) GetBusByPlateNumber(plateNumber string) (*Domain.Bu
 	return &bus, nil
 }
 
-func (agr *AgencyRepository) GetAllBusesByAgencyID(agencyID primitive.ObjectID) (*[]Domain.Bus, error) {
+func (agr *AgencyRepository) GetAllBusesByAgencyID(agencyID string) (*[]Domain.Bus, error) {
 	var buses []Domain.Bus
+	objID, err := primitive.ObjectIDFromHex(agencyID)
+	if err != nil {
+		return nil, err
+	}
 
-	filter := bson.M{"agency_id": agencyID}
+	filter := bson.M{"agency_id": objID}
 	cursor, err := agr.BusCollection.Find(agr.DbCtx, filter)
 	if err != nil {
 		return nil, err

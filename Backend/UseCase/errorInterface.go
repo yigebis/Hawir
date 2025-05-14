@@ -23,6 +23,7 @@ type IErrorService interface {
 	UnableToSeekFile() (int, error)
 	UnableToCopyFile() (int, error)
 	UnableToUploadFile() (int, error)
+	// UnableToDeleteFile() (int, error)
 
 	// agency user errors
 	InvalidEmailAgencyIDPassword() (int, error)
@@ -38,6 +39,7 @@ type IErrorService interface {
 
 	// Agency errors
 	AgencyNotFound() (int, error)
+	BusNotFound() (int, error)
 
 	// Booking errors
 	BookingNotFound() (int, error)
@@ -50,4 +52,8 @@ type IErrorService interface {
 	// Destination errors
 	DestinationNotFound() (int, error)
 	DestinationAlreadyExists() (int, error)
+
+	// Event errors
+	InvalidEventDate() (int, error)
+	EventNotFound() (int, error)
 }

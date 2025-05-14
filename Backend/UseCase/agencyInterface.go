@@ -2,8 +2,7 @@ package UseCase
 
 import (
 	"Hawir/Domain"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"mime/multipart"
 	// "go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -17,13 +16,15 @@ type IAgencyUseCase interface {
 
 	// vehicle management
 	AddBus(bus *Domain.Bus) (int, error)
-	EditBus(bus *Domain.Bus) (int, error)
-	DeleteBus(plateNumber string) (int, error)
-	GetBusByPlateNumber(plateNumber string) (*Domain.Bus, int, error)
-	GetAllBusesByAgencyID(agencyID primitive.ObjectID) (*[]Domain.Bus, int, error)
+	EditBus(bus *Domain.Bus, agencyID string) (int, error)
+	GetBusByID(id string) (*Domain.Bus, int, error)
+	GetAllBusesByAgencyID(agencyID string) (*[]Domain.Bus, int, error)
 
 	// driver management
-	AddDriver(driver *Domain.Driver) (int, error)
+	AddDriver(driver *Domain.Driver, fileHeader *multipart.FileHeader) (int, error)
+	EditDriver(driver *Domain.Driver, fileHeader *multipart.FileHeader) (int, error)
+	DeleteDriver(driverID, agencyID string) (int, error)
+	GetAllDriversByAgencyID(agencyID string) (*[]Domain.Driver, int, error)
 }
 
 type IAgencyRepository interface {
@@ -43,7 +44,7 @@ type IAgencyRepository interface {
 	// Vehicle management
 	AddBus(bus *Domain.Bus) error
 	EditBus(bus *Domain.Bus) error
-	DeleteBus(plateNumber string) error
+	GetBusByID(id string) (*Domain.Bus, error)
 	GetBusByPlateNumber(plateNumber string) (*Domain.Bus, error)
-	GetAllBusesByAgencyID(agencyID primitive.ObjectID) (*[]Domain.Bus, error)
+	GetAllBusesByAgencyID(agencyID string) (*[]Domain.Bus, error)
 }

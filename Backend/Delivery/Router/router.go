@@ -15,7 +15,8 @@ type Router struct {
 	BookingController     *Controller.BookingController
 	DestinationController *Controller.DestinationController
 	DriverController      *Controller.DriverController
-    NotificationController *Controller.NotificationController
+	EventController       *Controller.EventController
+  NotificationController *Controller.NotificationController
 	JWTSigner             string
 }
 
@@ -27,7 +28,8 @@ func NewRouter(
 	bc *Controller.BookingController,
 	desc *Controller.DestinationController,
 	dc *Controller.DriverController,
-    nc *Controller.NotificationController,
+	ec *Controller.EventController,
+  nc *Controller.NotificationController,
 	jwtSigner string,
 ) *Router {
 	return &Router{
@@ -38,7 +40,8 @@ func NewRouter(
 		BookingController:     bc,
 		DestinationController: desc,
 		DriverController:      dc,
-    	NotificationController: nc,
+		EventController:       ec,
+   	NotificationController: nc,
 		JWTSigner:             jwtSigner,
 	}
 }
@@ -65,6 +68,7 @@ func (r *Router) Run() {
 	bookingRouter := NewBookingRouter(r.BookingController)
 	destinationRouter := NewDestinationRouter(r.DestinationController)
 	driverRouter := NewDriverRouter(r.DriverController)
+	event_router := NewEventRouter(r.EventController)
 	notificationRouter := NewNotificationRouter(r.NotificationController)
 
 	userRouter.Run(router, r.JWTSigner)
@@ -74,6 +78,7 @@ func (r *Router) Run() {
 	bookingRouter.Run(router)
 	destinationRouter.Run(router)
 	driverRouter.Run(router, r.JWTSigner)
+	event_router.Run(router, r.JWTSigner)
 	notificationRouter.Run(router, r.JWTSigner)
 
 	router.Run()

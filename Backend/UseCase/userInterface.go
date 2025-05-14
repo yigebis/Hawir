@@ -51,5 +51,7 @@ type ITokenService interface {
 }
 
 type ICloudService interface {
-	UploadToCloudinary(fileHeader *multipart.FileHeader) (string, error)
+	UploadProfileToCloud(fileHeader *multipart.FileHeader) (string, error)
+	UploadEventMediaToCloud(fileHeader *multipart.FileHeader) (string, error)
+	DeleteFromCloud(url string) error
 }

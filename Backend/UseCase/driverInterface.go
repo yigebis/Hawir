@@ -17,7 +17,8 @@ type IDriverRepository interface {
 	AddDriver(driver *Domain.Driver) error
 	GetDriverByID(id string) (*Domain.Driver, error)
 	GetDriverByEmail(email string) (*Domain.Driver, error)
+	GetAllDriversByAgencyID(agencyID string) (*[]Domain.Driver, error)
 	UpdateDriver(id string, driver *Domain.Driver) error
-	DeleteDriverByEmail(email string) error
+	NullifyDriver(id string) error
 	AssignTrip(driverID, tripID string) error
 }

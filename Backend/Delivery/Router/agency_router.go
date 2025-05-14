@@ -29,16 +29,17 @@ func (ar *AgencyRouter) Run(router *gin.Engine, jwt_string string) {
 
 	// vehicle management endpoints
 	router.POST("/agency/bus/add", Infrastructure.AgencyMiddleWare(jwt_string), ar.AgencyController.AddBus)
-	router.PUT("/agency/bus/edit", ar.AgencyController.EditBus)
-	router.DELETE("/agency/bus/delete", ar.AgencyController.DeleteBus)
-	router.GET("/agency/bus/:plate_number", ar.AgencyController.GetBusByPlateNumber)
-	// router.GET("/agency/bus/all", ar.AgencyController.GetAllBusesByAgencyID)
+	router.PUT("/agency/bus/edit/:id", Infrastructure.AgencyMiddleWare(jwt_string), ar.AgencyController.EditBus)
+	// router.DELETE("/agency/bus/delete", ar.AgencyController.DeleteBus) I can't see the point of deleting a bus
+	router.GET("/agency/bus/:id", Infrastructure.AgencyMiddleWare(jwt_string), ar.AgencyController.GetBusByID)
+	router.GET("/agency/bus/all", Infrastructure.AgencyMiddleWare(jwt_string), ar.AgencyController.GetAllBusesByAgencyID)
 
 	// driver management andpoints
 	router.POST("/agency/driver/add", Infrastructure.AgencyMiddleWare(jwt_string), ar.AgencyController.AddDriver)
-	// router.PUT("/agency/driver/edit", ar.AgencyController.EditDriver)
-	// router.DELETE("/agency/driver/delete", ar.AgencyController.DeleteDriver)
-	// router.GET("/agency/driver/:id", ar.AgencyController.GetDriverByID)
-	// router.GET("/agency/driver/all", ar.AgencyController.GetAllDriversByAgencyID)
-	// router.GET("/agency/driver/search", ar.AgencyController.SearchDriverByName)
+	// this endpoint is used only for agencies only, not for drivers because with this endpoint, password can be directly changed without entering old password
+	router.PUT("/agency/driver/edit", Infrastructure.AgencyMiddleWare(jwt_string), ar.AgencyController.EditDriver)
+	// deleting the driver doesn't mean removing data from db, rather verified = false
+	router.DELETE("/agency/driver/delete/:id", Infrastructure.AgencyMiddleWare(jwt_string), ar.AgencyController.DeleteDriver)
+	router.GET("/agency/driver/all", Infrastructure.AgencyMiddleWare(jwt_string), ar.AgencyController.GetAllDriversByAgencyID)
+	// router.GET("/agency/driver/search", Infrastructure.AgencyMiddleWare(jwt_string), ar.AgencyController.SearchDriverByName)
 }
