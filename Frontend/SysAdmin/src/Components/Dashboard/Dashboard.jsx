@@ -5,6 +5,8 @@ import Sidebar from "../Sidebar/Sidebar";
 
 const Dashboard = ({ agencies, events, locations }) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedAgency, setSelectedAgency] = useState(null); // State for selected agency
+  const [isModalOpen, setIsModalOpen] = useState(false); // State for modal visibility
   const navigate = useNavigate(); // Initialize navigation
 
   // Filter logic for agencies, events, and locations
@@ -25,6 +27,18 @@ const Dashboard = ({ agencies, events, locations }) => {
       location.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [locations, searchQuery]);
+
+  // Open modal and set selected agency
+  const handleViewDetails = (agency) => {
+    setSelectedAgency(agency);
+    setIsModalOpen(true);
+  };
+
+  // Close modal
+  const handleCloseModal = () => {
+    setSelectedAgency(null);
+    setIsModalOpen(false);
+  };
 
   return (
     <div className="dashboard-container">
@@ -51,7 +65,7 @@ const Dashboard = ({ agencies, events, locations }) => {
         <section className="dashboard-section">
           <h2>Travel Agencies</h2>
           <div className="agency-list grid">
-            {filteredAgencies.map((agency) => (
+            {filteredAgencies.slice(0, 3).map((agency) => (
               <div className="agency-card" key={agency.id}>
                 <div className="agency-header">
                   <div className="agency-logo-container">
@@ -80,7 +94,7 @@ const Dashboard = ({ agencies, events, locations }) => {
                 <div className="agency-actions">
                   <button
                     className="view-details-btn"
-                    onClick={() => navigate(`/agency-details/${agency.id}`)}
+                    onClick={() => handleViewDetails(agency)} // Open modal
                   >
                     <i className="fas fa-eye"></i> View Details
                   </button>
@@ -90,12 +104,68 @@ const Dashboard = ({ agencies, events, locations }) => {
             {filteredAgencies.length === 0 && <p>No agencies found.</p>}
           </div>
           <button
-            className="view-more-btn"
+            className="view-more-btn-dashboard"
             onClick={() => navigate("/manage-agencies")}
           >
             View More
           </button>
         </section>
+
+        {/* Modal for Agency Details */}
+        {isModalOpen && selectedAgency && (
+          <div className="modal-overlay">
+            <div className="modal-content-details">
+              {/* Modal Header */}
+              <div className="modal-header">
+                <h2>{selectedAgency.name}</h2>
+                <button className="close-modal-btn" onClick={handleCloseModal}>
+                  &times;
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="modal-body">
+                <div className="modal-section">
+                  <h3>Description</h3>
+                  <p>{selectedAgency.description}</p>
+                </div>
+
+                <div className="modal-section">
+                  <h3>Contact Information</h3>
+                  <p>
+                    <strong>Email:</strong> {selectedAgency.contact[1]}
+                  </p>
+                  <p>
+                    <strong>Phone:</strong> {selectedAgency.contact[0]}
+                  </p>
+                </div>
+
+                <div className="modal-section">
+                  <h3>Services</h3>
+                  <p>{selectedAgency.services.join(", ")}</p>
+                </div>
+
+                <div className="modal-section">
+                  <h3>Additional Details</h3>
+                  <p>
+                    <strong>Address:</strong> {selectedAgency.address || "N/A"}
+                  </p>
+                  <p>
+                    <strong>Website:</strong>{" "}
+                    <a href={selectedAgency.website} target="_blank" rel="noopener noreferrer">
+                      {selectedAgency.website || "N/A"}
+                    </a>
+                  </p>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="modal-footer">
+                <button onClick={handleCloseModal}>Close</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Events Section */}
         <section className="dashboard-section">
@@ -125,7 +195,7 @@ const Dashboard = ({ agencies, events, locations }) => {
             {filteredEvents.length === 0 && <p>No events found.</p>}
           </div>
           <button
-            className="view-more-btn"
+            className="view-more-btn-dashboard"
             onClick={() => navigate("/manage-events")}
           >
             View More
@@ -136,19 +206,32 @@ const Dashboard = ({ agencies, events, locations }) => {
         <section className="dashboard-section">
           <h2>Locations</h2>
           <div className="location-list grid">
-            {filteredLocations.map((location) => (
+            {filteredLocations.slice(0, 3).map((location) => (
               <div className="location-card" key={location.id}>
                 <div className="location-image">
-                  <img src={location.imageUrl} alt={location.name} />
+                  <img src={location.imageUrl || location.image} alt={location.name} />
                 </div>
                 <div className="location-details">
                   <h3 className="location-name">{location.name}</h3>
-                  <p className="location-desc">{location.desc}</p>
+                  <p className="location-desc">{location.description}</p>
+                  <p>
+                    <strong>Latitude:</strong> {location.latitude || "N/A"}
+                  </p>
+                  <p>
+                    <strong>Longitude:</strong> {location.longitude || "N/A"}
+                  </p>
+                  <p>
+                    <strong>Hotels:</strong> {location.hotels?.length || 0}
+                  </p>
+                  <p>
+                    <strong>Tourist Attractions:</strong>{" "}
+                    {location.tourist_attractions?.length || 0}
+                  </p>
                   <button
                     className="view-details-btn"
                     onClick={() => navigate(`/location-details/${location.id}`)}
                   >
-                    View Details
+                    <i className="fas fa-eye"></i> View Details
                   </button>
                 </div>
               </div>
@@ -156,7 +239,7 @@ const Dashboard = ({ agencies, events, locations }) => {
             {filteredLocations.length === 0 && <p>No locations found.</p>}
           </div>
           <button
-            className="view-more-btn"
+            className="view-more-btn-dashboard"
             onClick={() => navigate("/manage-locations")}
           >
             View More

@@ -9,6 +9,17 @@ export const fetchAgencies = async () => {
   return response.data;
 };
 
+// Fetch all locations
+export const fetchLocations = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/destination/all`);
+    return response.data;
+  } catch (error) {
+    console.error("Error in fetchLocations:", error);
+    throw error;
+  }
+};
+
 // Add a new agency
 export const addAgency = async (agency) => {
   const response = await axios.post(`${API_BASE_URL}/agency/add`, agency);
@@ -22,7 +33,68 @@ export const editAgency = async (id, updatedAgency) => {
 };
 
 // Delete an agency
-export const deleteAgency = async (id) => {
-  const response = await axios.delete(`${API_BASE_URL}/agency/delete/${id}`);
-  return response.data;
+export const deleteAgency = async (id, payload) => {
+  try {
+    const token = sessionStorage.getItem("token"); // Retrieve the token from sessionStorage
+
+    const response = await axios.delete(`${API_BASE_URL}/agency/delete/${id}`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, // Include the token in the Authorization header
+      },
+      data: payload, // Include the payload in the request body
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error("Error in deleteAgency:", error);
+    throw error;
+  }
+};
+
+// Delete a location
+export const deleteLocation = async (id, payload) => {
+  try {
+    const token = sessionStorage.getItem("token"); // Retrieve the token from sessionStorage
+
+    const response = await axios.delete(
+      `${API_BASE_URL}/destination/delete/${id}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // Include the token in the Authorization header
+        },
+        data: payload, // Include the payload in the request body
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Error in deleteLocation:", error);
+    throw error;
+  }
+};
+
+
+
+// Admin login
+export const adminLogin = async (credentials) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/admin/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(credentials),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to login.");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error in adminLogin:", error);
+    throw error;
+  }
 };

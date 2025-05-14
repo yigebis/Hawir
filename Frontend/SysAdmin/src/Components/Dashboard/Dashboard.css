@@ -128,7 +128,6 @@ html {
   color: #666;
   margin-top: 5px;
 } */
- 
 
 .agency-description {
   margin: 10px 0;
@@ -147,12 +146,12 @@ html {
   margin-top: 10px;
 }
 
-.agency-actions button{
+.agency-actions button {
   justify-self: center;
   align-items: center;
 }
 
-.linebreak{
+.linebreak {
   display: block;
   /* content: ""; */
   margin: 10px 0;
@@ -191,10 +190,10 @@ html {
   background-color: #218838;
 }
 
-.view-more-btn {
+.view-more-btn-dashboard {
   margin-top: 20px;
   padding: 10px 20px;
-  background-color: #007bff;
+  background-color: #f35b04;
   color: white;
   border: none;
   border-radius: 4px;
@@ -203,8 +202,9 @@ html {
   display: inline-block;
 }
 
-.view-more-btn:hover {
-  background-color: #0056b3;
+.view-more-btn-dashboard:hover {
+  background-color: #d44e03;
+  transition: background-color 0.3s ease;
 }
 
 /* Section Styles */
@@ -279,6 +279,41 @@ html {
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
+.location-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.location-card:hover {
+  transform: translateY(-5px);
+}
+
+.location-image img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+}
+
+.location-details {
+  padding: 15px;
+}
+
+.location-name {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.location-desc {
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 10px;
+}
+
 .event-image img,
 .location-image img {
   width: 100%;
@@ -291,3 +326,109 @@ html {
   padding: 15px;
 }
 
+/* Modern Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7); /* Darker overlay for better focus */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content-details {
+  background: white;
+  padding: 40px;
+  border-radius: 16px;
+  width: 50%; /* Wider modal */
+  max-width: 800px;
+  max-height: 85%; /* Limit height */
+  overflow-y: auto; /* Scrollable content if it overflows */
+  position: relative;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3); /* Subtle shadow */
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 10px;
+}
+
+.modal-header h2 {
+  font-size: 28px;
+  font-weight: bold;
+  margin: 0;
+  color: #333;
+}
+
+.close-modal-btn {
+  background: none;
+  border: none;
+  font-size: 28px;
+  font-weight: bold;
+  color: #666;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.close-modal-btn:hover {
+  color: #ff4d4d; /* Red color on hover */
+}
+
+.modal-body {
+  font-size: 16px;
+  color: #444;
+  line-height: 1.8;
+}
+
+.modal-body .modal-section {
+  margin-bottom: 20px;
+}
+
+.modal-body .modal-section h3 {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.modal-body .modal-section p {
+  margin: 5px 0;
+}
+
+.modal-body a {
+  color: #f35b04;
+  text-decoration: none;
+}
+
+.modal-body a:hover {
+  text-decoration: underline;
+}
+
+.modal-footer {
+  margin-top: 20px;
+  text-align: right;
+}
+
+.modal-footer button {
+  background-color: #f35b04;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+.modal-footer button:hover {
+  background-color: #d44e03; /* Darker orange on hover */
+  transition: background-color 0.3s ease;
+}

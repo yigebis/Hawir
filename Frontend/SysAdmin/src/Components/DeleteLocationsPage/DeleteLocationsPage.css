@@ -1,0 +1,51 @@
+.delete-locations-page {
+  display: flex;
+  height: 100vh;
+  background-color: #f9f9f9;
+  font-family: Arial, sans-serif;
+}
+
+.delete-locations-main {
+  flex: 1;
+  padding: 20px;
+}
+
+.location-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.location-table th,
+.location-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.location-table th {
+  background-color: #f4f4f4;
+}
+
+.pagination {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.pagination-btn {
+  margin: 0 5px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.pagination-btn.active {
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+.undo-container {
+  margin-top: 20px;
+  background-color: #ffdddd;
+  padding: 10px;
+  border: 1px solid #ff0000;
+}
+

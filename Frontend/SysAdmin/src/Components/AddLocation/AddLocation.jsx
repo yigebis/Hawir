@@ -1,18 +1,11 @@
 import React, { useState } from "react";
 import "./AddLocation.css";
+import { API_BASE_URL } from "../../api/api.jsx";
 
 const AddLocation = ({ onClose, onSave }) => {
   const [formData, setFormData] = useState({
     name: "",
-    desc: "",
-    currentWeather: "",
-    hotels: [],
-    culture: "",
-    history: "",
-    people: "",
-    population: "",
-    touristAttractions: [],
-    postDate: new Date().toISOString().split("T")[0],
+    stations: [], // Initialize as an empty array
   });
 
   const handleChange = (e) => {
@@ -20,76 +13,54 @@ const AddLocation = ({ onClose, onSave }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleStationChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      stations: e.target.value.split(",").map((s) => s.trim()),
+    }));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave(formData);
-    onClose();
+    const destination = {
+      name: formData.name,
+      stations: formData.stations,
+    };
+    console.log("Submitting destination:", destination); // Debugging
+    fetch(`${API_BASE_URL}/destination/add`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(destination),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Response from server:", data); // Debugging
+        onSave(data);
+        onClose();
+      })
+      .catch((error) => console.error("Error adding destination:", error));
   };
 
   return (
     <div className="modal-overlay">
       <div className="modal-form">
-        <h2>Add New Location</h2>
+        <h2>Add New Destination</h2>
         <form onSubmit={handleSubmit}>
           <input
             type="text"
             name="name"
-            placeholder="Location Name"
+            placeholder="Destination Name"
             value={formData.name}
             onChange={handleChange}
             required
           />
           <textarea
-            name="desc"
-            placeholder="Description"
-            value={formData.desc}
-            onChange={handleChange}
-          />
-          <input
-            type="text"
-            name="currentWeather"
-            placeholder="Current Weather"
-            value={formData.currentWeather}
-            onChange={handleChange}
-          />
-          <input
-            type="text"
-            name="culture"
-            placeholder="Culture"
-            value={formData.culture}
-            onChange={handleChange}
-          />
-          <input
-            type="text"
-            name="history"
-            placeholder="History"
-            value={formData.history}
-            onChange={handleChange}
-          />
-          <input
-            type="text"
-            name="people"
-            placeholder="People"
-            value={formData.people}
-            onChange={handleChange}
-          />
-          <input
-            type="text"
-            name="population"
-            placeholder="Population"
-            value={formData.population}
-            onChange={handleChange}
-          />
-          <textarea
-            name="touristAttractions"
-            placeholder="Tourist Attractions (comma-separated)"
-            value={formData.touristAttractions}
-            onChange={(e) =>
-              setFormData((prev) => ({
-                ...prev,
-                touristAttractions: e.target.value.split(",").map((t) => t.trim()),
-              }))
-            }
+            name="stations"
+            placeholder="Stations (comma-separated)"
+            value={formData.stations.join(", ")}
+            onChange={handleStationChange}
           />
           <div className="form-actions">
             <button type="submit" className="save-btn">

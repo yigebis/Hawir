@@ -1,140 +1,207 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "../Sidebar/Sidebar";
 import AddLocation from "../AddLocation/AddLocation";
 import EditLocation from "../EditLocation/EditLocation";
 import "./ManageLocations.css";
 import harar from "../../assets/harar.jpeg";
+import { API_BASE_URL } from "../../api/api";
 
-const ManageLocations = ({ locations, setLocations }) => {
-  // const [locations, setLocations] = useState([
-  //   {
-  //     id: 1,
-  //     name: "Harar",
-  //     desc: "A historic city known for its ancient walls and vibrant culture.",
-  //     currentWeather: "Cloudy, 22°C",
-  //     hotels: [
-  //       {
-  //         name: "Heritage Plaza Hotel",
-  //         imageUrl: "https://via.placeholder.com/150",
-  //       },
-  //       {
-  //         name: "Harar Guest House",
-  //         imageUrl: "https://via.placeholder.com/150",
-  //       },
-  //     ],
-  //     culture: "Famous for its diverse traditions and coffee culture.",
-  //     history: "Known as the City of Saints, with over 82 mosques.",
-  //     people: "Welcoming and culturally diverse community.",
-  //     population: "122,000",
-  //     touristAttractions: [
-  //       {
-  //         name: "Harar Jugol",
-  //         desc: "A UNESCO World Heritage Site with ancient walls.",
-  //       },
-  //       {
-  //         name: "Hyena Feeding",
-  //         desc: "A unique tradition of feeding wild hyenas.",
-  //       },
-  //     ],
-  //     postDate: "2025-04-26",
-  //   },
-  // ]);
+const ManageLocations = () => {
+  const [destinations, setDestinations] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterOption, setFilterOption] = useState("all");
   const [sortOption, setSortOption] = useState("newest");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState(null);
-  const [deletedLocation, setDeletedLocation] = useState(null);
+  const [selectedDestination, setSelectedDestination] = useState(null);
+  const [deletedDestination, setDeletedDestination] = useState(null);
   const [undoTimeout, setUndoTimeout] = useState(null);
   const [undoAvailable, setUndoAvailable] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const locationsPerPage = 6; // Number of locations per page
+  const navigate = useNavigate();
 
-  const handleAddLocation = (newLocation) => {
-    setLocations((prev) => [...prev, { ...newLocation, id: Date.now() }]);
+  useEffect(() => {
+    // Fetch all destinations on component mount
+    fetch(`${API_BASE_URL}/destination/all`)
+      .then((response) => {
+        if (!response.ok) {
+          return response.text().then((text) => {
+            throw new Error(
+              `Failed to fetch destinations: ${response.status} - ${text}`
+            );
+          });
+        }
+        return response.json();
+      })
+      .then((data) => setDestinations(data))
+      .catch((error) => console.error("Error fetching destinations:", error));
+  }, []);
+
+  const handleAddDestination = (newDestination) => {
+    fetch(`${API_BASE_URL}/destination/add`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newDestination),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          return response.text().then((text) => {
+            throw new Error(
+              `Failed to add destination: ${response.status} - ${text}`
+            );
+          });
+        }
+        return response.json();
+      })
+      .then((data) => {
+        // Ensure the response contains the required fields
+        if (!data.id || !data.name || !data.stations) {
+          console.error("Invalid response from server:", data);
+          return;
+        }
+
+        setDestinations((prev) => [...prev, data]);
+        setShowAddModal(false);
+      })
+      .catch((error) => console.error("Error adding destination:", error));
   };
 
-  const handleEditLocation = (updatedLocation) => {
-    setLocations((prev) =>
-      prev.map((location) =>
-        location.id === updatedLocation.id ? updatedLocation : location
-      )
-    );
-    setShowEditModal(false);
+  const handleEditDestination = (updatedDestination) => {
+    fetch(`${API_BASE_URL}/destination/edit/${updatedDestination.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(updatedDestination),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          return response.text().then((text) => {
+            throw new Error(
+              `Failed to edit destination: ${response.status} - ${text}`
+            );
+          });
+        }
+        return response.json();
+      })
+      .then((data) => {
+        setDestinations((prev) =>
+          prev.map((dest) => (dest.id === data.id ? data : dest))
+        );
+        setShowEditModal(false);
+      })
+      .catch((error) => console.error("Error editing destination:", error));
   };
 
-  const handleDeleteClick = (location) => {
-    setSelectedLocation(location);
+  const handleDeleteClick = (destination) => {
+    setSelectedDestination(destination);
     setShowDeleteModal(true);
   };
 
-  const confirmDeleteLocation = () => {
+  const confirmDeleteDestination = () => {
     setShowDeleteModal(false);
 
-    const updatedLocations = locations.filter(
-      (location) => location.id !== selectedLocation.id
-    );
-    setLocations(updatedLocations);
-
-    setDeletedLocation(selectedLocation);
-    setUndoAvailable(true);
-
-    const timeout = setTimeout(() => {
-      setDeletedLocation(null);
-      setUndoAvailable(false);
-    }, 5000);
-
-    setUndoTimeout(timeout);
-    setSelectedLocation(null);
+    fetch(`${API_BASE_URL}/destination/delete/${selectedDestination.id}`, {
+      method: "DELETE",
+    })
+      .then((response) => {
+        if (!response.ok) {
+          return response.text().then((text) => {
+            throw new Error(
+              `Failed to delete destination: ${response.status} - ${text}`
+            );
+          });
+        }
+        // No need to parse JSON for a successful DELETE, might return empty or a message
+        return response.text(); // Or response.json() if your backend returns JSON on delete
+      })
+      .then(() => {
+        const updatedDestinations = destinations.filter(
+          (dest) => dest.id !== selectedDestination.id
+        );
+        setDestinations(updatedDestinations);
+        setDeletedDestination(selectedDestination);
+        setUndoAvailable(true);
+        const timeout = setTimeout(() => {
+          setDeletedDestination(null);
+          setUndoAvailable(false);
+        }, 5000);
+        setUndoTimeout(timeout);
+        setSelectedDestination(null);
+      })
+      .catch((error) => console.error("Error deleting destination:", error));
   };
 
-  const undoDeleteLocation = () => {
+  const undoDeleteDestination = () => {
     clearTimeout(undoTimeout);
-    setLocations((prev) => [...prev, deletedLocation]);
-    setDeletedLocation(null);
-    setUndoAvailable(false);
+    fetch(`${API_BASE_URL}/destination/add`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(deletedDestination),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          return response.text().then((text) => {
+            throw new Error(
+              `Failed to undo delete: ${response.status} - ${text}`
+            );
+          });
+        }
+        return response.json();
+      })
+      .then((data) => {
+        setDestinations((prev) => [...prev, data]);
+        setDeletedDestination(null);
+        setUndoAvailable(false);
+      })
+      .catch((error) => console.error("Error undoing delete:", error));
   };
 
-  // Filter and search logic
-  const filteredLocations = useMemo(() => {
-    let filtered = locations;
+  const filteredDestinations = useMemo(() => {
+    let filtered = destinations;
 
-    // Apply search filter
     if (searchQuery) {
-      filtered = filtered.filter(
-        (location) =>
-          location.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          location.desc.toLowerCase().includes(searchQuery.toLowerCase())
+      filtered = filtered.filter((dest) =>
+        dest.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
-    // Apply filter option
-    if (filterOption !== "all") {
-      filtered = filtered.filter((location) =>
-        filterOption === "highPopulation"
-          ? parseInt(location.population.replace(/,/g, ""), 10) > 100000
-          : filterOption === "lowPopulation"
-          ? parseInt(location.population.replace(/,/g, ""), 10) <= 100000
-          : true
-      );
-    }
-
-    // Apply sort option
     switch (sortOption) {
       case "name":
         filtered.sort((a, b) => a.name.localeCompare(b.name));
         break;
-      case "oldest":
-        filtered.sort((a, b) => new Date(a.postDate) - new Date(b.postDate));
-        break;
-      case "newest":
-      default:
-        filtered.sort((a, b) => new Date(b.postDate) - new Date(a.postDate));
+      default: // Assuming your backend handles sorting by date if needed
         break;
     }
 
     return filtered;
-  }, [locations, searchQuery, filterOption, sortOption]);
+  }, [destinations, searchQuery, sortOption]);
+
+  const paginatedDestinations = useMemo(() => {
+    const startIndex = (currentPage - 1) * locationsPerPage;
+    const endIndex = startIndex + locationsPerPage;
+    return filteredDestinations.slice(startIndex, endIndex);
+  }, [filteredDestinations, currentPage, locationsPerPage]);
+
+  const totalPages = Math.ceil(filteredDestinations.length / locationsPerPage);
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage((prev) => prev - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage((prev) => prev + 1);
+    }
+  };
 
   return (
     <div className="manage-locations-container">
@@ -142,9 +209,9 @@ const ManageLocations = ({ locations, setLocations }) => {
 
       <div className="manage-locations-content">
         <header className="locations-header">
-          <h1>Manage Locations</h1>
+          <h1>Manage Destinations</h1>
           <button className="add-btn" onClick={() => setShowAddModal(true)}>
-            Add Location
+            Add Destination
           </button>
         </header>
 
@@ -163,7 +230,7 @@ const ManageLocations = ({ locations, setLocations }) => {
           </label>
           <input
             type="text"
-            placeholder="Search locations..."
+            placeholder="Search destinations..."
             className="search-input"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -171,65 +238,76 @@ const ManageLocations = ({ locations, setLocations }) => {
         </div>
 
         <div className="locations-list">
-          {filteredLocations.map((location) => (
-            <div className="location-card" key={location.id}>
+          {paginatedDestinations.map((destination) => (
+            <div className="location-card" key={destination.id}>
               <div className="location-image">
-                <img src={harar} alt={location.name} />
+                <img src={harar} alt={destination.name} />{" "}
+                {/* Consider dynamic images */}
               </div>
               <div className="location-details">
-                <h3 className="location-name">{location.name}</h3>
-                <p className="location-desc">{location.desc}</p>
-                <p className="location-info">
-                  <strong>Culture:</strong> {location.culture}
-                </p>
-                <p className="location-info">
-                  <strong>Weather:</strong> {location.currentWeather}
-                </p>
-                <div className="tourist-attractions">
-                  <strong>Tourist Attractions:</strong>
-                  <ul>
-                    {location.touristAttractions.map((attraction, index) => (
-                      <li key={index}>
-                        <strong>{attraction.name}:</strong> {attraction.desc}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                <h3 className="location-name">{destination.name}</h3>
+                {destination.stations && (
+                  <p className="location-info">
+                    <strong>Stations:</strong> {destination.stations.join(", ")}
+                  </p>
+                )}
                 <div className="location-actions">
                   <button
                     className="edit-btn"
                     onClick={() => {
-                      setSelectedLocation(location);
+                      setSelectedDestination(destination);
                       setShowEditModal(true);
                     }}
                   >
-                    Edit
+                    <i className="fas fa-edit"></i> Edit
                   </button>
                   <button
-                    className="delete-btn"
-                    onClick={() => handleDeleteClick(location)}
+                    className="view-more-btn"
+                    onClick={() =>
+                      navigate(`/location-details/${destination.id}`)
+                    }
                   >
-                    Delete
+                    View More
                   </button>
                 </div>
               </div>
             </div>
           ))}
-          {filteredLocations.length === 0 && <p>No locations found.</p>}
+          {paginatedDestinations.length === 0 && <p>No destinations found.</p>}
+        </div>
+
+        <div className="pagination-controls">
+          <button
+            className="pagination-btn"
+            onClick={handlePreviousPage}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </button>
+          <span>
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            className="pagination-btn"
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </button>
         </div>
 
         {showAddModal && (
           <AddLocation
             onClose={() => setShowAddModal(false)}
-            onSave={handleAddLocation}
+            onSave={handleAddDestination}
           />
         )}
 
-        {showEditModal && selectedLocation && (
+        {showEditModal && selectedDestination && (
           <EditLocation
-            locationData={selectedLocation}
+            destinationData={selectedDestination}
             onClose={() => setShowEditModal(false)}
-            onSave={handleEditLocation}
+            onSave={handleEditDestination}
           />
         )}
 
@@ -238,8 +316,8 @@ const ManageLocations = ({ locations, setLocations }) => {
             <div className="modal-content">
               <h3>Confirm Deletion</h3>
               <p>
-                Are you sure you want to delete the location{" "}
-                <strong>{selectedLocation?.name}</strong>?
+                Are you sure you want to delete the destination{" "}
+                <strong>{selectedDestination?.name}</strong>?
               </p>
               <div className="modal-actions">
                 <button
@@ -248,7 +326,10 @@ const ManageLocations = ({ locations, setLocations }) => {
                 >
                   Cancel
                 </button>
-                <button className="confirm-btn" onClick={confirmDeleteLocation}>
+                <button
+                  className="confirm-btn"
+                  onClick={confirmDeleteDestination}
+                >
                   Confirm
                 </button>
               </div>
@@ -256,11 +337,11 @@ const ManageLocations = ({ locations, setLocations }) => {
           </div>
         )}
 
-        {undoAvailable && deletedLocation && (
+        {undoAvailable && deletedDestination && (
           <div className="undo-notification">
             <p>
-              Location <strong>{deletedLocation.name}</strong> deleted.{" "}
-              <button onClick={undoDeleteLocation}>Undo</button>
+              Destination <strong>{deletedDestination.name}</strong> deleted.{" "}
+              <button onClick={undoDeleteDestination}>Undo</button>
             </p>
           </div>
         )}

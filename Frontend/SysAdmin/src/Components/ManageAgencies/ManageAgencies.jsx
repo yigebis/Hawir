@@ -12,14 +12,13 @@ const ManageAgencies = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedAgency, setSelectedAgency] = useState(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [agencyToDelete, setAgencyToDelete] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const agenciesPerPage = 6;
 
-  // Fetch agencies from the backend when the component loads
   useEffect(() => {
     const loadAgencies = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/agency/all`); 
+        const response = await fetch(`${API_BASE_URL}/agency/all`);
         const data = await response.json();
         setAgencies(data);
       } catch (error) {
@@ -32,12 +31,12 @@ const ManageAgencies = () => {
 
   const filteredAgencies = useMemo(() => {
     let filtered = agencies.filter((agency) =>
-      agency.name.toLowerCase().includes(searchQuery.toLowerCase())
+      (agency.name || "").toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     switch (sortOption) {
       case "name":
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
+        filtered.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
         break;
       case "oldest":
         filtered.sort((a, b) => a.id - b.id);
@@ -51,10 +50,23 @@ const ManageAgencies = () => {
     return filtered;
   }, [agencies, searchQuery, sortOption]);
 
+  const paginatedAgencies = useMemo(() => {
+    const startIndex = (currentPage - 1) * agenciesPerPage;
+    const endIndex = startIndex + agenciesPerPage;
+    return filteredAgencies.slice(startIndex, endIndex);
+  }, [filteredAgencies, currentPage, agenciesPerPage]);
+
+  const totalPages = Math.ceil(filteredAgencies.length / agenciesPerPage);
+
   const handleAddAgency = async (newAgency) => {
     try {
-      const addedAgency = await addAgency(newAgency); // Call the backend API
-      setAgencies((prev) => [...prev, addedAgency]); // Update the state with the new agency
+      const agencyWithDefaults = {
+        ...newAgency,
+        contact: newAgency.contact || ["", ""],
+      };
+
+      const addedAgency = await addAgency(agencyWithDefaults);
+      setAgencies((prev) => [...prev, addedAgency]);
     } catch (error) {
       console.error("Error adding agency:", error);
       alert("Failed to add agency. Please try again.");
@@ -63,13 +75,13 @@ const ManageAgencies = () => {
 
   const handleEditAgency = async (updatedAgency) => {
     try {
-      const editedAgency = await editAgency(updatedAgency.id, updatedAgency); // Call the backend API
+      const editedAgency = await editAgency(updatedAgency.id, updatedAgency);
       setAgencies((prev) =>
         prev.map((agency) =>
           agency.id === updatedAgency.id ? editedAgency : agency
         )
-      ); // Update the state with the edited agency
-      setShowEditModal(false); // Close the edit modal
+      );
+      setShowEditModal(false);
     } catch (error) {
       console.error("Error editing agency:", error);
       alert("Failed to edit agency. Please try again.");
@@ -77,18 +89,18 @@ const ManageAgencies = () => {
   };
 
   const handleDeleteClick = (agency) => {
-    setAgencyToDelete(agency);
-    setShowDeleteModal(true);
+    setSelectedAgency(agency);
+    setShowEditModal(true);
   };
 
   const confirmDeleteAgency = async () => {
     try {
-      await deleteAgency(agencyToDelete.id); // Call the backend API
+      await deleteAgency(selectedAgency.id);
       setAgencies((prev) =>
-        prev.filter((agency) => agency.id !== agencyToDelete.id)
-      ); // Remove the agency from the state
-      setShowDeleteModal(false); // Close the delete modal
-      setAgencyToDelete(null); // Clear the selected agency
+        prev.filter((agency) => agency.id !== selectedAgency.id)
+      );
+      setShowEditModal(false);
+      setSelectedAgency(null);
     } catch (error) {
       console.error("Error deleting agency:", error);
       alert("Failed to delete agency. Please try again.");
@@ -112,29 +124,6 @@ const ManageAgencies = () => {
           onClose={() => setShowEditModal(false)}
           onSave={handleEditAgency}
         />
-      )}
-
-      {showDeleteModal && (
-        <div className="delete-modal">
-          <div className="modal-content">
-            <h3>Confirm Deletion</h3>
-            <p>
-              Are you sure you want to delete the agency{" "}
-              <strong>{agencyToDelete?.name}</strong>?
-            </p>
-            <div className="modal-actions">
-              <button
-                className="cancel-btn"
-                onClick={() => setShowDeleteModal(false)}
-              >
-                Cancel
-              </button>
-              <button className="confirm-btn" onClick={confirmDeleteAgency}>
-                Confirm
-              </button>
-            </div>
-          </div>
-        </div>
       )}
 
       <main className="manage-agencies-main">
@@ -170,7 +159,7 @@ const ManageAgencies = () => {
         </div>
 
         <div className="agency-list grid">
-          {filteredAgencies.map((agency) => (
+          {paginatedAgencies.map((agency) => (
             <div className="agency-card" key={agency.id}>
               <div className="agency-header">
                 <div className="agency-logo-container">
@@ -206,15 +195,30 @@ const ManageAgencies = () => {
                 >
                   <i className="fas fa-edit"></i> Edit
                 </button>
-                <button
-                  className="delete-btn"
-                  onClick={() => handleDeleteClick(agency)}
-                >
-                  <i className="fas fa-trash"></i> Delete
-                </button>
               </div>
             </div>
           ))}
+          {paginatedAgencies.length === 0 && <p>No agencies found.</p>}
+        </div>
+
+        <div className="pagination-controls">
+          <button
+            className="pagination-btn"
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </button>
+          <span>
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            className="pagination-btn"
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </button>
         </div>
       </main>
     </div>

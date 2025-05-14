@@ -1,12 +1,33 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./EditLocation.css";
 
-const EditLocation = ({ locationData, onClose, onSave }) => {
-  const [formData, setFormData] = useState({ ...locationData });
+const EditLocation = ({ destinationData, onClose, onSave }) => {
+  const [formData, setFormData] = useState({
+    id: destinationData?.id || "", // Ensure ID is included
+    name: destinationData?.name || "",
+    stations: destinationData?.stations || [],
+  });
+
+  useEffect(() => {
+    if (destinationData) {
+      setFormData({
+        id: destinationData.id,
+        name: destinationData.name || "",
+        stations: destinationData.stations || [],
+      });
+    }
+  }, [destinationData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleStationChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      stations: e.target.value.split(",").map((s) => s.trim()),
+    }));
   };
 
   const handleSubmit = (e) => {
@@ -18,67 +39,21 @@ const EditLocation = ({ locationData, onClose, onSave }) => {
   return (
     <div className="modal-overlay">
       <div className="modal-form">
-        <h2>Edit Location</h2>
+        <h2>Edit Destination</h2>
         <form onSubmit={handleSubmit}>
           <input
             type="text"
             name="name"
-            placeholder="Location Name"
+            placeholder="Destination Name"
             value={formData.name}
             onChange={handleChange}
             required
           />
           <textarea
-            name="desc"
-            placeholder="Description"
-            value={formData.desc}
-            onChange={handleChange}
-          />
-          <input
-            type="text"
-            name="currentWeather"
-            placeholder="Current Weather"
-            value={formData.currentWeather}
-            onChange={handleChange}
-          />
-          <input
-            type="text"
-            name="culture"
-            placeholder="Culture"
-            value={formData.culture}
-            onChange={handleChange}
-          />
-          <input
-            type="text"
-            name="history"
-            placeholder="History"
-            value={formData.history}
-            onChange={handleChange}
-          />
-          <input
-            type="text"
-            name="people"
-            placeholder="People"
-            value={formData.people}
-            onChange={handleChange}
-          />
-          <input
-            type="text"
-            name="population"
-            placeholder="Population"
-            value={formData.population}
-            onChange={handleChange}
-          />
-          <textarea
-            name="touristAttractions"
-            placeholder="Tourist Attractions (comma-separated)"
-            value={formData.touristAttractions.join(", ")}
-            onChange={(e) =>
-              setFormData((prev) => ({
-                ...prev,
-                touristAttractions: e.target.value.split(",").map((t) => t.trim()),
-              }))
-            }
+            name="stations"
+            placeholder="Stations (comma-separated)"
+            value={formData.stations.join(", ")}
+            onChange={handleStationChange}
           />
           <div className="form-actions">
             <button type="submit" className="save-btn">

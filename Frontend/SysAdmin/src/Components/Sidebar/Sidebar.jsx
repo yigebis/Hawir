@@ -2,8 +2,9 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import "./Sidebar.css";
 import logo from "../../assets/logo.jpg";
+import "@fortawesome/fontawesome-free/css/all.min.css";
 
-function Sidebar({ agencies, setAgencies }) {
+function Sidebar() {
   const location = useLocation();
 
   return (
@@ -14,23 +15,39 @@ function Sidebar({ agencies, setAgencies }) {
       </div>
       <ul className="sidebar-menu">
         <li className={location.pathname === "/dashboard" ? "active" : ""}>
-          <Link to="/dashboard">Dashboard</Link>
+          <Link to="/dashboard">
+            <i className="fas fa-th-large"></i> Dashboard
+          </Link>
         </li>
         <li
           className={location.pathname === "/manage-agencies" ? "active" : ""}
         >
-          <Link to="/manage-agencies">Manage Agencies</Link>
+          <Link to="/manage-agencies">
+            <i className="fas fa-building"></i> Manage Agencies
+          </Link>
         </li>
         <li className={location.pathname === "/manage-events" ? "active" : ""}>
-          <Link to="/manage-events">Manage Evnets</Link>
+          <Link to="/manage-events">
+            <i className="fas fa-calendar-alt"></i> Manage Events
+          </Link>
         </li>
-        <li className={location.pathname === "/manage-locations" ? "active" : ""}>
-          <Link to="/manage-locations">Manage Locations</Link>
-        </li>
-        <li>
-          <Link to="/logout">Logout</Link>
+        <li
+          className={location.pathname === "/manage-locations" ? "active" : ""}
+        >
+          <Link to="/manage-locations">
+            <i className="fas fa-map-marker-alt"></i> Manage Locations
+          </Link>
         </li>
       </ul>
+      <div className="sidebar-footer">
+        <ul>
+          <li className={location.pathname === "/settings" ? "active" : ""}>
+            <Link to="/settings">
+              <i className="fas fa-cog"></i> Settings
+            </Link>
+          </li>
+        </ul>
+      </div>
     </aside>
   );
 }
