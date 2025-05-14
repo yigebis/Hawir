@@ -23,20 +23,25 @@ func NewBookingController(buc UseCase.IBookingUseCase) *BookingController {
 
 func (bc *BookingController) Book(ctx *gin.Context) {
 	var booking = Domain.Booking{}
-
+	
+	print("First\n")
 	err := ctx.ShouldBindJSON(&booking)
 	if err != nil {
 		ctx.JSON(400, gin.H{"error": "invalid request payload"})
 		return
 	}
 
-	code, err := bc.BookingUseCase.Book(&booking)
+	print("Second\n")
+	createdBooking, statusCode, err := bc.BookingUseCase.Book(&booking)
 	if err != nil {
-		ctx.JSON(code, gin.H{"error": err.Error()})
+		ctx.JSON(statusCode, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(code, gin.H{"message": "seat booked successfully"})
+	print("PaymentRef:   ")
+	print(createdBooking.PaymentRef)
+	// Return the created booking object in the response body
+	ctx.JSON(statusCode, createdBooking)
 }
 
 func (bc *BookingController) ChooseSeat(ctx *gin.Context) {
@@ -152,13 +157,13 @@ func (bc *BookingController) GetAllBookings(ctx *gin.Context) {
 		return
 	}
 
-	bookings, statusCode, err := bc.BookingUseCase.GetAllBookings(travelID)
+	travelBookings, statusCode, err := bc.BookingUseCase.GetAllBookings(travelID)
 	if err != nil {
 		ctx.JSON(statusCode, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(statusCode, bookings)
+	ctx.JSON(statusCode, travelBookings)
 }
 
 func (bc *BookingController) GetBookingsForTraveler(ctx *gin.Context) {
@@ -175,4 +180,21 @@ func (bc *BookingController) GetBookingsForTraveler(ctx *gin.Context) {
 	}
 
 	ctx.JSON(statusCode, bookings)
+}
+
+func (bc *BookingController) GetTravelSeats(ctx *gin.Context) {
+	travelID := ctx.Param("travelId")
+
+	if travelID == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "missing travel ID"})
+		return
+	}
+
+	travelSeats, statusCode, err := bc.BookingUseCase.GetTravelSeats(travelID)
+	if err != nil {
+		ctx.JSON(statusCode, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(statusCode, travelSeats)
 }

@@ -14,6 +14,9 @@ import (
 	"log"
 	"os"
 
+	firebase "firebase.google.com/go/v4"
+    "google.golang.org/api/option"
+
 	// comment it for production
 	"github.com/joho/godotenv"
 
@@ -21,12 +24,31 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+var (
+    firebaseApp *firebase.App
+)
+
+func initializeFirebaseApp() *firebase.App {
+	if firebaseApp == nil {
+		opt := option.WithCredentialsFile(os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")) // Call option.WithCredentialsFile
+		app, err := firebase.NewApp(context.Background(), nil, opt)
+		if err != nil {
+			log.Fatalf("error initializing Firebase app: %v", err)
+			return nil
+		}
+		firebaseApp = app
+	}
+	return firebaseApp
+}
+
 func main() {
 	//comment it for production
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("error loading .env file")
 	}
 
+	firebaseApp = initializeFirebaseApp() // Initialize Firebase
+	
 	// domain name of the website
 	websiteDomainName := os.Getenv("WEBSITE_DOMAIN_NAME")
 
@@ -62,10 +84,12 @@ func main() {
 	booking_collection := client.Database("Hawir").Collection("Booking")
 	agency_admin_collection := client.Database("Hawir").Collection("AgencyAdmins")
 	destination_collection := client.Database("Hawir").Collection("destinations")
+	notification_collection := client.Database("Hawir").Collection("notifications")
 	destination_details_collection := client.Database("Hawir").Collection("destination_details")
 	bus_collection := client.Database("Hawir").Collection("buses")
 	driver_collection := client.Database("Hawir").Collection("Drivers")
 	event_collection := client.Database("Hawir").Collection("events")
+
 
 	admin_context := context.TODO()
 	user_context := context.TODO()
@@ -73,6 +97,7 @@ func main() {
 	agency_context := context.TODO()
 	booking_context := context.TODO()
 	destination_context := context.TODO()
+	notification_context := context.TODO()
 	driver_context := context.TODO()
 	event_context := context.TODO()
 
@@ -86,7 +111,9 @@ func main() {
 		booking_collection,
 		travel_stat_collection,
 		seat_collection,
+		user_collection,
 	)
+	nr := Repository.NewNotificationRepository(notification_context, notification_collection)
 	dr := Repository.NewDestinationRepository(destination_context, destination_collection, destination_details_collection)
 	drr := Repository.NewDriverRepository(driver_context, driver_collection)
 	er := Repository.NewEventRepository(event_context, event_collection)
@@ -119,9 +146,10 @@ func main() {
 
 	oauthService := Infrastructure.NewOAuth(oauthState, oauthClientID, oauthClientSecret, websiteDomainName)
 
+	nuc := UseCase.NewNotificationUseCase(ur, nr, firebaseApp)
 	uuc := UseCase.NewUserUseCase(ur, ps, ts, ms, es, cs, ex, tx, rx)
 	aguc := UseCase.NewAgencyUseCase(agr, drr, ps, ts, es, ms, cs, ex, tx, rx)
-	tuc := UseCase.NewTravelUseCase(tr, tsr, agr, drr, es)
+	tuc := UseCase.NewTravelUseCase(tr, tsr, agr, drr, es, br, nuc)
 	auc := UseCase.NewAdminUseCase(admr, agr, ps, es, ts, ms, tx, rx)
 	buc := UseCase.NewBookingUseCase(br, tr, es)
 	duc := UseCase.NewDestinationUseCase(dr, es)
@@ -135,12 +163,14 @@ func main() {
 	admin_controller := Controller.NewAdminController(auc, aguc, vs, rx, websiteDomainName)
 	booking_controller := Controller.NewBookingController(buc)
 	destination_controller := Controller.NewDestinationController(duc)
+	notification_controller := Controller.NewNotificationController(nuc)
 	driver_controller := Controller.NewDriverController(druc, vs, rx, websiteDomainName)
 
 	maxPageSize, _ := strconv.Atoi(os.Getenv("MAX_SIZE_PER_PAGE"))
 	event_controller := Controller.NewEventController(euc, maxPageSize)
 
 	// setting up the router
-	router := Router.NewRouter(user_controller, agency_controller, travel_controller, admin_controller, booking_controller, destination_controller, driver_controller, event_controller, jwtSecret)
+	router := Router.NewRouter(user_controller, agency_controller, travel_controller, admin_controller, booking_controller, destination_controller, driver_controller, event_controller, notification_controller, jwtSecret)
+
 	router.Run()
 }

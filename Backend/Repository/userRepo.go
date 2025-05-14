@@ -140,3 +140,57 @@ func (ur *UserRepository) ChangePassword(id primitive.ObjectID, password string)
 
 	return err
 }
+
+// StoreUserFCMToken adds an FCM token to the user's document
+func (ur *UserRepository) StoreUserFCMToken(userID string, fcmToken string) error {
+	objectID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return fmt.Errorf("invalid user ID: %w", err)
+	}
+
+	// To avoid duplicate tokens, check if it exists first
+	filter := bson.M{"_id": objectID, "fcm_tokens": bson.M{"$ne": fcmToken}}
+	update := bson.M{"$push": bson.M{"fcm_tokens": fcmToken}}
+
+	_, err = ur.Collection.UpdateOne(ur.DbCtx, filter, update)
+	if err != nil {
+		return fmt.Errorf("failed to store FCM token for user %s: %w", userID, err)
+	}
+	fmt.Printf("FCM token stored for user %s: %s\n", userID, fcmToken)
+	return nil
+}
+
+// RemoveUserFCMToken removes a specific FCM token from the user's document
+func (ur *UserRepository) RemoveUserFCMToken(userID string, fcmToken string) error {
+	objectID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return fmt.Errorf("invalid user ID: %w", err)
+	}
+
+	update := bson.M{"$pull": bson.M{"fcm_tokens": fcmToken}}
+
+	_, err = ur.Collection.UpdateOne(ur.DbCtx, bson.M{"_id": objectID}, update)
+	if err != nil {
+		return fmt.Errorf("failed to remove FCM token for user %s: %w", userID, err)
+	}
+	fmt.Printf("FCM token removed for user %s: %s\n", userID, fcmToken)
+	return nil
+}
+
+// GetUserFCMTokens retrieves all FCM tokens for a given user ID
+func (ur *UserRepository) GetUserFCMTokens(userID string) ([]string, error) {
+	objectID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user ID: %w", err)
+	}
+
+	var user Domain.User
+	err = ur.Collection.FindOne(ur.DbCtx, bson.M{"_id": objectID}).Decode(&user)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, fmt.Errorf("user not found with ID %s: %w", userID, err)
+		}
+		return nil, fmt.Errorf("failed to retrieve user %s: %w", userID, err)
+	}
+	return user.FcmTokens, nil
+}

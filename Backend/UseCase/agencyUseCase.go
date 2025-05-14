@@ -189,11 +189,22 @@ func (aguc *AgencyUseCase) GetAllBusesByAgencyID(agencyID string) (*[]Domain.Bus
 	if err != nil {
 		// code, err := aguc.ErrorService.BusNotFound()
 		code, err := aguc.ErrorService.NoError()
+    return nil, code, err
+  }
+  
+  code, err := aguc.ErrorService.NoError()
+  return buses, code, err
+}
+
+func (aguc *AgencyUseCase) GetAgencyForUser(id string) (*Domain.AgencyDisplay, int, error) {
+	agency, err := aguc.AgencyRepo.GetAgencyForUserById(id)
+	if err != nil {
+		code, err := aguc.ErrorService.AgencyNotFound()
 		return nil, code, err
 	}
 
 	code, err := aguc.ErrorService.NoError()
-	return buses, code, err
+  return agency, code, err
 }
 
 func (aguc *AgencyUseCase) AddDriver(driver *Domain.Driver, fileHeader *multipart.FileHeader) (int, error) {
