@@ -174,13 +174,18 @@ func (b *BookingRepository) GetBooking(bookingID string) (*Domain.Booking, error
 	return &booking, nil
 }
 
-func (b *BookingRepository) GetBookingByTravelerID(travelerID, travelID string) (*Domain.Booking, error) {
-	filter := bson.M{"travel_id": travelID, "traveler_id": travelerID}
+func (b *BookingRepository) GetBookingByBookingRef(booking_ref string) (*Domain.Booking, error) {
+	filter := bson.M{"booking_ref": booking_ref}
 
 	var booking Domain.Booking
-	err := b.BookingCollection.FindOne(b.DbCtx, filter).Decode(&booking)
-	print("inside getbBt")
-	print(err)
+	res := b.BookingCollection.FindOne(b.DbCtx, filter)
+
+	if res == nil {
+		return nil, errors.New("booking not found")
+	}
+
+	err := res.Decode(&booking)
+	
 	if err != nil {
 		return nil, err
 	}
@@ -287,7 +292,6 @@ func (b *BookingRepository) GetTravellersIDForTrip(travelID string) (*[]string, 
 		if err != nil {
 			return nil, err
 		}
-		print("traveller id: ", booking.TravelerID, "\n")
 		travellers = append(travellers, booking.TravelerID)
 	}
 
@@ -309,4 +313,32 @@ func (b *BookingRepository) GetTravelSeats(travelID string) (*[]bool, error) {
 	}
 
 	return &travelStats.Seats, nil
+}
+
+func (b *BookingRepository) UpdateBooking(booking *Domain.Booking) (error) {
+	objId, err := primitive.ObjectIDFromHex(booking.ID.Hex())
+	if err != nil {
+		return err
+	}
+
+	filter := bson.M{"_id": objId}
+
+	updateData := bson.M{
+		"payment_ref":    booking.PaymentRef,
+		"pay_time":       booking.PayTime,
+		"status":         Domain.BookingStatusPaid,
+	}
+
+	update := bson.M{"$set": updateData}
+
+	result, err := b.BookingCollection.UpdateOne(b.DbCtx, filter, update)
+	if err != nil {
+		return err
+	}
+
+	if result.MatchedCount == 0 {
+		return errors.New("booking not found")
+	}
+
+	return nil
 }

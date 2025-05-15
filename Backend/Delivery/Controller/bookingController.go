@@ -24,23 +24,18 @@ func NewBookingController(buc UseCase.IBookingUseCase) *BookingController {
 func (bc *BookingController) Book(ctx *gin.Context) {
 	var booking = Domain.Booking{}
 	
-	print("First\n")
 	err := ctx.ShouldBindJSON(&booking)
 	if err != nil {
 		ctx.JSON(400, gin.H{"error": "invalid request payload"})
 		return
 	}
 
-	print("Second\n")
 	createdBooking, statusCode, err := bc.BookingUseCase.Book(&booking)
 	if err != nil {
 		ctx.JSON(statusCode, gin.H{"error": err.Error()})
 		return
 	}
 
-	print("PaymentRef:   ")
-	print(createdBooking.PaymentRef)
-	// Return the created booking object in the response body
 	ctx.JSON(statusCode, createdBooking)
 }
 
@@ -197,4 +192,28 @@ func (bc *BookingController) GetTravelSeats(ctx *gin.Context) {
 	}
 
 	ctx.JSON(statusCode, travelSeats)
+}
+
+func (bc *BookingController) UpdateBooking(ctx *gin.Context) {
+	bookingStatus := Domain.BookingStatus{}
+
+	err := ctx.ShouldBindJSON(&bookingStatus)
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": "invalid request payload"})
+		return
+	}
+
+	err = bc.V.Struct(bookingStatus)
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": "invalid request payload", "details": err.Error()})
+		return
+	}
+
+	booking, statusCode, err := bc.BookingUseCase.UpdateBooking(&bookingStatus)
+	if err != nil {
+		ctx.JSON(statusCode, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(statusCode, booking)
 }

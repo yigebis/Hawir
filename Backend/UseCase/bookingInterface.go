@@ -16,6 +16,7 @@ type IBookingUseCase interface {
 	GetAllBookings(travelID string) (*[]Domain.TravelBookings, int, error)
 	GetBookingsForTraveler(travelerID string) (*[]Domain.Booking, int, error)
 	GetTravelSeats(travelID string) (*[]bool, int, error)
+	UpdateBooking(bookingStatus *Domain.BookingStatus) (*Domain.Booking, int, error)
 }
 
 type IBookingRepository interface {
@@ -29,9 +30,10 @@ type IBookingRepository interface {
 	CancelBook(bookingID string) error
 	EditBook(booking *Domain.Booking) error
 	GetBooking(bookingID string) (*Domain.Booking, error)
-	GetBookingByTravelerID(travelerID string, travelID string) (*Domain.Booking, error)
+	GetBookingByBookingRef(booking_ref string) (*Domain.Booking, error)
 	GetAllBookings(travelID string) (*[]Domain.TravelBookings, error)
 	GetBookingsForTraveler(travelerID string) (*[]Domain.Booking, error)
 	GetTravellersIDForTrip(travelID string) (*[]string, error)
 	GetTravelSeats(travelID string) (*[]bool, error)
+	UpdateBooking(booking *Domain.Booking) (error)
 }

@@ -85,7 +85,6 @@ func (buc *BookingUseCase) UnchooseSeat(seat *Domain.Seat) (int, error) {
 // this will make the seat reserved for 30 minutes
 func (buc *BookingUseCase) Book(booking *Domain.Booking) (*Domain.Booking, int, error) {
 	// check whether the seat has been choosen by the traveler or not
-	print("inside usecase\n")
 	_, err := buc.BookingRepo.GetSeatByTravelerID(booking.TravelerID, booking.TravelID)
 	if err != nil {
 		// Return nil booking on error
@@ -93,7 +92,6 @@ func (buc *BookingUseCase) Book(booking *Domain.Booking) (*Domain.Booking, int, 
 		return nil, statusCode, err
 	}
 
-	print("after getting travel\n")
 	// delete the seat
 	err = buc.BookingRepo.DeleteSeat(booking.TravelerID, booking.TravelID)
 	if err != nil {
@@ -102,10 +100,8 @@ func (buc *BookingUseCase) Book(booking *Domain.Booking) (*Domain.Booking, int, 
 		return nil, statusCode, err
 	}
 
-	print("affter deleting seat\n")
 	// reserve it for some minutes
 	bookReservationSpan, err := strconv.Atoi(os.Getenv("BOOK_RESERVATION_SPAN"))
-	print("bookReservationSpan: ", bookReservationSpan, "\n")
 	if err != nil {
 		// Return nil booking on error
 		statusCode, err := buc.ErrorService.SeatNotChosen()
@@ -115,16 +111,18 @@ func (buc *BookingUseCase) Book(booking *Domain.Booking) (*Domain.Booking, int, 
 	maxTime := time.Now().Add(time.Duration(bookReservationSpan) * time.Minute) // Assuming span is in minutes
 	booking.BookTimeLimit = maxTime
 
+	booking.PaymentRef = Domain.Payment{}
 	// Generate a unique PaymentRef for this booking
-	paymentRefUUID := uuid.New()
-	booking.PaymentRef = fmt.Sprintf("hw-booking-%s", paymentRefUUID.String())
-	// Set the initial status to pending
+	UUID := fmt.Sprintf("hw-booking-%s", uuid.New().String())
+
+	booking.PaymentRef.CurrentPaymentRef = UUID
+	booking.PaymentRef.PaymentSuccessful = false
+	booking.PaymentRef.FailedPaymentRef = []string{}
+	booking.BookingRef = UUID
 	booking.Status = Domain.BookingStatusPending
 
 	// Set the booking time to the current time
 	booking.BookTime = time.Now()
-	print("before booking\n")
-	print("book id", booking.ID.Hex(), "\n")
 	err = buc.BookingRepo.Book(booking)
 	if err != nil {
 		// Return nil booking on error
@@ -133,19 +131,14 @@ func (buc *BookingUseCase) Book(booking *Domain.Booking) (*Domain.Booking, int, 
 	}
 
 	fmt.Println("after booking")
-	print(booking.ID.Hex())
-	print("\nStatus Code",)
-	booking, err = buc.BookingRepo.GetBookingByTravelerID(booking.TravelerID, booking.TravelID)
+	booking, err = buc.BookingRepo.GetBookingByBookingRef(booking.BookingRef)
 	if err != nil {
 		statusCode, err := buc.ErrorService.BookingNotFound()
 		return nil, statusCode, err
 	}
 
-	print("after getting booking")
-	print(booking.ID.Hex())
 	// Return the booking object after successful saving
 	statusCode, err := buc.ErrorService.NoError()
-	print("StatusCode: ", statusCode)
 	return booking, statusCode, err
 }
 
@@ -211,4 +204,35 @@ func (buc *BookingUseCase) GetTravelSeats(travelID string) (*[]bool, int, error)
 
 	statusCode, err := buc.ErrorService.NoError()
 	return travelSeats, statusCode, err
+}
+
+func (buc *BookingUseCase) UpdateBooking(bookingStatus *Domain.BookingStatus) (*Domain.Booking, int, error) {
+	booking, err := buc.BookingRepo.GetBookingByBookingRef(bookingStatus.BookingRef)
+	if err != nil {
+		statusCode, err := buc.ErrorService.BookingNotFound()
+		return nil, statusCode, err
+	}
+
+	if bookingStatus.Status == Domain.BookingStatusFailed {
+		booking.PaymentRef.FailedPaymentRef = append(booking.PaymentRef.FailedPaymentRef, booking.PaymentRef.CurrentPaymentRef)
+		booking.PaymentRef.PaymentSuccessful = false
+
+		UUID := fmt.Sprintf("hw-booking-%s", uuid.New().String())
+		booking.PaymentRef.CurrentPaymentRef = UUID
+	} else if bookingStatus.Status == Domain.BookingStatusPaid {
+		booking.Status = Domain.BookingStatusPaid
+		booking.PaymentRef.PaymentSuccessful = true
+		booking.PaymentType = "online"
+		booking.PayTime = time.Now()
+	}
+
+	err = buc.BookingRepo.UpdateBooking(booking)
+	if err != nil {
+		////// Must CHANGE THE ERROR SERVICE TO BE MORE SPECIFIC like FailedToUpdateBooking(internal server error)
+		statusCode, err := buc.ErrorService.BookingNotFound()
+		return nil, statusCode, err
+	}
+
+	statusCode, err := buc.ErrorService.NoError()
+	return booking, statusCode, err
 }
