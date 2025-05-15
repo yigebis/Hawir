@@ -26,4 +26,5 @@ func (br *BookingRouter) Run(router *gin.Engine) {
 	router.GET("/booking/all/:travelId", br.BookingController.GetAllBookings)
 	router.GET("/booking/traveler/:travelerId", br.BookingController.GetBookingsForTraveler)
 	router.GET("/booking/seats/:travelId", br.BookingController.GetTravelSeats)
+	router.PUT("booking/update", br.BookingController.UpdateBooking)
 }
