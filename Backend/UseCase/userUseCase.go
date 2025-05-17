@@ -290,6 +290,8 @@ func (uuc *UserUseCase) EditUser(user *Domain.UserProfile, fileHeader *multipart
 			return uuc.ErrorService.UnableToUploadFile()
 		}
 		filePath = url
+		user.ProfilePhoto = filePath
+
 
 		// file, err := fileHeader.Open()
 		// if err != nil {
@@ -324,7 +326,6 @@ func (uuc *UserUseCase) EditUser(user *Domain.UserProfile, fileHeader *multipart
 		// filePath = "/static/" + fileName
 	}
 
-	user.ProfilePhoto = filePath
 	err := uuc.UserRepo.EditUser(user)
 	if err != nil {
 		return uuc.ErrorService.UserNotFound()

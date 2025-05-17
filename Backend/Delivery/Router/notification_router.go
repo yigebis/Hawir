@@ -19,6 +19,6 @@ func NewNotificationRouter(nc *Controller.NotificationController) *NotificationR
 
 func (nr *NotificationRouter) Run(router *gin.Engine, jwt_string string) {
 	router.GET("/notification/:travellerId", Infrastructure.UserMiddleware(jwt_string), nr.NotificationController.GetNotificationsForTraveller)
-	router.PUT("/notification/:travellerId/:notificationId/read", nr.NotificationController.MarkNotificationAsRead)
-	router.PUT("/notification/:travellerId/:notificationId/unread", nr.NotificationController.MarkNotificationAsUnread)
+	router.PUT("/notification/:travellerId/:notificationId/read", Infrastructure.UserMiddleware(jwt_string), nr.NotificationController.MarkNotificationAsRead)
+	router.PUT("/notification/:travellerId/:notificationId/unread", Infrastructure.UserMiddleware(jwt_string),nr.NotificationController.MarkNotificationAsUnread)
 }

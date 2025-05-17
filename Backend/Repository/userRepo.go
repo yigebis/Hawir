@@ -110,8 +110,11 @@ func (ur *UserRepository) EditUser(user *Domain.UserProfile) error {
 		"last_name":          user.LastName,
 		"favourite_agencies": user.FavouriteAgencies,
 		// "email": user.Email,
-		// "phone_number": user.PhoneNumber,
-		"profile_photo": user.ProfilePhoto,
+		"phone_number": user.PhoneNumber,
+	}
+
+	if user.ProfilePhoto != "" {
+		updateData["profile_photo"] = user.ProfilePhoto
 	}
 
 	update := bson.M{"$set": updateData}
