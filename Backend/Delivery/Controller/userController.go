@@ -346,12 +346,12 @@ func (uc *UserController) EditUser(ctx *gin.Context) {
 	lastName := ctx.PostForm("last_name")
 
 	// validate the names
-	if code, err := uc.ValidationService.NameValidation(user.FirstName); err != nil {
+	if code, err := uc.ValidationService.NameValidation(firstName); err != nil {
 		ctx.JSON(code, gin.H{"error": err.Error()})
 		return
 	}
 
-	if code, err := uc.ValidationService.NameValidation(user.LastName); err != nil {
+	if code, err := uc.ValidationService.NameValidation(lastName); err != nil {
 		ctx.JSON(code, gin.H{"error": err.Error()})
 		return
 	}
@@ -368,10 +368,18 @@ func (uc *UserController) EditUser(ctx *gin.Context) {
 		}
 	}
 
+	phoneNumber := ctx.PostForm("phone_number")
+	// validate phone number
+	if code, err := uc.ValidationService.PhoneValidation(phoneNumber); err != nil {
+		ctx.JSON(code, gin.H{"error": err.Error()})
+		return
+	}
+
 	user.ID = objID
 	user.FirstName = firstName
 	user.LastName = lastName
 	user.FavouriteAgencies = favouriteAgencies
+	user.PhoneNumber = phoneNumber
 
 	fileHeader, err := ctx.FormFile("profile_photo")
 	if err != nil && err != http.ErrMissingFile { // No file uploaded is okay
@@ -386,7 +394,6 @@ func (uc *UserController) EditUser(ctx *gin.Context) {
 			return
 		}
 	}
-	// phone number validation
 
 	statusCode, err := uc.UserUseCase.EditUser(&user, fileHeader)
 	if err != nil {

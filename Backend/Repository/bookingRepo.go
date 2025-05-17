@@ -326,7 +326,7 @@ func (b *BookingRepository) UpdateBooking(booking *Domain.Booking) (error) {
 	updateData := bson.M{
 		"payment_ref":    booking.PaymentRef,
 		"pay_time":       booking.PayTime,
-		"status":         Domain.BookingStatusPaid,
+		"status":         booking.Status,
 	}
 
 	update := bson.M{"$set": updateData}

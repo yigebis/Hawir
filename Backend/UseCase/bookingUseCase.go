@@ -216,6 +216,7 @@ func (buc *BookingUseCase) UpdateBooking(bookingStatus *Domain.BookingStatus) (*
 	if bookingStatus.Status == Domain.BookingStatusFailed {
 		booking.PaymentRef.FailedPaymentRef = append(booking.PaymentRef.FailedPaymentRef, booking.PaymentRef.CurrentPaymentRef)
 		booking.PaymentRef.PaymentSuccessful = false
+		booking.Status = Domain.BookingStatusPending
 
 		UUID := fmt.Sprintf("hw-booking-%s", uuid.New().String())
 		booking.PaymentRef.CurrentPaymentRef = UUID
@@ -224,6 +225,9 @@ func (buc *BookingUseCase) UpdateBooking(bookingStatus *Domain.BookingStatus) (*
 		booking.PaymentRef.PaymentSuccessful = true
 		booking.PaymentType = "online"
 		booking.PayTime = time.Now()
+	} else {
+		statusCode, err := buc.ErrorService.UnableToSeekFile()
+		return nil, statusCode, err;
 	}
 
 	err = buc.BookingRepo.UpdateBooking(booking)
