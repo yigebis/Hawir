@@ -24,6 +24,7 @@ func (ar *AgencyRouter) Run(router *gin.Engine, jwt_string string) {
 	router.POST("/agency/password/reset", ar.AgencyController.ResetAgencyAdminPassword)
 	router.GET("/agency/:id", ar.AgencyController.GetAgencyByUniqueID)
 	router.GET("/agency/all", ar.AgencyController.GetAllAgencies)
+	router.GET("/agency/get/:id", ar.AgencyController.GetAgencyForUser)
 	// router.POST("/agency/edit", r.UserController.EditAgency)
 
 	// vehicle management endpoints

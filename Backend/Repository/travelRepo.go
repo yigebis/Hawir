@@ -54,6 +54,8 @@ func (tr *TravelRepository) EditTravel(travel *Domain.Travel) error {
 		"pickup_locations":   travel.PickupLocations,
 		"destination":        travel.Destination,
 		"planned_start_time": travel.PlannedStartTime,
+		"actual_start_time": travel.ActualStartTime,
+		"actual_arrival_time": travel.ActualArrivalTime,
 		"est_arrival_time":   travel.EstArrivalTime,
 		"price":              travel.Price,
 		// "notice":             travel.Notice,
