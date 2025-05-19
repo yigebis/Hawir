@@ -430,3 +430,42 @@ func (agc *AgencyController) GetAllDriversByAgencyID(ctx *gin.Context) {
 
 	ctx.JSON(code, drivers)
 }
+
+func (agc *AgencyController) ForgetPassword(ctx *gin.Context) {
+	email := ctx.Param("email")
+	if email == "" {
+		ctx.JSON(400, gin.H{"error": "missing email"})
+		return
+	}
+
+	statusCode, err := agc.AgencyUseCase.ForgotPassword(email)
+	if err != nil {
+		ctx.JSON(statusCode, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(statusCode, gin.H{"message": "short code has been sent to the email"})
+}
+
+func (agc *AgencyController) ChangePasswordWithForget(ctx *gin.Context) {
+	credential := Domain.ForgetPassword{}
+	if err := ctx.ShouldBindJSON(&credential); err != nil {
+		ctx.JSON(400, gin.H{"error": "invalid request payload"})
+		return
+	}
+
+	// validate the new password
+	statusCode, err := agc.ValidationService.ValidatePassword(credential.NewPassword)
+	if err != nil {
+		ctx.JSON(statusCode, gin.H{"error": err.Error()})
+		return
+	}
+
+	statusCode, err = agc.AgencyUseCase.ChangePasswordWithCode(credential.Email, credential.Code, credential.NewPassword)
+	if err != nil {
+		ctx.JSON(statusCode, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(statusCode, gin.H{"message": "password changed successfully"})
+}

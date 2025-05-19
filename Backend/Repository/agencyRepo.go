@@ -123,15 +123,13 @@ func (agr *AgencyRepository) GetAgencyAdmin(email string) (*Domain.AgencyAdmin, 
 	return &admin, nil
 }
 
-func (agr *AgencyRepository) ResetAgencyAdminPassword(unique_id string, newPassword string) error {
-	filter := bson.M{"agency_id": unique_id}
+func (agr *AgencyRepository) ResetAgencyAdminPassword(email string, newPassword string) error {
+	filter := bson.M{"email": email}
 	update := bson.M{"$set": bson.M{"password": newPassword}}
 	_, err := agr.AdminCollection.UpdateOne(agr.DbCtx, filter, update)
 	if err != nil {
 		return err
 	}
-	filter = bson.M{"unique_id": unique_id}
-	_, err = agr.AgencyCollection.UpdateOne(agr.DbCtx, filter, update)
 	return err
 }
 

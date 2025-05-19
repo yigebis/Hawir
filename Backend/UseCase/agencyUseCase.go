@@ -9,6 +9,7 @@ import (
 type AgencyUseCase struct {
 	AgencyRepo      IAgencyRepository
 	DriverRepo      IDriverRepository
+	CodeRepo        ICodeRepository
 	PasswordService IPasswordService
 	TokenService    ITokenService
 	ErrorService    IErrorService
@@ -20,10 +21,11 @@ type AgencyUseCase struct {
 	RefresherExpiry int64
 }
 
-func NewAgencyUseCase(agr IAgencyRepository, drr IDriverRepository, ps IPasswordService, ts ITokenService, es IErrorService, ms IMailService, cs ICloudService, ex, tx, rx int64) IAgencyUseCase {
+func NewAgencyUseCase(agr IAgencyRepository, drr IDriverRepository, cr ICodeRepository, ps IPasswordService, ts ITokenService, es IErrorService, ms IMailService, cs ICloudService, ex, tx, rx int64) IAgencyUseCase {
 	return &AgencyUseCase{
 		AgencyRepo:      agr,
 		DriverRepo:      drr,
+		CodeRepo:        cr,
 		PasswordService: ps,
 		TokenService:    ts,
 		ErrorService:    es,
@@ -322,4 +324,75 @@ func (aguc *AgencyUseCase) GetAllDriversByAgencyID(agencyID string) (*[]Domain.D
 
 	code, err := aguc.ErrorService.NoError()
 	return drivers, code, err
+}
+
+func (aguc *AgencyUseCase) ForgotPassword(email string) (int, error) {
+	// check if the agency admin exists
+	_, err := aguc.AgencyRepo.GetAgencyAdmin(email)
+	if err != nil {
+		return aguc.ErrorService.UserNotFound()
+	}
+
+	// generate a code
+	code, err := aguc.TokenService.GenerateCode()
+	if err != nil {
+		return aguc.ErrorService.InternalServer()
+	}
+
+	// store the code in the database by hashing it
+	hashedCode, err := aguc.PasswordService.HashPassword(code)
+	if err != nil {
+		return aguc.ErrorService.InternalServer()
+	}
+
+	err = aguc.CodeRepo.StoreCode(email, hashedCode)
+	if err != nil {
+		return aguc.ErrorService.InternalServer()
+	}
+
+	// send the code to the user's email
+	err = aguc.MailService.SendPasswordResetEmail(email, code)
+	if err != nil {
+		return aguc.ErrorService.InternalServer()
+	}
+
+	return aguc.ErrorService.NoError()
+}
+
+func (aguc *AgencyUseCase) ChangePasswordWithCode(email, code, password string) (int, error) {
+	// check if the agency admin exists
+	_, err := aguc.AgencyRepo.GetAgencyAdmin(email)
+	if err != nil {
+		return aguc.ErrorService.InvalidEmailPassword()
+	}
+
+	// check if the code is correct
+	hashedCode, err := aguc.CodeRepo.GetData(email)
+	if err != nil {
+		return aguc.ErrorService.InvalidEmailPassword()
+	}
+
+	// check if the code is correct
+	if aguc.PasswordService.VerifyPassword(hashedCode, code) != nil {
+		return aguc.ErrorService.InvalidEmailPassword()
+	}
+
+	// hash the new password
+	hashedPassword, err := aguc.PasswordService.HashPassword(password)
+	if err != nil {
+		return aguc.ErrorService.InternalServer()
+	}
+
+	// change the password
+	if err = aguc.AgencyRepo.ResetAgencyAdminPassword(email, hashedPassword); err != nil {
+		return aguc.ErrorService.InternalServer()
+	}
+
+	// delete the code data from database
+	err = aguc.CodeRepo.DeleteCode(email)
+	if err != nil {
+		return aguc.ErrorService.InternalServer()
+	}
+
+	return aguc.ErrorService.NoError()
 }

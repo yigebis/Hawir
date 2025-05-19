@@ -66,6 +66,7 @@ func main() {
 	bus_collection := client.Database("Hawir").Collection("buses")
 	driver_collection := client.Database("Hawir").Collection("Drivers")
 	event_collection := client.Database("Hawir").Collection("events")
+	code_collection := client.Database("Hawir").Collection("codes")
 
 	admin_context := context.TODO()
 	user_context := context.TODO()
@@ -75,6 +76,7 @@ func main() {
 	destination_context := context.TODO()
 	driver_context := context.TODO()
 	event_context := context.TODO()
+	code_context := context.TODO()
 
 	admr := Repository.NewAdminRepository(admin_context, admin_collection)
 	ur := Repository.NewUserRepository(user_context, user_collection)
@@ -90,6 +92,7 @@ func main() {
 	dr := Repository.NewDestinationRepository(destination_context, destination_collection, destination_details_collection)
 	drr := Repository.NewDriverRepository(driver_context, driver_collection)
 	er := Repository.NewEventRepository(event_context, event_collection)
+	cr := Repository.NewCodeRepository(code_context, code_collection)
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	es := Error.NewErrorService()
@@ -119,8 +122,8 @@ func main() {
 
 	oauthService := Infrastructure.NewOAuth(oauthState, oauthClientID, oauthClientSecret, websiteDomainName)
 
-	uuc := UseCase.NewUserUseCase(ur, ps, ts, ms, es, cs, ex, tx, rx)
-	aguc := UseCase.NewAgencyUseCase(agr, drr, ps, ts, es, ms, cs, ex, tx, rx)
+	uuc := UseCase.NewUserUseCase(ur, cr, ps, ts, ms, es, cs, ex, tx, rx)
+	aguc := UseCase.NewAgencyUseCase(agr, drr, cr, ps, ts, es, ms, cs, ex, tx, rx)
 	tuc := UseCase.NewTravelUseCase(tr, tsr, agr, drr, es)
 	auc := UseCase.NewAdminUseCase(admr, agr, ps, es, ts, ms, tx, rx)
 	buc := UseCase.NewBookingUseCase(br, tr, es)
