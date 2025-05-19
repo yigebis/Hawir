@@ -128,6 +128,51 @@ func (ms *MailService) SendAgencyAdminPassword(to, uniqueID, password string) er
 	return err
 }
 
-func (ms *MailService) SendPasswordResetEmail(to, resetToken, api string) error {
-	return nil
+func (ms *MailService) SendPasswordResetEmail(to, code string) error {
+	m := gomail.NewMessage()
+
+	m.SetHeader("From", ms.From)
+	m.SetHeader("To", to)
+	m.SetHeader("Subject", "Password Reset Code")
+
+	body := fmt.Sprintf(`
+	<!DOCTYPE html>
+	<html>
+	<head>
+		<style>
+			.button {
+				display: inline-block;
+				padding: 10px 20px;
+				font-size: 16px;
+				color: #fff;  /* Set text color to white */
+				background-color: #007BFF;  /* Verify button color */
+				border: none;
+				border-radius: 5px;
+				text-decoration: none;  /* Remove underline */
+				margin: 5px;
+				cursor: pointer;
+			}
+			.button.reject {
+				background-color: #dc3545;  /* Reject button color */
+			}
+		</style>
+	</head>
+	<body>
+		<p>Here is the code you can reset your password with</p>
+		<p><b>Code<b> : %s</p>
+		<p>If you did not request this, don't make any actions</p>
+	</body>
+	</html>
+	`, code)
+
+	m.SetBody("text/html", body)
+
+	host := "smtp.gmail.com"
+	port := 587
+
+	d := gomail.NewDialer(host, port, ms.Sender, ms.Password)
+
+	err := d.DialAndSend(m)
+	fmt.Println(err)
+	return err
 }

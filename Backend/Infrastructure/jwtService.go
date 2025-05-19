@@ -3,6 +3,8 @@ package Infrastructure
 import (
 	"Hawir/Error"
 	"Hawir/UseCase"
+	"crypto/rand"
+	"fmt"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -94,4 +96,14 @@ func (ts *TokenService) ValidateToken(tokenString string) (map[string]interface{
 	}
 
 	return claimsMap, nil
+}
+
+func (ts *TokenService) GenerateCode() (string, error) {
+	code := make([]byte, 6)
+	_, err := rand.Read(code)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%x", code), nil
 }

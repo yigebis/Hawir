@@ -25,6 +25,10 @@ type IAgencyUseCase interface {
 	EditDriver(driver *Domain.Driver, fileHeader *multipart.FileHeader) (int, error)
 	DeleteDriver(driverID, agencyID string) (int, error)
 	GetAllDriversByAgencyID(agencyID string) (*[]Domain.Driver, int, error)
+
+	// forget password
+	ForgotPassword(email string) (int, error)
+	ChangePasswordWithCode(email, code, password string) (int, error)
 }
 
 type IAgencyRepository interface {
@@ -39,7 +43,7 @@ type IAgencyRepository interface {
 	GetAgencyByUniqueID(uniqueID string) (*Domain.Agency, error)
 	GetAgencyAdmin(email string) (*Domain.AgencyAdmin, error)
 	GetAgencyForUserById(string) (*Domain.AgencyDisplay, error)
-	ResetAgencyAdminPassword(string, string) error
+	ResetAgencyAdminPassword(email, password string) error
 
 	// Vehicle management
 	AddBus(bus *Domain.Bus) error

@@ -33,5 +33,6 @@ func (ur *UserRouter) Run(router *gin.Engine, jwtSigner string) {
 	router.GET("/user/my/:id", Infrastructure.UserMiddleware(jwtSigner), ur.UserController.MyProfile)             //user middleware
 	router.PUT("/user/edit", Infrastructure.UserMiddleware(jwtSigner), ur.UserController.EditUser)                //user middleware
 	router.PUT("/user/password/reset", Infrastructure.UserMiddleware(jwtSigner), ur.UserController.ResetPassword) //user middleware
-
+	router.POST("/user/password/forget/:email", ur.UserController.ForgotPassword)
+	router.POST("/user/password/forget/reset", ur.UserController.ChangePasswordWithForget)
 }

@@ -19,13 +19,15 @@ type IUserUseCase interface {
 	MyProfile(id string) (*Domain.User, int, error)
 	EditUser(user *Domain.UserProfile, fileHeader *multipart.FileHeader) (int, error)
 	ResetPassword(credential *Domain.ChangeCredential) (int, error)
+	ForgotPassword(email string) (int, error)
+	ChangePasswordWithCode(email, code, password string) (int, error)
 	StoreFCMToken(userID string, fcmToken string) error
 	RemoveFCMToken(userID string, fcmToken string) error
 	GetUserFCMTokens(userID string) ([]string, error)
 }
 
 type IUserRepository interface {
-	CreateUser(user *Domain.User) error
+	CreateUser(user *Domain.User) (string, error)
 	GetUserByEmail(email string) (*Domain.User, error)
 	GetUserByPhoneNumber(phoneNumber string) (*Domain.User, error)
 	VerifyUser(email string) error
@@ -48,10 +50,17 @@ type ITokenService interface {
 	GenerateEmailToken(email string, expiryDuration int64, role string) (string, error)
 	GenerateAgencyToken(email, role, agencyID, admin_role string, expiryDuration int64) (string, error)
 	ValidateToken(token string) (map[string]interface{}, error)
+	GenerateCode() (string, error)
 }
 
 type ICloudService interface {
 	UploadProfileToCloud(fileHeader *multipart.FileHeader) (string, error)
 	UploadEventMediaToCloud(fileHeader *multipart.FileHeader) (string, error)
 	DeleteFromCloud(url string) error
+}
+
+type ICodeRepository interface {
+	StoreCode(email, code string) error
+	GetData(email string) (string, error)
+	DeleteCode(email string) error
 }
