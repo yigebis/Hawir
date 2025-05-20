@@ -8,25 +8,26 @@ import (
 
 // Booking represents a single booking transaction.
 type Booking struct {
-	ID            primitive.ObjectID `json:"id" bson:"_id,omitempty"`
-	BookingRef    string             `json:"booking_ref" bson:"booking_ref,omitempty"`
-	TravelID      string             `json:"travel_id" bson:"travel_id,omitempty"`
-	TravelerID    string             `json:"traveler_id" bson:"traveler_id,omitempty"`
-	SeatNo        int                `json:"seat_no" bson:"seat_no,omitempty"`
-	TripType      string             `json:"trip_type" bson:"trip_type,omitempty"`
-	StartLocation string             `json:"start_location" bson:"start_location,omitempty"`
-	Price         float64            `json:"price" bson:"price,omitempty"`
-	PaymentType   string             `json:"payment_type" bson:"payment_type,omitempty"`
-	PaymentRef    Payment            `json:"payment_ref" bson:"payment_ref"`
-	BookTime      time.Time          `json:"book_time" bson:"book_time,omitempty"`
-	PayTime       time.Time          `json:"pay_time" bson:"pay_time,omitempty"`
-	BookTimeLimit time.Time          `json:"book_time_limit" bson:"book_time_limit,omitempty"`
-	Status        string             `json:"status" bson:"status,omitempty"`
+	ID               primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	BookingRef       string             `json:"booking_ref" bson:"booking_ref,omitempty"`
+	TravelID         string             `json:"travel_id" bson:"travel_id,omitempty"`
+	TravelerID       string             `json:"traveler_id" bson:"traveler_id,omitempty"`
+	SeatNo           int                `json:"seat_no" bson:"seat_no,omitempty"`
+	TripType         string             `json:"trip_type" bson:"trip_type,omitempty"`
+	StartLocation    string             `json:"start_location" bson:"start_location,omitempty"`
+	Price            float64            `json:"price" bson:"price,omitempty"`
+	PaymentType      string             `json:"payment_type" bson:"payment_type,omitempty"`
+	PaymentRef       Payment            `json:"payment_ref" bson:"payment_ref"`
+	BookTime         time.Time          `json:"book_time" bson:"book_time,omitempty"`
+	PayTime          time.Time          `json:"pay_time" bson:"pay_time,omitempty"`
+	BookTimeLimit    time.Time          `json:"book_time_limit" bson:"book_time_limit,omitempty"`
+	Status           string             `json:"status" bson:"status,omitempty"`
+	NotificationSent bool               `json:"notification_sent" bson:"notification_sent,omitempty"`
 }
 
 type Payment struct {
-	CurrentPaymentRef string `json:"current_payment_ref" bson:"current_payment_ref"`
-	PaymentSuccessful bool `json:"payment_successful" bson:"payment_successful"`
+	CurrentPaymentRef string   `json:"current_payment_ref" bson:"current_payment_ref"`
+	PaymentSuccessful bool     `json:"payment_successful" bson:"payment_successful"`
 	FailedPaymentRef  []string `json:"failed_payment_ref" bson:"failed_payment_ref"`
 }
 
@@ -36,8 +37,8 @@ type BookingStatus struct {
 }
 
 const (
-	BookingStatusPending   = "pending" // Booking made, payment pending
-	BookingStatusPaid      = "confirmed"    // Payment received
+	BookingStatusPending   = "pending"   // Booking made, payment pending
+	BookingStatusPaid      = "confirmed" // Payment received
 	BookingStatusFailed    = "failed"
 	BookingStatusCancelled = "cancelled"  // Booking cancelled (e.g., payment expired)
 	BookingStatusCheckedIn = "checked_in" // User has checked in for the trip

@@ -19,18 +19,20 @@ import (
 
 	// comment it for production
 	// "github.com/joho/godotenv"
+  
+  "github.com/robfig/cron/v3" // Import the cron scheduler library
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var (
-    firebaseApp *firebase.App
+	firebaseApp *firebase.App
 )
 
 func initializeFirebaseApp() *firebase.App {
 	if firebaseApp == nil {
-		opt := option.WithCredentialsFile(os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")) // Call option.WithCredentialsFile
+		opt := option.WithCredentialsFile(os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"))
 		app, err := firebase.NewApp(context.Background(), nil, opt)
 		if err != nil {
 			log.Fatalf("error initializing Firebase app: %v", err)
@@ -52,14 +54,9 @@ func main() {
 	// domain name of the website
 	websiteDomainName := os.Getenv("WEBSITE_DOMAIN_NAME")
 
-	// setting up the usecase
-
-	//user usecase
 	username := os.Getenv("MONGO_USERNAME")
 	password := os.Getenv("MONGO_PASSWORD")
 	uri := "mongodb+srv://" + username + ":" + password + "@cluster0.isgee.mongodb.net/"
-
-	// fmt.Print(uri)
 
 	clientOptions := options.Client().ApplyURI(uri)
 	client, err := mongo.Connect(context.TODO(), clientOptions)
@@ -91,7 +88,6 @@ func main() {
 	event_collection := client.Database("Hawir").Collection("events")
 	code_collection := client.Database("Hawir").Collection("codes")
 
-
 	admin_context := context.TODO()
 	user_context := context.TODO()
 	travel_context := context.TODO()
@@ -114,6 +110,7 @@ func main() {
 		travel_stat_collection,
 		seat_collection,
 		user_collection,
+		travel_collection, 
 	)
 	nr := Repository.NewNotificationRepository(notification_context, notification_collection)
 	dr := Repository.NewDestinationRepository(destination_context, destination_collection, destination_details_collection)
@@ -149,9 +146,9 @@ func main() {
 
 	oauthService := Infrastructure.NewOAuth(oauthState, oauthClientID, oauthClientSecret, websiteDomainName)
 
+	nuc := UseCase.NewNotificationUseCase(ur, br, nr, firebaseApp)
 	uuc := UseCase.NewUserUseCase(ur, cr, ps, ts, ms, es, cs, ex, tx, rx)
 	aguc := UseCase.NewAgencyUseCase(agr, drr, cr, ps, ts, es, ms, cs, ex, tx, rx)
-	nuc := UseCase.NewNotificationUseCase(ur, nr, firebaseApp)
 	tuc := UseCase.NewTravelUseCase(tr, tsr, agr, drr, es, br, nuc)
 	auc := UseCase.NewAdminUseCase(admr, agr, ps, es, ts, ms, tx, rx)
 	buc := UseCase.NewBookingUseCase(br, tr, es)
@@ -171,6 +168,19 @@ func main() {
 
 	maxPageSize, _ := strconv.Atoi(os.Getenv("MAX_SIZE_PER_PAGE"))
 	event_controller := Controller.NewEventController(euc, maxPageSize)
+
+	c := cron.New()
+
+	_, err = c.AddFunc("0 * * * *", func() {
+		// Use context.Background() for the scheduled task execution.
+		nuc.SendUpcomingTripNotifications(context.Background())
+	})
+	if err != nil {
+		log.Fatalf("Error adding scheduled task to cron: %v", err)
+	}
+
+	c.Start()
+	fmt.Println("Cron scheduler started.")
 
 	// setting up the router
 	router := Router.NewRouter(user_controller, agency_controller, travel_controller, admin_controller, booking_controller, destination_controller, driver_controller, event_controller, notification_controller, jwtSecret)
