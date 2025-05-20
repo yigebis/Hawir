@@ -429,6 +429,45 @@ func (uc *UserController) ResetPassword(ctx *gin.Context) {
 	ctx.JSON(statusCode, gin.H{"message": "password reset successfully"})
 }
 
+func (uc *UserController) ForgotPassword(ctx *gin.Context) {
+	email := ctx.Param("email")
+	if email == "" {
+		ctx.JSON(400, gin.H{"error": "missing email"})
+		return
+	}
+
+	statusCode, err := uc.UserUseCase.ForgotPassword(email)
+	if err != nil {
+		ctx.JSON(statusCode, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(statusCode, gin.H{"message": "short code has been sent to the email"})
+}
+
+func (uc *UserController) ChangePasswordWithForget(ctx *gin.Context) {
+	credential := Domain.ForgetPassword{}
+	if err := ctx.ShouldBindJSON(&credential); err != nil {
+		ctx.JSON(400, gin.H{"error": "invalid request payload"})
+		return
+	}
+
+	// validate the new password
+	statusCode, err := uc.ValidationService.ValidatePassword(credential.NewPassword)
+	if err != nil {
+		ctx.JSON(statusCode, gin.H{"error": err.Error()})
+		return
+	}
+
+	statusCode, err = uc.UserUseCase.ChangePasswordWithCode(credential.Email, credential.Code, credential.NewPassword)
+	if err != nil {
+		ctx.JSON(statusCode, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(statusCode, gin.H{"message": "password changed successfully"})
+}
+
 type FCMTokenRequest struct {
 	FCMToken string `json:"fcm_token"`
 }

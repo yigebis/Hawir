@@ -42,4 +42,7 @@ func (ar *AgencyRouter) Run(router *gin.Engine, jwt_string string) {
 	router.DELETE("/agency/driver/delete/:id", Infrastructure.AgencyMiddleWare(jwt_string), ar.AgencyController.DeleteDriver)
 	router.GET("/agency/driver/all", Infrastructure.AgencyMiddleWare(jwt_string), ar.AgencyController.GetAllDriversByAgencyID)
 	// router.GET("/agency/driver/search", Infrastructure.AgencyMiddleWare(jwt_string), ar.AgencyController.SearchDriverByName)
+
+	router.POST("/agency/password/forget/:email", ar.AgencyController.ForgetPassword)
+	router.POST("/agency/password/reset/forget/", ar.AgencyController.ChangePasswordWithForget)
 }

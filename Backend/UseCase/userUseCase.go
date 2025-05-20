@@ -9,6 +9,7 @@ import (
 
 type UserUseCase struct {
 	UserRepo        IUserRepository
+	CodeRepo        ICodeRepository
 	PasswordService IPasswordService
 	TokenService    ITokenService
 	MailService     IMailService
@@ -20,9 +21,10 @@ type UserUseCase struct {
 	RefresherExpiry int64
 }
 
-func NewUserUseCase(ur IUserRepository, ps IPasswordService, ts ITokenService, ms IMailService, es IErrorService, cs ICloudService, ex, tx, rx int64) IUserUseCase {
+func NewUserUseCase(ur IUserRepository, cr ICodeRepository, ps IPasswordService, ts ITokenService, ms IMailService, es IErrorService, cs ICloudService, ex, tx, rx int64) IUserUseCase {
 	return &UserUseCase{
 		UserRepo:        ur,
+		CodeRepo:        cr,
 		PasswordService: ps,
 		TokenService:    ts,
 		MailService:     ms,
@@ -78,14 +80,14 @@ func (uuc *UserUseCase) Register(user *Domain.User) (int, error) {
 	user.FavouriteAgencies = nil
 
 	// store the user in the database
-	err = uuc.UserRepo.CreateUser(user)
+	id, err := uuc.UserRepo.CreateUser(user)
 	if err != nil {
 		fmt.Println("repo")
 		return uuc.ErrorService.InternalServer()
 	}
 
 	// send verification email
-	token, err := uuc.TokenService.GenerateEmailToken(user.Email, uuc.EmailExpiry, "user")
+	token, err := uuc.TokenService.GenerateToken(id, user.FirstName, "user", uuc.EmailExpiry)
 	if err != nil {
 		fmt.Println("token_mail")
 		return uuc.ErrorService.InternalServer()
@@ -108,7 +110,19 @@ func (uuc *UserUseCase) VerifyEmail(email, token string) (int, error) {
 		return uuc.ErrorService.InvalidToken()
 	}
 
-	if claims["email"] != email {
+	// get the user from the database
+	user, err := uuc.UserRepo.GetUserByEmail(email)
+	if err != nil {
+		return uuc.ErrorService.NotAuthorized()
+	}
+
+	// check if the user is already verified
+	if user.Verified {
+		return uuc.ErrorService.UserExists()
+	}
+
+	//check if the id in the token is the same as the user's id
+	if claims["id"] != user.ID.Hex() {
 		return uuc.ErrorService.InvalidToken()
 	}
 
@@ -224,7 +238,7 @@ func (uuc *UserUseCase) LoginByAuth(user *Domain.User) (string, string, int, err
 		user.RegistrationDate = time.Now()
 
 		//store the user in the database
-		createErr := uuc.UserRepo.CreateUser(user)
+		_, createErr := uuc.UserRepo.CreateUser(user)
 		if createErr != nil {
 			code, err := uuc.ErrorService.InternalServer()
 			return "", "", code, err
@@ -369,6 +383,81 @@ func (uuc *UserUseCase) ResetPassword(credential *Domain.ChangeCredential) (int,
 	}
 
 	err = uuc.UserRepo.ChangePassword(user.ID, hashedPassword)
+	if err != nil {
+		return uuc.ErrorService.InternalServer()
+	}
+
+	return uuc.ErrorService.NoError()
+}
+
+func (uuc *UserUseCase) ForgotPassword(email string) (int, error) {
+	// check if the user exists
+	user, err := uuc.UserRepo.GetUserByEmail(email)
+	if err != nil {
+		return uuc.ErrorService.UserNotFound()
+	}
+
+	if !user.Verified {
+		return uuc.ErrorService.NotAuthorized()
+	}
+
+	// generate a code
+	code, err := uuc.TokenService.GenerateCode()
+	if err != nil {
+		return uuc.ErrorService.InternalServer()
+	}
+
+	// store the code in the database by hashing it
+	hashedCode, err := uuc.PasswordService.HashPassword(code)
+	if err != nil {
+		return uuc.ErrorService.InternalServer()
+	}
+
+	err = uuc.CodeRepo.StoreCode(email, hashedCode)
+	if err != nil {
+		return uuc.ErrorService.InternalServer()
+	}
+
+	// send the code to the user's email
+	err = uuc.MailService.SendPasswordResetEmail(email, code)
+	if err != nil {
+		return uuc.ErrorService.InternalServer()
+	}
+
+	return uuc.ErrorService.NoError()
+}
+
+func (uuc *UserUseCase) ChangePasswordWithCode(email, code, password string) (int, error) {
+	// check if the user exists
+	user, err := uuc.UserRepo.GetUserByEmail(email)
+	if err != nil {
+		return uuc.ErrorService.InvalidEmailPassword()
+	}
+
+	// check if the code is correct
+	hashedCode, err := uuc.CodeRepo.GetData(email)
+	if err != nil {
+		return uuc.ErrorService.InvalidEmailPassword()
+	}
+
+	// check if the code is correct
+	if uuc.PasswordService.VerifyPassword(hashedCode, code) != nil {
+		return uuc.ErrorService.InvalidEmailPassword()
+	}
+
+	// hash the new password
+	hashedPassword, err := uuc.PasswordService.HashPassword(password)
+	if err != nil {
+		return uuc.ErrorService.InternalServer()
+	}
+
+	// change the password
+	if uuc.UserRepo.ChangePassword(user.ID, hashedPassword) != nil {
+		return uuc.ErrorService.InternalServer()
+	}
+
+	// delete the code data from database
+	err = uuc.CodeRepo.DeleteCode(email)
 	if err != nil {
 		return uuc.ErrorService.InternalServer()
 	}

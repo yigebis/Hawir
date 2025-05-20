@@ -25,12 +25,14 @@ func NewUserRepository(dbCtx context.Context, collection *mongo.Collection) UseC
 	}
 }
 
-func (ur *UserRepository) CreateUser(user *Domain.User) error {
-	_, err := ur.Collection.InsertOne(ur.DbCtx, user)
+func (ur *UserRepository) CreateUser(user *Domain.User) (string, error) {
+	result, err := ur.Collection.InsertOne(ur.DbCtx, user)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
-	return err
+
+	id := result.InsertedID.(primitive.ObjectID).Hex()
+	return id, err
 }
 
 func (ur *UserRepository) GetUserByEmail(email string) (*Domain.User, error) {
