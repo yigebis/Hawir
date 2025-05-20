@@ -1,6 +1,9 @@
 package UseCase
 
-import "Hawir/Domain"
+import (
+	"Hawir/Domain"
+	"context"
+)
 
 type INotificationUseCase interface {
 	NotifyCancelledBooking(userIDs *[]string, tripID string) error
@@ -8,6 +11,7 @@ type INotificationUseCase interface {
 	SaveNotificationsForTraveller(customNotification *Domain.CustomNotification, travellerIDs []string) (string, error)
 	MarkNotificationAsRead(travellerId string, notificationId string) (int, error)
 	MarkNotificationAsUnread(travellerId string, notificationId string) (int, error)
+	SendUpcomingTripNotifications(ctx context.Context)
 }
 
 type INotificationRepository interface {
