@@ -400,12 +400,18 @@ func (b *BookingRepository) FindConfirmedBookingsForUpcomingTravel(ctx context.C
 			},
 		},
 		{
+			// NEW STAGE: Convert travel_id string to ObjectId
+			"$addFields": bson.M{
+				"travel_id_objectId": bson.M{"$toObjectId": "$travel_id"},
+			},
+		},
+		{
 			// Perform a lookup (join) with the 'travels' collection
 			"$lookup": bson.M{
-				"from":         "travels", // The collection to join with (replace "travels" with your actual travel collection name)
-				"localField":   "travel_id", // Field from the bookings collection
-				"foreignField": "_id", // Field from the travels collection (assuming TravelID in booking is the ObjectID string of the travel)
-				"as":           "travel_info", // Output array field name
+				"from":         "travels",            // The collection to join with
+				"localField":   "travel_id_objectId", // NOW using the converted ObjectId field
+				"foreignField": "_id",                // Field from the travels collection (which is ObjectId)
+				"as":           "travel_info",        // Output array field name
 			},
 		},
 		{

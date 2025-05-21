@@ -401,6 +401,12 @@ func (uuc *UserUseCase) ForgotPassword(email string) (int, error) {
 		return uuc.ErrorService.NotAuthorized()
 	}
 
+	// delete previous code data's from database
+	err = uuc.CodeRepo.DeleteCode(email)
+	if err != nil {
+		return uuc.ErrorService.InternalServer()
+	}
+
 	// generate a code
 	code, err := uuc.TokenService.GenerateCode()
 	if err != nil {

@@ -22,7 +22,7 @@ type Booking struct {
 	PayTime          time.Time          `json:"pay_time" bson:"pay_time,omitempty"`
 	BookTimeLimit    time.Time          `json:"book_time_limit" bson:"book_time_limit,omitempty"`
 	Status           string             `json:"status" bson:"status,omitempty"`
-	NotificationSent bool               `json:"notification_sent" bson:"notification_sent,omitempty"`
+	NotificationSent bool               `json:"notification_sent" bson:"notification_sent"`
 }
 
 type Payment struct {
