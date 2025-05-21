@@ -9,21 +9,24 @@ import (
 
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/messaging"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type NotificationUseCase struct {
-	UserRepo    IUserRepository
-	BookingRepository IBookingRepository
+	UserRepo               IUserRepository
+	BookingRepository      IBookingRepository
 	NotificationRepository INotificationRepository
-	FirebaseApp *firebase.App
+	TravelRepository       ITravelRepository
+	FirebaseApp            *firebase.App
 }
 
-func NewNotificationUseCase(ur IUserRepository, br IBookingRepository, nr INotificationRepository, fbApp *firebase.App) INotificationUseCase {
+func NewNotificationUseCase(ur IUserRepository, br IBookingRepository, nr INotificationRepository, tr ITravelRepository, fbApp *firebase.App) INotificationUseCase {
 	return &NotificationUseCase{
-		UserRepo:    ur,
-		BookingRepository: br,
+		UserRepo:               ur,
+		BookingRepository:      br,
 		NotificationRepository: nr,
-		FirebaseApp: fbApp,
+		TravelRepository:       tr,
+		FirebaseApp:            fbApp,
 	}
 }
 
@@ -65,12 +68,12 @@ func (nuc *NotificationUseCase) NotifyCancelledBooking(userIDs *[]string, tripID
 					Body:  fmt.Sprintf("The trip with ID %s has been cancelled.", tripID),
 				},
 				Data: map[string]string{
-					"trip_id":         tripID,
+					"trip_id":           tripID,
 					"notification_type": "trip_cancelled",
 				},
 			})
 			log.Printf("Full response: %+v", response)
-			log.Printf("Response: %+v",response.FailureCount)
+			log.Printf("Response: %+v", response.FailureCount)
 			log.Printf("REsponse: %+v", response.SuccessCount)
 			if err != nil {
 				log.Printf("error sending messages to user %s for trip %s: %v", userID, tripID, err)
@@ -103,7 +106,7 @@ func (nuc *NotificationUseCase) GetNotificationsForTraveller(travellerId string)
 func (nuc *NotificationUseCase) SaveNotificationsForTraveller(customNotification *Domain.CustomNotification, travellerIDs []string) (string, error) {
 	str, err := nuc.NotificationRepository.SaveNotification(customNotification, travellerIDs)
 	if err != nil {
-		return "", err 
+		return "", err
 	}
 
 	return str, nil
@@ -140,8 +143,8 @@ func (nuc *NotificationUseCase) SendUpcomingTripNotifications(ctx context.Contex
 	// This window helps capture trips that are exactly one day away,
 	// accounting for potential minor scheduling delays.
 	now := time.Now()
-	startTime := now.Add(23 * time.Hour) // Start checking from 23 hours from now
-	endTime := now.Add(25 * time.Hour)   // End checking at 25 hours from now
+	startTime := now                   // Start checking from the current moment
+	endTime := now.Add(24 * time.Hour) // End checking at exactly 24 hours from the current moment
 
 	// --- START: Query for relevant bookings ---
 	// Query the database for confirmed bookings within the time window
@@ -161,9 +164,8 @@ func (nuc *NotificationUseCase) SendUpcomingTripNotifications(ctx context.Contex
 	client, err := nuc.FirebaseApp.Messaging(ctx)
 	if err != nil {
 		fmt.Printf("Error getting Firebase Messaging client: %v. Cannot send notifications.\n", err) // Log error
-		return // Stop task if FCM client cannot be obtained
+		return                                                                                       // Stop task if FCM client cannot be obtained
 	}
-
 
 	// Iterate through the found bookings
 	for _, booking := range bookings {
@@ -173,27 +175,53 @@ func (nuc *NotificationUseCase) SendUpcomingTripNotifications(ctx context.Contex
 		user, err := nuc.UserRepo.GetUserById(booking.TravelerID)
 		if err != nil {
 			fmt.Printf("Error fetching user %s for booking %s: %v. Skipping notification.\n", booking.TravelerID, booking.ID.Hex(), err) // Log error
-			continue // Skip to the next booking if user fetching fails
+			continue                                                                                                                     // Skip to the next booking if user fetching fails
 		}
 		if user == nil || len(user.FcmTokens) == 0 {
 			fmt.Printf("No user found or no FCM tokens for traveler %s for booking %s. Skipping notification.\n", booking.TravelerID, booking.ID.Hex()) // Log
-			continue // Skip if no user or no tokens are found
+			continue                                                                                                                                    // Skip if no user or no tokens are found
 		}
 		// --- END: Fetch Traveler FCM Token ---
 
+		travel, err := nuc.TravelRepository.ViewTravelById(booking.TravelID)
+		if err != nil {
+			fmt.Printf("Error fetching travel %s for booking %s: %v. Skipping notification.\n", booking.TravelID, booking.ID.Hex(), err)
+			continue // Skip if travel details cannot be fetched
+		}
+		if travel == nil {
+			fmt.Printf("Travel %s not found for booking %s. Skipping notification.\n", booking.TravelID, booking.ID.Hex())
+			continue // Skip if travel is nil
+		}
+
 		// --- START: Send FCM Notification ---
 		// Prepare and send the FCM notification using MulticastMessage for potentially multiple tokens.
-		notificationTitle := "Upcoming Trip Reminder" // Localize this if needed
-		// You might need to fetch Travel details here to get the actual trip destination/details
-		// For now, using StartLocation from the booking, assuming it's available and sufficient.
-		notificationBody := fmt.Sprintf("Your trip from %s is scheduled for tomorrow.", booking.StartLocation) // Customize and localize this message
+		travelerName := "Traveler"
+		if user.FirstName != "" { // Assuming your User struct has FirstName
+			travelerName = user.FirstName
+		}
+
+		notificationTitle := "Your Trip Reminder!" // More engaging title
+		notificationBody := fmt.Sprintf(
+			"Hi %s! Your trip from %s to %s is scheduled for %s at %s. Booking Ref: %s, Seat: %d. Tap to view details!",
+			travelerName,
+			booking.StartLocation,
+			travel.Destination, // Using destination from Travel
+			travel.PlannedStartTime.Format("Jan 02, 2006"), // Formatted date
+			travel.PlannedStartTime.Format("03:04 PM MST"), // Formatted time with timezone
+			booking.BookingRef,
+			booking.SeatNo,
+		)
 
 		// Optional: Add data payload for handling in the mobile app (e.g., navigate to booking details)
 		notificationData := map[string]string{
-			"booking_id": booking.ID.Hex(),
-			"travel_id":  booking.TravelID,
+			"booking_id":        booking.ID.Hex(),
+			"travel_id":         booking.TravelID,
 			"notification_type": "upcoming_trip_reminder", // Define a type for the app to handle
-			// Add other relevant data
+			"destination":       travel.Destination,
+			"planned_start_time": travel.PlannedStartTime.Format(time.RFC3339), // Send time in standard format
+			"booking_ref":       booking.BookingRef,
+			"seat_no":           fmt.Sprintf("%d", booking.SeatNo), // Convert int to string for data payload
+			// Add other relevant data for the app to use
 		}
 
 		// Send the multicast message
@@ -225,8 +253,25 @@ func (nuc *NotificationUseCase) SendUpcomingTripNotifications(ctx context.Contex
 				}
 			}
 		}
-		// --- END: Send FCM Notification ---
 
+		customNotification := &Domain.CustomNotification{
+			ID:       primitive.NewObjectID(), // Generate a new ObjectID for the custom notification
+			Title:    notificationTitle,
+			Message:  notificationBody,
+			PostTime: time.Now(),
+			Status:   Domain.NotificationStatusUnread, // Mark as unread initially
+		}
+
+		// Save the notification to the database for the current traveler
+		// The SaveNotification method expects a slice of traveler IDs.
+		notificationID, saveErr := nuc.NotificationRepository.SaveNotification(customNotification, []string{booking.TravelerID})
+		if saveErr != nil {
+			fmt.Printf("Error saving notification to DB for traveler %s, booking %s: %v\n", booking.TravelerID, booking.ID.Hex(), saveErr) // Log error
+			// This is a non-critical error for the FCM send, but important for record-keeping.
+			// Decide if you want to retry or just log.
+		} else {
+			fmt.Printf("Notification saved to DB for traveler %s with ID: %s\n", booking.TravelerID, notificationID)
+		}
 
 		// --- START: Mark Notification as Sent ---
 		// Mark the booking as having the notification sent to prevent duplicates.

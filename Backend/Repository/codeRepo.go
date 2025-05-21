@@ -46,6 +46,6 @@ func (cr *CodeRepository) GetData(email string) (string, error) {
 
 func (cr *CodeRepository) DeleteCode(email string) error {
 	filter := bson.M{"email": email}
-	_, err := cr.Collection.DeleteOne(cr.DbCtx, filter)
+	_, err := cr.Collection.DeleteMany(cr.DbCtx, filter)
 	return err
 }

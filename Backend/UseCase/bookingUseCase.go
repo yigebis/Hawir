@@ -120,6 +120,7 @@ func (buc *BookingUseCase) Book(booking *Domain.Booking) (*Domain.Booking, int, 
 	booking.PaymentRef.FailedPaymentRef = []string{}
 	booking.BookingRef = UUID
 	booking.Status = Domain.BookingStatusPending
+	booking.NotificationSent = false
 
 	// Set the booking time to the current time
 	booking.BookTime = time.Now()
@@ -225,6 +226,7 @@ func (buc *BookingUseCase) UpdateBooking(bookingStatus *Domain.BookingStatus) (*
 		booking.PaymentRef.PaymentSuccessful = true
 		booking.PaymentType = "online"
 		booking.PayTime = time.Now()
+		booking.NotificationSent = false
 	} else {
 		statusCode, err := buc.ErrorService.UnableToSeekFile()
 		return nil, statusCode, err;

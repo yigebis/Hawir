@@ -15,12 +15,12 @@ import (
 	"os"
 
 	firebase "firebase.google.com/go/v4"
-    "google.golang.org/api/option"
+	"google.golang.org/api/option"
 
 	// comment it for production
 	// "github.com/joho/godotenv"
-  
-  "github.com/robfig/cron/v3" // Import the cron scheduler library
+
+	"github.com/robfig/cron/v3" // Import the cron scheduler library
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -50,7 +50,7 @@ func main() {
 	// }
 
 	firebaseApp = initializeFirebaseApp() // Initialize Firebase
-	
+
 	// domain name of the website
 	websiteDomainName := os.Getenv("WEBSITE_DOMAIN_NAME")
 
@@ -110,7 +110,7 @@ func main() {
 		travel_stat_collection,
 		seat_collection,
 		user_collection,
-		travel_collection, 
+		travel_collection,
 	)
 	nr := Repository.NewNotificationRepository(notification_context, notification_collection)
 	dr := Repository.NewDestinationRepository(destination_context, destination_collection, destination_details_collection)
@@ -146,7 +146,7 @@ func main() {
 
 	oauthService := Infrastructure.NewOAuth(oauthState, oauthClientID, oauthClientSecret, websiteDomainName)
 
-	nuc := UseCase.NewNotificationUseCase(ur, br, nr, firebaseApp)
+	nuc := UseCase.NewNotificationUseCase(ur, br, nr, tr, firebaseApp)
 	uuc := UseCase.NewUserUseCase(ur, cr, ps, ts, ms, es, cs, ex, tx, rx)
 	aguc := UseCase.NewAgencyUseCase(agr, drr, cr, ps, ts, es, ms, cs, ex, tx, rx)
 	tuc := UseCase.NewTravelUseCase(tr, tsr, agr, drr, es, br, nuc)
@@ -171,8 +171,8 @@ func main() {
 
 	c := cron.New()
 
-	_, err = c.AddFunc("0 * * * *", func() {
-		// Use context.Background() for the scheduled task execution.
+	// Recommended: Every 15 minutes
+	_, err = c.AddFunc("*/15 * * * *", func() {
 		nuc.SendUpcomingTripNotifications(context.Background())
 	})
 	if err != nil {
