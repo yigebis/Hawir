@@ -18,7 +18,7 @@ import (
 	"google.golang.org/api/option"
 
 	// comment it for production
-	"github.com/joho/godotenv"
+	// "github.com/joho/godotenv"
 
 	"github.com/robfig/cron/v3" // Import the cron scheduler library
 
@@ -45,9 +45,9 @@ func initializeFirebaseApp() *firebase.App {
 
 func main() {
 	//comment it for production
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("error loading .env file")
-	}
+	// if err := godotenv.Load(); err != nil {
+	// 	log.Fatal("error loading .env file")
+	// }
 
 	firebaseApp = initializeFirebaseApp() // Initialize Firebase
 

@@ -62,6 +62,7 @@ func (tr *TravelRepository) EditTravel(travel *Domain.Travel) error {
 		"bus_ref": travel.BusRef,
 		// "has_pay_back":       travel.HasPayBack,
 		"driver_id": travel.DriverID,
+		"total_seats": travel.TotalSeats,
 		// Automatically set last_mod_time to now on update
 		"last_mod_time": time.Now(),
 		"status":        travel.Status,

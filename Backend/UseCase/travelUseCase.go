@@ -75,18 +75,6 @@ func (tuc *TravelUseCase) AssignBus(travel *Domain.Travel, travelID string) (int
 }
 
 func (tuc *TravelUseCase) TravelValidation(travel *Domain.Travel) (int, error) {
-	var found = false
-	for _, pickupLocation := range travel.PickupLocations {
-		if travel.StartLocation == pickupLocation {
-			found = true
-			break
-		}
-	}
-
-	if !found {
-		return tuc.ErrorService.InvalidStartLocation()
-	}
-
 	if travel.Price < 0 {
 		return tuc.ErrorService.InvalidPrice()
 	}
