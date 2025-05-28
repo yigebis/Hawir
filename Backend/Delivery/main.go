@@ -87,6 +87,7 @@ func main() {
 	driver_collection := client.Database("Hawir").Collection("Drivers")
 	event_collection := client.Database("Hawir").Collection("events")
 	code_collection := client.Database("Hawir").Collection("codes")
+	bus_tracking_collection := client.Database("Hawir").Collection("bus_tracking")
 
 	admin_context := context.TODO()
 	user_context := context.TODO()
@@ -98,6 +99,7 @@ func main() {
 	driver_context := context.TODO()
 	event_context := context.TODO()
 	code_context := context.TODO()
+	bus_tracking_context := context.TODO()
 
 	admr := Repository.NewAdminRepository(admin_context, admin_collection)
 	ur := Repository.NewUserRepository(user_context, user_collection)
@@ -117,6 +119,7 @@ func main() {
 	drr := Repository.NewDriverRepository(driver_context, driver_collection)
 	er := Repository.NewEventRepository(event_context, event_collection)
 	cr := Repository.NewCodeRepository(code_context, code_collection)
+	btr := Repository.NewBusTrackingRepository(bus_tracking_collection, bus_tracking_context)
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	es := Error.NewErrorService()
@@ -155,6 +158,7 @@ func main() {
 	duc := UseCase.NewDestinationUseCase(dr, es)
 	druc := UseCase.NewDriverUseCase(drr, es, ps, ts, ms, tx, rx)
 	euc := UseCase.NewEventUseCase(er, dr, es, cs)
+	btuc := UseCase.NewBusTrackingUseCase(btr, es)
 
 	// setting up the controllers
 	user_controller := Controller.NewUserController(uuc, aguc, ts, oauthService, ps, vs, rx, websiteDomainName)
@@ -165,6 +169,10 @@ func main() {
 	destination_controller := Controller.NewDestinationController(duc)
 	notification_controller := Controller.NewNotificationController(nuc)
 	driver_controller := Controller.NewDriverController(druc, vs, rx, websiteDomainName)
+
+	hub := Infrastructure.NewHub()
+	go hub.Run()
+	bus_tracking_controller := Controller.NewBusTrackingController(hub, btuc)
 
 	maxPageSize, _ := strconv.Atoi(os.Getenv("MAX_SIZE_PER_PAGE"))
 	event_controller := Controller.NewEventController(euc, maxPageSize)
@@ -183,7 +191,6 @@ func main() {
 	fmt.Println("Cron scheduler started.")
 
 	// setting up the router
-	router := Router.NewRouter(user_controller, agency_controller, travel_controller, admin_controller, booking_controller, destination_controller, driver_controller, event_controller, notification_controller, jwtSecret)
-
+	router := Router.NewRouter(user_controller, agency_controller, travel_controller, admin_controller, booking_controller, destination_controller, driver_controller, event_controller, bus_tracking_controller, notification_controller, jwtSecret)
 	router.Run()
 }

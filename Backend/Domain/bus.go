@@ -17,3 +17,10 @@ type Bus struct {
 	Status           string             `json:"status" bson:"status,omitempty"`
 	CurrentTrips     []string           `json:"current_trip" bson:"current_trip,omitempty"`
 }
+
+type BusTracking struct {
+	BusID     string    `json:"bus_id" bson:"bus_id,omitempty"`
+	Latitude  float64   `json:"latitude" bson:"latitude,omitempty"`
+	Longitude float64   `json:"longitude" bson:"longitude,omitempty"`
+	Timestamp time.Time `json:"timestamp" bson:"timestamp,omitempty"`
+}
