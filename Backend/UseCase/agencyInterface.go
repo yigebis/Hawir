@@ -12,6 +12,7 @@ type IAgencyUseCase interface {
 	GetAllAgencies() (*[]Domain.Agency, int, error)
 	GetAgency(id string) (*Domain.Agency, int, error)
 	GetAgencyByUniqueID(id string) (*Domain.Agency, int, error)
+  GetAgencyForUser(id string) (*Domain.AgencyDisplay, int, error)
 
 	// vehicle management
 	AddBus(bus *Domain.Bus) (int, error)

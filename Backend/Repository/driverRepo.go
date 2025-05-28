@@ -103,7 +103,21 @@ func (dr *DriverRepository) UpdateDriver(id string, driver *Domain.Driver) error
 	}
 
 	filter := bson.M{"_id": objID}
-	update := bson.M{"$set": driver}
+	updatedData := bson.M{
+		"first_name": driver.FirstName,
+		"last_name": driver.LastName,
+		"sex": driver.Sex,
+		"date_of_birth": driver.DateOfBirth,
+		"phone": driver.Phone,
+	}
+	if driver.Password != "" {
+		updatedData["password"] = driver.Password
+	}
+	if driver.Photo != "" {
+		updatedData["photo"] = driver.Photo
+	}
+	
+	update := bson.M{"$set": updatedData}
 	_, err = dr.DriverCollection.UpdateOne(dr.DbCtx, filter, update)
 	return err
 }
