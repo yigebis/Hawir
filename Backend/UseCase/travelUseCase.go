@@ -197,6 +197,17 @@ func (tuc *TravelUseCase) ViewTravelsByAgencyId(agencyId string) (*[]Domain.Trav
 }
 
 // searching for travels
+func (tuc *TravelUseCase) SearchTravel(searchParams *Domain.SearchParams) (*[]Domain.Travel, int, error) {
+	travels, err := tuc.TravelRepo.SearchTravel(searchParams)
+	if err != nil {
+		code, err := tuc.ErrorService.TravelNotFound()
+		return nil, code, err
+	}
+
+	code, err := tuc.ErrorService.NoError()
+	return travels, code, err
+}
+
 func (tuc *TravelUseCase) CancelTravel(travelID string) (int, error) {
 	err := tuc.TravelRepo.EditTravelStatus(travelID, "cancelled")
 	if err != nil {
