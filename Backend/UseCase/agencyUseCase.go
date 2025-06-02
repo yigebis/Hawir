@@ -4,6 +4,8 @@ import (
 	"Hawir/Domain"
 	"mime/multipart"
 	"time"
+
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type AgencyUseCase struct {
@@ -134,15 +136,20 @@ func (aguc *AgencyUseCase) GetAllAgencies() (*[]Domain.Agency, int, error) {
 }
 
 func (aguc *AgencyUseCase) AddBus(bus *Domain.Bus) (int, error) {
-	// panic("unimplemented")
-	// check if the bus with the same plate number exists
+	// Check if the bus with the same plate number exists
 	_, err := aguc.AgencyRepo.GetBusByPlateNumber(bus.PlateNumber)
 
 	if err == nil {
-		// return aguc.ErrorService.BusAlreadyExists()
+		// Bus with plate number already exists
 		return aguc.ErrorService.IncorrectPlateNo()
 	}
 
+	// If error is something other than "not found", return internal error
+	if err != mongo.ErrNoDocuments {
+		return aguc.ErrorService.InternalServer()
+	}
+
+	// Bus doesn't exist, safe to add
 	bus.IsReserved = false
 	bus.RegistrationDate = time.Now()
 	bus.CurrentTrips = []string{}
@@ -196,6 +203,17 @@ func (aguc *AgencyUseCase) GetAllBusesByAgencyID(agencyID string) (*[]Domain.Bus
 
 	code, err := aguc.ErrorService.NoError()
 	return buses, code, err
+}
+
+func (aguc *AgencyUseCase) GetAgencyForUser(id string) (*Domain.AgencyDisplay, int, error) {
+	agency, err := aguc.AgencyRepo.GetAgencyForUserById(id)
+	if err != nil {
+		code, err := aguc.ErrorService.AgencyNotFound()
+		return nil, code, err
+	}
+
+	code, err := aguc.ErrorService.NoError()
+	return agency, code, err
 }
 
 func (aguc *AgencyUseCase) AddDriver(driver *Domain.Driver, fileHeader *multipart.FileHeader) (int, error) {
@@ -284,8 +302,9 @@ func (aguc *AgencyUseCase) EditDriver(driver *Domain.Driver, fileHeader *multipa
 			return aguc.ErrorService.UnableToUploadFile()
 		}
 		filePath = url
+		driver.Photo = filePath
 	}
-	driver.Photo = filePath
+	
 
 	err = aguc.DriverRepo.UpdateDriver(driver.ID.Hex(), driver)
 	if err != nil {

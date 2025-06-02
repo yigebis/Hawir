@@ -18,6 +18,7 @@ type Router struct {
 	EventController         *Controller.EventController
 	BusTrackingController   *Controller.BusTrackingController
 	AdvertisementController *Controller.AdvertisementController
+  NotificationController *Controller.NotificationController
 	JWTSigner               string
 }
 
@@ -32,6 +33,7 @@ func NewRouter(
 	ec *Controller.EventController,
 	btc *Controller.BusTrackingController,
 	adc *Controller.AdvertisementController,
+  nc *Controller.NotificationController,
 	jwtSigner string,
 ) *Router {
 	return &Router{
@@ -45,8 +47,8 @@ func NewRouter(
 		EventController:         ec,
 		BusTrackingController:   btc,
 		AdvertisementController: adc,
-		JWTSigner:               jwtSigner,
-	}
+    NotificationController: nc,
+		JWTSigner:               jwtSigner, 
 }
 
 func (r *Router) Run() {
@@ -60,10 +62,10 @@ func (r *Router) Run() {
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"}, // Headers to allow
 		ExposeHeaders:    []string{"Content-Length"},                          // Headers to expose to frontend
 		AllowCredentials: true,                                                // Allow cookies or authentication headers
+
 	}
 	router.Use(cors.New(config))
 	// router.Use(cors.Default())
-
 	userRouter := NewUserRouter(r.UserController)
 	agencyRouter := NewAgencyRouter(r.AgencyController)
 	adminRouter := NewAdminRouter(r.AdminController)
@@ -74,6 +76,7 @@ func (r *Router) Run() {
 	event_router := NewEventRouter(r.EventController)
 	busTrackingRouter := NewBusTrackingRouter(r.BusTrackingController)
 	advertisementRouter := NewAdvertisementRouter(r.AdvertisementController)
+	notificationRouter := NewNotificationRouter(r.NotificationController)
 
 	userRouter.Run(router, r.JWTSigner)
 	agencyRouter.Run(router, r.JWTSigner)
@@ -85,6 +88,7 @@ func (r *Router) Run() {
 	event_router.Run(router, r.JWTSigner)
 	busTrackingRouter.Run(router)
 	advertisementRouter.Run(router, r.JWTSigner)
+	notificationRouter.Run(router, r.JWTSigner)
 
 	router.Run()
 }

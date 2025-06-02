@@ -258,12 +258,7 @@ func (agr *AgencyRepository) GetBusByPlateNumber(plateNumber string) (*Domain.Bu
 
 func (agr *AgencyRepository) GetAllBusesByAgencyID(agencyID string) (*[]Domain.Bus, error) {
 	var buses []Domain.Bus
-	objID, err := primitive.ObjectIDFromHex(agencyID)
-	if err != nil {
-		return nil, err
-	}
-
-	filter := bson.M{"agency_id": objID}
+	filter := bson.M{"agency_id": agencyID}
 	cursor, err := agr.BusCollection.Find(agr.DbCtx, filter)
 	if err != nil {
 		return nil, err

@@ -269,6 +269,8 @@ func (uuc *UserUseCase) GetUserById(id string) (*Domain.UserDisplay, int, error)
 		ID:           user.ID,
 		FirstName:    user.FirstName,
 		LastName:     user.LastName,
+		Email:        user.Email,
+		PhoneNumber: user.PhoneNumber,
 		ProfilePhoto: user.ProfilePhoto,
 	}
 
@@ -302,6 +304,8 @@ func (uuc *UserUseCase) EditUser(user *Domain.UserProfile, fileHeader *multipart
 			return uuc.ErrorService.UnableToUploadFile()
 		}
 		filePath = url
+		user.ProfilePhoto = filePath
+
 
 		// file, err := fileHeader.Open()
 		// if err != nil {
@@ -336,7 +340,6 @@ func (uuc *UserUseCase) EditUser(user *Domain.UserProfile, fileHeader *multipart
 		// filePath = "/static/" + fileName
 	}
 
-	user.ProfilePhoto = filePath
 	err := uuc.UserRepo.EditUser(user)
 	if err != nil {
 		return uuc.ErrorService.UserNotFound()
@@ -396,6 +399,12 @@ func (uuc *UserUseCase) ForgotPassword(email string) (int, error) {
 
 	if !user.Verified {
 		return uuc.ErrorService.NotAuthorized()
+	}
+
+	// delete previous code data's from database
+	err = uuc.CodeRepo.DeleteCode(email)
+	if err != nil {
+		return uuc.ErrorService.InternalServer()
 	}
 
 	// generate a code
@@ -460,4 +469,16 @@ func (uuc *UserUseCase) ChangePasswordWithCode(email, code, password string) (in
 	}
 
 	return uuc.ErrorService.NoError()
+}
+
+func (uuc *UserUseCase) StoreFCMToken(userID string, fcmToken string) error {
+	return uuc.UserRepo.StoreUserFCMToken(userID, fcmToken)
+}
+
+func (uuc *UserUseCase) RemoveFCMToken(userID string, fcmToken string) error {
+	return uuc.UserRepo.RemoveUserFCMToken(userID, fcmToken)
+}
+
+func (uuc *UserUseCase) GetUserFCMTokens(userID string) ([]string, error) {
+	return uuc.UserRepo.GetUserFCMTokens(userID)
 }
