@@ -2,11 +2,17 @@ package Infrastructure
 
 import (
 	"Hawir/UseCase"
+	"fmt"
 	"path/filepath"
 	"strings"
 
 	"context"
 	"mime/multipart"
+
+	"crypto/hmac"
+	"crypto/sha1"
+	"encoding/hex"
+	"sort"
 
 	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
@@ -33,12 +39,26 @@ func ExtractPublicID(cloudinaryURL string) string {
 }
 
 type CloudinaryService struct {
-	CloudinaryUrl string
+	CloudinaryUrl         string
+	CloudName             string
+	AdvertisementPublicID string
+	TravelerPublicID      string
+	EventPublicID         string
+	AgencyPublicID        string
+	DestinationPublicID   string
+	DriverPublicID        string
 }
 
-func NewCloudinaryService(url string) UseCase.ICloudService {
+func NewCloudinaryService(url, cloudName, advertisementPID, travelerPID, eventPID, agencyPID, destinationPID, driverPID string) UseCase.ICloudService {
 	return &CloudinaryService{
-		CloudinaryUrl: url,
+		CloudinaryUrl:         url,
+		CloudName:             cloudName,
+		AdvertisementPublicID: advertisementPID,
+		TravelerPublicID:      travelerPID,
+		EventPublicID:         eventPID,
+		AgencyPublicID:        agencyPID,
+		DestinationPublicID:   destinationPID,
+		DriverPublicID:        driverPID,
 	}
 }
 
@@ -105,4 +125,47 @@ func (cs *CloudinaryService) DeleteFromCloud(url string) error {
 	}
 
 	return nil
+}
+
+func (cs *CloudinaryService) GenerateCloudinarySignature(params map[string]string, apiSecret string) string {
+	var keys []string
+	for k := range params {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	var toSign []string
+	for _, k := range keys {
+		toSign = append(toSign, k+"="+params[k])
+	}
+	joined := strings.Join(toSign, "&")
+	fmt.Println(joined)
+
+	h := hmac.New(sha1.New, []byte(apiSecret))
+	h.Write([]byte(joined))
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+func (cs *CloudinaryService) GetAdvertisementPublicID() (string, string) {
+	return cs.CloudName, cs.AdvertisementPublicID
+}
+
+func (cs *CloudinaryService) GetTravelerPublicID() (string, string) {
+	return cs.CloudName, cs.TravelerPublicID
+}
+
+func (cs *CloudinaryService) GetEventPublicID() (string, string) {
+	return cs.CloudName, cs.EventPublicID
+}
+
+func (cs *CloudinaryService) GetAgencyPublicID() (string, string) {
+	return cs.CloudName, cs.AgencyPublicID
+}
+
+func (cs *CloudinaryService) GetDestinationPublicID() (string, string) {
+	return cs.CloudName, cs.DestinationPublicID
+}
+
+func (cs *CloudinaryService) GetDriverPublicID() (string, string) {
+	return cs.CloudName, cs.DriverPublicID
 }

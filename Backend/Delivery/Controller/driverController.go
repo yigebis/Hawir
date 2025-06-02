@@ -15,15 +15,17 @@ type DriverController struct {
 	DriverUseCase     UseCase.IDriverUseCase
 	V                 *validator.Validate
 	ValidationService *Infrastructure.ValidationService
+	CloudinaryService UseCase.ICloudService
 	RefresherExpiry   int64
 	WebsiteDomainName string
 }
 
-func NewDriverController(du UseCase.IDriverUseCase, vs *Infrastructure.ValidationService, rx int64, wdn string) *DriverController {
+func NewDriverController(du UseCase.IDriverUseCase, vs *Infrastructure.ValidationService, cs UseCase.ICloudService, rx int64, wdn string) *DriverController {
 	return &DriverController{
 		DriverUseCase:     du,
 		V:                 validator.New(),
 		ValidationService: vs,
+		CloudinaryService: cs,
 		RefresherExpiry:   rx,
 		WebsiteDomainName: wdn,
 	}
@@ -145,4 +147,42 @@ func (dc *DriverController) ChangePassword(ctx *gin.Context) {
 	}
 
 	ctx.JSON(code, gin.H{"message": "password changed successfully"})
+}
+
+func (dc *DriverController) GetPublicID(ctx *gin.Context) {
+	cloudName, uploadPreset := dc.CloudinaryService.GetDriverPublicID()
+	ctx.JSON(200, gin.H{
+		"cloud_name":    cloudName,
+		"upload_preset": uploadPreset,
+	})
+}
+
+func (dc *DriverController) UploadProfilePhoto(ctx *gin.Context) {
+	var upload = Domain.DriverProfile{}
+	err := ctx.ShouldBindJSON(&upload)
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": "url parameter is required"})
+		return
+	}
+
+	// get the driver ID from the JWT token
+	claimsAny, exists := ctx.Get("driver")
+	if !exists {
+		ctx.JSON(401, gin.H{"error": "unauthorized"})
+		return
+	}
+	claims, ok := claimsAny.(jwt.MapClaims)
+	if !ok {
+		ctx.JSON(401, gin.H{"error": "unauthorized"})
+		return
+	}
+	id := claims["id"].(string)
+
+	statusCode, err := dc.DriverUseCase.EditPhoto(id, upload.Url)
+	if err != nil {
+		ctx.JSON(statusCode, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(statusCode, gin.H{"message": "profile photo uploaded successfully", "url": upload.Url})
 }

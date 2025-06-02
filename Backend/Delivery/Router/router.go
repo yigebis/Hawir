@@ -8,17 +8,18 @@ import (
 )
 
 type Router struct {
-	UserController        *Controller.UserController
-	AgencyController      *Controller.AgencyController
-	TravelController      *Controller.TravelController
-	AdminController       *Controller.AdminController
-	BookingController     *Controller.BookingController
-	DestinationController *Controller.DestinationController
-	DriverController      *Controller.DriverController
-	EventController       *Controller.EventController
-	BusTrackingController *Controller.BusTrackingController
+	UserController          *Controller.UserController
+	AgencyController        *Controller.AgencyController
+	TravelController        *Controller.TravelController
+	AdminController         *Controller.AdminController
+	BookingController       *Controller.BookingController
+	DestinationController   *Controller.DestinationController
+	DriverController        *Controller.DriverController
+	EventController         *Controller.EventController
+	BusTrackingController   *Controller.BusTrackingController
+	AdvertisementController *Controller.AdvertisementController
   NotificationController *Controller.NotificationController
-	JWTSigner             string
+	JWTSigner               string
 }
 
 func NewRouter(
@@ -31,22 +32,23 @@ func NewRouter(
 	dc *Controller.DriverController,
 	ec *Controller.EventController,
 	btc *Controller.BusTrackingController,
+	adc *Controller.AdvertisementController,
   nc *Controller.NotificationController,
 	jwtSigner string,
 ) *Router {
 	return &Router{
-		UserController:        uc,
-		AgencyController:      agc,
-		TravelController:      tc,
-		AdminController:       ac,
-		BookingController:     bc,
-		DestinationController: desc,
-		DriverController:      dc,
-		EventController:       ec,
-		BusTrackingController: btc,
-   	NotificationController: nc,
-		JWTSigner:             jwtSigner,
-	}
+		UserController:          uc,
+		AgencyController:        agc,
+		TravelController:        tc,
+		AdminController:         ac,
+		BookingController:       bc,
+		DestinationController:   desc,
+		DriverController:        dc,
+		EventController:         ec,
+		BusTrackingController:   btc,
+		AdvertisementController: adc,
+    NotificationController: nc,
+		JWTSigner:               jwtSigner, 
 }
 
 func (r *Router) Run() {
@@ -73,6 +75,7 @@ func (r *Router) Run() {
 	driverRouter := NewDriverRouter(r.DriverController)
 	event_router := NewEventRouter(r.EventController)
 	busTrackingRouter := NewBusTrackingRouter(r.BusTrackingController)
+	advertisementRouter := NewAdvertisementRouter(r.AdvertisementController)
 	notificationRouter := NewNotificationRouter(r.NotificationController)
 
 	userRouter.Run(router, r.JWTSigner)
@@ -84,8 +87,8 @@ func (r *Router) Run() {
 	driverRouter.Run(router, r.JWTSigner)
 	event_router.Run(router, r.JWTSigner)
 	busTrackingRouter.Run(router)
+	advertisementRouter.Run(router, r.JWTSigner)
 	notificationRouter.Run(router, r.JWTSigner)
-
 
 	router.Run()
 }

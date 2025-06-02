@@ -88,6 +88,7 @@ func main() {
 	event_collection := client.Database("Hawir").Collection("events")
 	code_collection := client.Database("Hawir").Collection("codes")
 	bus_tracking_collection := client.Database("Hawir").Collection("bus_tracking")
+	ads_collection := client.Database("Hawir").Collection("Advertisements")
 
 	admin_context := context.TODO()
 	user_context := context.TODO()
@@ -100,6 +101,7 @@ func main() {
 	event_context := context.TODO()
 	code_context := context.TODO()
 	bus_tracking_context := context.TODO()
+	ads_context := context.TODO()
 
 	admr := Repository.NewAdminRepository(admin_context, admin_collection)
 	ur := Repository.NewUserRepository(user_context, user_collection)
@@ -120,6 +122,7 @@ func main() {
 	er := Repository.NewEventRepository(event_context, event_collection)
 	cr := Repository.NewCodeRepository(code_context, code_collection)
 	btr := Repository.NewBusTrackingRepository(bus_tracking_collection, bus_tracking_context)
+	adr := Repository.NewAdvertisementRepository(ads_collection, ads_context)
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	es := Error.NewErrorService()
@@ -128,8 +131,17 @@ func main() {
 	timeService := Infrastructure.NewTimeService()
 	ms := Infrastructure.NewMailService(os.Getenv("SENDER_EMAIL"), os.Getenv("EMAIL_PASSWORD"), os.Getenv("FROM"), websiteDomainName)
 	vs := Infrastructure.NewValidationService(es)
+
 	cloudinaryUrl := os.Getenv("CLOUDINARY_STRING")
-	cs := Infrastructure.NewCloudinaryService(cloudinaryUrl)
+	advPublicID := os.Getenv("CLOUDINARY_ADVERTISEMENT_PUBLIC_ID")
+	travelerPublicID := os.Getenv("CLOUDINARY_TRAVELER_PUBLIC_ID")
+	driverPublicID := os.Getenv("CLOUDINARY_DRIVER_PUBLIC_ID")
+	agencyPublicID := os.Getenv("CLOUDINARY_AGENCY_PUBLIC_ID")
+	eventPublicID := os.Getenv("CLOUDINARY_EVENT_PUBLIC_ID")
+	destinationPublicID := os.Getenv("CLOUDINARY_DESTINATION_PUBLIC_ID")
+	cloudName := os.Getenv("CLOUDINARY_CLOUD_NAME")
+
+	cs := Infrastructure.NewCloudinaryService(cloudinaryUrl, cloudName, advPublicID, travelerPublicID, eventPublicID, agencyPublicID, destinationPublicID, driverPublicID)
 
 	email_duration := os.Getenv("EMAIL_EXPIRY")
 	token_duration := os.Getenv("TOKEN_EXPIRY")
@@ -159,6 +171,7 @@ func main() {
 	druc := UseCase.NewDriverUseCase(drr, es, ps, ts, ms, tx, rx)
 	euc := UseCase.NewEventUseCase(er, dr, es, cs)
 	btuc := UseCase.NewBusTrackingUseCase(btr, es)
+	aduc := UseCase.NewAdvertisementUseCase(adr, es)
 
 	// setting up the controllers
 	user_controller := Controller.NewUserController(uuc, aguc, ts, oauthService, ps, vs, rx, websiteDomainName)
@@ -167,8 +180,9 @@ func main() {
 	admin_controller := Controller.NewAdminController(auc, aguc, vs, rx, websiteDomainName)
 	booking_controller := Controller.NewBookingController(buc)
 	destination_controller := Controller.NewDestinationController(duc)
+	driver_controller := Controller.NewDriverController(druc, vs, cs, rx, websiteDomainName)
+
 	notification_controller := Controller.NewNotificationController(nuc)
-	driver_controller := Controller.NewDriverController(druc, vs, rx, websiteDomainName)
 
 	hub := Infrastructure.NewHub()
 	go hub.Run()
@@ -176,6 +190,11 @@ func main() {
 
 	maxPageSize, _ := strconv.Atoi(os.Getenv("MAX_SIZE_PER_PAGE"))
 	event_controller := Controller.NewEventController(euc, maxPageSize)
+
+	apiKey := os.Getenv("CLOUDINARY_API_KEY")
+	apiSecret := os.Getenv("CLOUDINARY_API_SECRET")
+	cloudinaryName := os.Getenv("CLOUDINARY_CLOUD_NAME")
+	advertisement_controller := Controller.NewAdvertisementController(aduc, apiKey, apiSecret, cloudinaryName, cs)
 
 	c := cron.New()
 
@@ -191,6 +210,6 @@ func main() {
 	fmt.Println("Cron scheduler started.")
 
 	// setting up the router
-	router := Router.NewRouter(user_controller, agency_controller, travel_controller, admin_controller, booking_controller, destination_controller, driver_controller, event_controller, bus_tracking_controller, notification_controller, jwtSecret)
+  router := Router.NewRouter(user_controller, agency_controller, travel_controller, admin_controller, booking_controller, destination_controller, driver_controller, event_controller, bus_tracking_controller, advertisement_controller, notification_controller, jwtSecret)
 	router.Run()
 }
