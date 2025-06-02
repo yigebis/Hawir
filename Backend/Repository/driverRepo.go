@@ -124,3 +124,28 @@ func (dr *DriverRepository) NullifyDriver(id string) error {
 	_, err = dr.DriverCollection.UpdateOne(dr.DbCtx, filter, update)
 	return err
 }
+
+func (dr *DriverRepository) RemoveTripFromDriver(driverID, tripID string) error {
+	driverObjID, err := primitive.ObjectIDFromHex(driverID)
+	if err != nil {
+		return err
+	}
+
+	filter := bson.M{"_id": driverObjID}
+	update := bson.M{"$pull": bson.M{"current_trips": tripID}}
+
+	_, err = dr.DriverCollection.UpdateOne(dr.DbCtx, filter, update)
+	return err
+}
+
+func (dr *DriverRepository) EditPhoto(id string, url string) error {
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+
+	filter := bson.M{"_id": objID}
+	update := bson.M{"$set": bson.M{"photo": url}}
+	_, err = dr.DriverCollection.UpdateOne(dr.DbCtx, filter, update)
+	return err
+}

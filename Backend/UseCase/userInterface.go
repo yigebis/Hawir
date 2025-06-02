@@ -51,6 +51,12 @@ type ICloudService interface {
 	UploadProfileToCloud(fileHeader *multipart.FileHeader) (string, error)
 	UploadEventMediaToCloud(fileHeader *multipart.FileHeader) (string, error)
 	DeleteFromCloud(url string) error
+	GenerateCloudinarySignature(params map[string]string, secret string) string
+	GetAdvertisementPublicID() (string, string)
+	GetTravelerPublicID() (string, string)
+	GetDriverPublicID() (string, string)
+	GetAgencyPublicID() (string, string)
+	GetEventPublicID() (string, string)
 }
 
 type ICodeRepository interface {

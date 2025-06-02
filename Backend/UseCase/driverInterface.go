@@ -10,6 +10,7 @@ type IDriverUseCase interface {
 	LoginDriver(credentials *Domain.DriverCredentials) (*Domain.Driver, string, string, int, error)
 	GetDriverByID(id string) (*Domain.Driver, int, error)
 	ChangePassword(id string, changePassword *Domain.DriverChangeCredentials) (int, error)
+	EditPhoto(id string, url string) (int, error)
 }
 
 type IDriverRepository interface {
@@ -21,4 +22,6 @@ type IDriverRepository interface {
 	UpdateDriver(id string, driver *Domain.Driver) error
 	NullifyDriver(id string) error
 	AssignTrip(driverID, tripID string) error
+	RemoveTripFromDriver(driverID, tripID string) error
+	EditPhoto(id string, url string) error
 }

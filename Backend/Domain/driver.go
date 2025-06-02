@@ -32,3 +32,7 @@ type DriverChangeCredentials struct {
 	NewPassword     string `json:"new_password" bson:"new_password" validate:"required"`
 	ConfirmPassword string `json:"confirm_password" bson:"confirm_password" validate:"required"`
 }
+
+type DriverProfile struct {
+	Url string `json:"url" validate:"required,url"`
+}

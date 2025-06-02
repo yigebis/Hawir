@@ -212,9 +212,22 @@ func (tuc *TravelUseCase) SearchTravel(searchParams *Domain.SearchParams) (*[]Do
 
 // cancelling a travel (agency side)
 func (tuc *TravelUseCase) CancelTravel(travelID string) (int, error) {
-	err := tuc.TravelRepo.EditTravelStatus(travelID, "cancelled")
+	// check if the travel exists
+	travel, err := tuc.TravelRepo.ViewTravelById(travelID)
 	if err != nil {
 		return tuc.ErrorService.TravelNotFound()
+	}
+
+	err = tuc.TravelRepo.EditTravelStatus(travelID, "cancelled")
+	if err != nil {
+		return tuc.ErrorService.TravelNotFound()
+	}
+
+	// if there is an assigned driver for this travel, the travel should be removed from the driver's current trips
+	err = tuc.DriverRepo.RemoveTripFromDriver(travel.DriverID, travelID)
+	if err != nil {
+		// fmt.Println(err.Error())
+		return tuc.ErrorService.InternalServer()
 	}
 
 	return tuc.ErrorService.NoError()

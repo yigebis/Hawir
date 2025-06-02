@@ -176,3 +176,13 @@ func (du *DriverUseCase) ChangePassword(id string, changePassword *Domain.Driver
 
 	return du.ErrorService.NoError()
 }
+
+func (du *DriverUseCase) EditPhoto(id string, url string) (int, error) {
+	err := du.DriverRepo.EditPhoto(id, url)
+	if err != nil {
+		code, err := du.ErrorService.InternalServer()
+		return code, err
+	}
+
+	return du.ErrorService.NoError()
+}
