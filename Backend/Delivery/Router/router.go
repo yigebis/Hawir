@@ -49,8 +49,8 @@ func NewRouter(
 		AdvertisementController: adc,
     NotificationController: nc,
 		JWTSigner:               jwtSigner, 
+	}
 }
-
 func (r *Router) Run() {
 	router := gin.Default()
 
