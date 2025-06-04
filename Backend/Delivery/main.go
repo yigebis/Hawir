@@ -179,7 +179,7 @@ func main() {
 	travel_controller := Controller.NewTravelController(tuc)
 	admin_controller := Controller.NewAdminController(auc, aguc, vs, rx, websiteDomainName)
 	booking_controller := Controller.NewBookingController(buc)
-	destination_controller := Controller.NewDestinationController(duc)
+	destination_controller := Controller.NewDestinationController(duc, cs)
 	driver_controller := Controller.NewDriverController(druc, vs, cs, rx, websiteDomainName)
 
 	notification_controller := Controller.NewNotificationController(nuc)

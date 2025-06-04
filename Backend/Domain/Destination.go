@@ -10,6 +10,7 @@ type Destination struct {
 	ID       primitive.ObjectID `json:"id" bson:"_id,omitempty"`
 	Name     string             `json:"name" bson:"name,omitempty" validate:"required"`
 	Stations []string           `json:"stations" bson:"stations,omitempty"`
+	Image    string             `json:"image" bson:"image,omitempty"`
 }
 
 // separated detail collections for the sake of efficiency
@@ -18,7 +19,6 @@ type DestinationDetails struct {
 	Latitude      string  `json:"latitude" bson:"latitude,omitempty"`
 	Longitude     string  `json:"longitude" bson:"longitude,omitempty"`
 	Description   string  `json:"description" bson:"description,omitempty"`
-	Image         string  `json:"image" bson:"image,omitempty"`
 	Hotels        []Hotel `json:"hotels" bson:"hotels,omitempty" validate:"dive"`
 	Culture       string  `json:"culture" bson:"culture,omitempty"`
 	History       string  `json:"history" bson:"history,omitempty"`

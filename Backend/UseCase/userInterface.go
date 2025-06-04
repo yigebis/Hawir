@@ -63,6 +63,7 @@ type ICloudService interface {
 	GetDriverPublicID() (string, string)
 	GetAgencyPublicID() (string, string)
 	GetEventPublicID() (string, string)
+	GetDestinationPublicID() (string, string)
 }
 
 type ICodeRepository interface {

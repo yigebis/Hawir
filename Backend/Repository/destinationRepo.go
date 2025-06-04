@@ -145,7 +145,6 @@ func (dr *DestinationRepository) EditDestinationDetails(destinationDetails *Doma
 		"latitude":    destinationDetails.Latitude,
 		"longitude":   destinationDetails.Longitude,
 		"description": destinationDetails.Description,
-		"image":       destinationDetails.Image,
 		"hotels":      destinationDetails.Hotels,
 		"culture":     destinationDetails.Culture,
 		"history":     destinationDetails.History,

@@ -13,13 +13,23 @@ import (
 type DestinationController struct {
 	DestinationUseCase UseCase.IDestinationUseCase
 	V                  *validator.Validate
+	CloudinaryService  UseCase.ICloudService
 }
 
-func NewDestinationController(duc UseCase.IDestinationUseCase) *DestinationController {
+func NewDestinationController(duc UseCase.IDestinationUseCase, cloudinaryService UseCase.ICloudService) *DestinationController {
 	return &DestinationController{
 		DestinationUseCase: duc,
 		V:                  validator.New(),
+		CloudinaryService:  cloudinaryService,
 	}
+}
+
+func (dc *DestinationController) GetUploadPreset(ctx *gin.Context) {
+	cloudName, uploadPreset := dc.CloudinaryService.GetDestinationPublicID()
+	ctx.JSON(200, gin.H{
+		"cloud_name":    cloudName,
+		"upload_preset": uploadPreset,
+	})
 }
 
 func (dc *DestinationController) AddDestination(ctx *gin.Context) {
