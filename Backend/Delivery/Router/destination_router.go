@@ -18,6 +18,7 @@ func NewDestinationRouter(dc *Controller.DestinationController) *DestinationRout
 
 func (dr *DestinationRouter) Run(router *gin.Engine) {
 	//destination endpoints
+	router.GET("/destination/upload_preset", dr.DestinationController.GetUploadPreset)
 	router.POST("/destination/add", dr.DestinationController.AddDestination)
 	router.GET("/destination/:id", dr.DestinationController.GetDestinationByID)
 	router.PUT("/destination/edit/:id", dr.DestinationController.EditDestination)
