@@ -18,7 +18,8 @@ type Router struct {
 	EventController         *Controller.EventController
 	BusTrackingController   *Controller.BusTrackingController
 	AdvertisementController *Controller.AdvertisementController
-  NotificationController *Controller.NotificationController
+	NotificationController  *Controller.NotificationController
+	ReviewController        *Controller.ReviewController
 	JWTSigner               string
 }
 
@@ -33,7 +34,8 @@ func NewRouter(
 	ec *Controller.EventController,
 	btc *Controller.BusTrackingController,
 	adc *Controller.AdvertisementController,
-  nc *Controller.NotificationController,
+	nc *Controller.NotificationController,
+	rc *Controller.ReviewController,
 	jwtSigner string,
 ) *Router {
 	return &Router{
@@ -47,8 +49,9 @@ func NewRouter(
 		EventController:         ec,
 		BusTrackingController:   btc,
 		AdvertisementController: adc,
-    NotificationController: nc,
-		JWTSigner:               jwtSigner, 
+		NotificationController:  nc,
+		ReviewController: rc,
+		JWTSigner:               jwtSigner,
 	}
 }
 func (r *Router) Run() {
@@ -77,6 +80,7 @@ func (r *Router) Run() {
 	busTrackingRouter := NewBusTrackingRouter(r.BusTrackingController)
 	advertisementRouter := NewAdvertisementRouter(r.AdvertisementController)
 	notificationRouter := NewNotificationRouter(r.NotificationController)
+	reviewRouter := NewReviewRouter(r.ReviewController)
 
 	userRouter.Run(router, r.JWTSigner)
 	agencyRouter.Run(router, r.JWTSigner)
@@ -89,6 +93,7 @@ func (r *Router) Run() {
 	busTrackingRouter.Run(router)
 	advertisementRouter.Run(router, r.JWTSigner)
 	notificationRouter.Run(router, r.JWTSigner)
+	reviewRouter.Run(router, r.JWTSigner)
 
 	router.Run()
 }

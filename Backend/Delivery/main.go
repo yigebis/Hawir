@@ -89,6 +89,9 @@ func main() {
 	code_collection := client.Database("Hawir").Collection("codes")
 	bus_tracking_collection := client.Database("Hawir").Collection("bus_tracking")
 	ads_collection := client.Database("Hawir").Collection("Advertisements")
+	review_collection := client.Database("Hawir").Collection("reviews")
+	agency_ratings_collection := client.Database("Hawir").Collection("agency_ratings")
+	travel_ratings_collection := client.Database("Hawir").Collection("travel_ratings")
 
 	admin_context := context.TODO()
 	user_context := context.TODO()
@@ -102,6 +105,9 @@ func main() {
 	code_context := context.TODO()
 	bus_tracking_context := context.TODO()
 	ads_context := context.TODO()
+	review_context := context.TODO()
+	agency_ratings_context := context.TODO()
+	travel_ratings_context := context.TODO()
 
 	admr := Repository.NewAdminRepository(admin_context, admin_collection)
 	ur := Repository.NewUserRepository(user_context, user_collection)
@@ -123,6 +129,9 @@ func main() {
 	cr := Repository.NewCodeRepository(code_context, code_collection)
 	btr := Repository.NewBusTrackingRepository(bus_tracking_collection, bus_tracking_context)
 	adr := Repository.NewAdvertisementRepository(ads_collection, ads_context)
+	rr := Repository.NewReviewRepository(review_context, review_collection)
+	arr := Repository.NewAgencyRatingRepository(agency_ratings_context, agency_ratings_collection)
+	trr := Repository.NewTravelRatingRepository(travel_ratings_context, travel_ratings_collection)
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	es := Error.NewErrorService()
@@ -164,14 +173,17 @@ func main() {
 	nuc := UseCase.NewNotificationUseCase(ur, br, nr, tr, firebaseApp)
 	uuc := UseCase.NewUserUseCase(ur, cr, ps, ts, ms, es, cs, ex, tx, rx)
 	aguc := UseCase.NewAgencyUseCase(agr, drr, cr, ps, ts, es, ms, cs, ex, tx, rx)
-	tuc := UseCase.NewTravelUseCase(tr, tsr, agr, drr, es, br, nuc)
-	auc := UseCase.NewAdminUseCase(admr, agr, ps, es, ts, ms, tx, rx)
+	tuc := UseCase.NewTravelUseCase(tr, tsr, agr, drr, es, br, nuc, trr)
+	auc := UseCase.NewAdminUseCase(admr, agr, ps, es, ts, ms, tx, rx, arr)
 	buc := UseCase.NewBookingUseCase(br, tr, es)
 	duc := UseCase.NewDestinationUseCase(dr, es)
 	druc := UseCase.NewDriverUseCase(drr, es, ps, ts, ms, tx, rx)
 	euc := UseCase.NewEventUseCase(er, dr, es, cs)
 	btuc := UseCase.NewBusTrackingUseCase(btr, es)
 	aduc := UseCase.NewAdvertisementUseCase(adr, es)
+	ruc := UseCase.NewReviewUseCase(rr, ur, arr, trr, es)
+	aruc := UseCase.NewAgencyRatingUseCase(arr, es)
+	truc := UseCase.NewTravelRatingUseCase(trr, es)
 
 	// setting up the controllers
 	user_controller := Controller.NewUserController(uuc, aguc, ts, oauthService, ps, vs, rx, websiteDomainName)
@@ -183,6 +195,7 @@ func main() {
 	driver_controller := Controller.NewDriverController(druc, vs, cs, rx, websiteDomainName)
 
 	notification_controller := Controller.NewNotificationController(nuc)
+	review_controller := Controller.NewReviewController(ruc, truc, aruc)
 
 	hub := Infrastructure.NewHub()
 	go hub.Run()
@@ -210,6 +223,6 @@ func main() {
 	fmt.Println("Cron scheduler started.")
 
 	// setting up the router
-  router := Router.NewRouter(user_controller, agency_controller, travel_controller, admin_controller, booking_controller, destination_controller, driver_controller, event_controller, bus_tracking_controller, advertisement_controller, notification_controller, jwtSecret)
+	router := Router.NewRouter(user_controller, agency_controller, travel_controller, admin_controller, booking_controller, destination_controller, driver_controller, event_controller, bus_tracking_controller, advertisement_controller, notification_controller, review_controller, jwtSecret)
 	router.Run()
 }
