@@ -8,26 +8,28 @@ import (
 )
 
 type AdminUseCase struct {
-	AdminRepo       IAdminRepo
-	AgencyRepo      IAgencyRepository
-	PasswordService IPasswordService
-	ErrorService    IErrorService
-	TokenService    ITokenService
-	MailService     IMailService
-	TokenExpiry     int64
-	RefresherExpiry int64
+	AdminRepo            IAdminRepo
+	AgencyRepo           IAgencyRepository
+	PasswordService      IPasswordService
+	ErrorService         IErrorService
+	TokenService         ITokenService
+	MailService          IMailService
+	TokenExpiry          int64
+	RefresherExpiry      int64
+	AgencyRatingRepo IAgencyRatingRepository
 }
 
-func NewAdminUseCase(adminRepo IAdminRepo, agencyRepo IAgencyRepository, ps IPasswordService, es IErrorService, ts ITokenService, ms IMailService, tx, rx int64) IAdminUseCase {
+func NewAdminUseCase(adminRepo IAdminRepo, agencyRepo IAgencyRepository, ps IPasswordService, es IErrorService, ts ITokenService, ms IMailService, tx, rx int64, agencyStatRepo IAgencyRatingRepository) IAdminUseCase {
 	return &AdminUseCase{
-		AdminRepo:       adminRepo,
-		AgencyRepo:      agencyRepo,
-		PasswordService: ps,
-		ErrorService:    es,
-		TokenService:    ts,
-		MailService:     ms,
-		TokenExpiry:     tx,
-		RefresherExpiry: rx,
+		AdminRepo:            adminRepo,
+		AgencyRepo:           agencyRepo,
+		PasswordService:      ps,
+		ErrorService:         es,
+		TokenService:         ts,
+		MailService:          ms,
+		TokenExpiry:          tx,
+		RefresherExpiry:      rx,
+		AgencyRatingRepo: agencyStatRepo,
 	}
 }
 
@@ -110,6 +112,17 @@ func (auc *AdminUseCase) AddAgency(agency *Domain.Agency) (int, error) {
 	}
 
 	err = auc.AgencyRepo.AddAgencyAdmin(&admin)
+	if err != nil {
+		return auc.ErrorService.InternalServer()
+	}
+
+	agencyStat := Domain.AgencyRating{
+		AgencyID:         agency.UniqueID,
+		Rating:           0,
+		TotalRatingSum:   0,
+		TotalRatingCount: 0,
+	}
+	err = auc.AgencyRatingRepo.CreateAgencyRating(&agencyStat)
 	if err != nil {
 		return auc.ErrorService.InternalServer()
 	}

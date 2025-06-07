@@ -34,3 +34,11 @@ type TravelStats struct {
 	AvgRating     float64 `json:"avg_rating" bson:"avg_rating"`
 	RatedBy       int64   `json:"rated_by" bson:"rated_by"`
 }
+
+type TravelRating struct {
+	ID               primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	TravelID         string             `json:"travel_id" bson:"travel_id"`
+	Rating           float64            `json:"rating" bson:"rating" validate:"required"`
+	TotalRatingSum   int64              `json:"total_rating_sum" bson:"total_rating_sum" validate:"required"`
+	TotalRatingCount int64              `json:"total_rating_count" bson:"total_rating_count" validate:"required"`
+}

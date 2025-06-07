@@ -10,24 +10,26 @@ import (
 )
 
 type TravelUseCase struct {
-	TravelRepo      ITravelRepository
-	TravelStatsRepo ITravelStatsRepository
-	AgencyRepo      IAgencyRepository
-	DriverRepo      IDriverRepository
-	ErrorService    IErrorService
-	BookingRepository IBookingRepository
+	TravelRepo          ITravelRepository
+	TravelStatsRepo     ITravelStatsRepository
+	AgencyRepo          IAgencyRepository
+	DriverRepo          IDriverRepository
+	ErrorService        IErrorService
+	BookingRepository   IBookingRepository
 	NotificationService INotificationUseCase
+	TravelRatingRepo        ITravelRatingRepository
 }
 
-func NewTravelUseCase(travelRepo ITravelRepository, travelStatsRepo ITravelStatsRepository, agencyRepo IAgencyRepository, driverRepo IDriverRepository, errorService IErrorService, bookingRepo IBookingRepository, notificationService INotificationUseCase) ITravelUseCase {
+func NewTravelUseCase(travelRepo ITravelRepository, travelStatsRepo ITravelStatsRepository, agencyRepo IAgencyRepository, driverRepo IDriverRepository, errorService IErrorService, bookingRepo IBookingRepository, notificationService INotificationUseCase, travelRating ITravelRatingRepository) ITravelUseCase {
 	return &TravelUseCase{
-		TravelRepo:      travelRepo,
-		TravelStatsRepo: travelStatsRepo,
-		AgencyRepo:      agencyRepo,
-		DriverRepo:      driverRepo,
-		ErrorService:    errorService,
-		BookingRepository: bookingRepo,
+		TravelRepo:          travelRepo,
+		TravelStatsRepo:     travelStatsRepo,
+		AgencyRepo:          agencyRepo,
+		DriverRepo:          driverRepo,
+		ErrorService:        errorService,
+		BookingRepository:   bookingRepo,
 		NotificationService: notificationService,
+		TravelRatingRepo:        travelRating,
 	}
 }
 
@@ -141,6 +143,17 @@ func (tuc *TravelUseCase) CreateTravel(travel *Domain.Travel) (int, error) {
 		return tuc.ErrorService.InternalServer()
 	}
 
+	var travelRating = Domain.TravelRating{
+		TravelID:         travelID,
+		Rating:           0,
+		TotalRatingSum:   0,
+		TotalRatingCount: 0,
+	}
+	err = tuc.TravelRatingRepo.CreateTravelRating(&travelRating)
+	if err != nil {
+		return tuc.ErrorService.InternalServer()
+	}
+
 	return tuc.ErrorService.NoError()
 }
 
@@ -226,11 +239,11 @@ func (tuc *TravelUseCase) CancelTravel(travelID string) (int, error) {
 		notificationMessage := fmt.Sprintf("Your booking for travel ID %s has been cancelled.", travelID)
 
 		customNotification := &Domain.CustomNotification{
-			ID: primitive.NewObjectID(), // Generate a unique ID for this notification instance
-			Title: notificationTitle,
-			Message: notificationMessage,
-			PostTime: time.Now(), // Set the post time to now
-			Status: Domain.NotificationStatusUnread, // Set initial status to unread
+			ID:       primitive.NewObjectID(), // Generate a unique ID for this notification instance
+			Title:    notificationTitle,
+			Message:  notificationMessage,
+			PostTime: time.Now(),                      // Set the post time to now
+			Status:   Domain.NotificationStatusUnread, // Set initial status to unread
 		}
 
 		_, saveErr := tuc.NotificationService.SaveNotificationsForTraveller(customNotification, *travellerIDs)

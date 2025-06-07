@@ -48,3 +48,11 @@ type PasswordReset struct {
 	OldPassword string `json:"old_password"`
 	NewPassword string `json:"new_password"`
 }
+
+type AgencyRating struct {
+	ID               primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	AgencyID         string             `json:"agency_id" bson:"agency_id" validate:"required"`
+	Rating           float64            `json:"rating" bson:"rating" validate:"required"`
+	TotalRatingSum   int64              `json:"total_rating_sum" bson:"total_rating_sum" validate:"required"`
+	TotalRatingCount int64              `json:"total_rating_count" bson:"total_rating_count" validate:"required"`
+}
