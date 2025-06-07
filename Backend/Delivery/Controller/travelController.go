@@ -33,7 +33,7 @@ func (tc *TravelController) CreateTravel(ctx *gin.Context) {
 		return
 	}
 
-	claims := getAgencyClaims(ctx.Get("agency"))
+	claims := getClaims(ctx.Get("agency"))
 	// fmt.Println(claims)
 	if claims == nil {
 		fmt.Println("claims is nil")

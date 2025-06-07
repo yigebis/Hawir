@@ -121,7 +121,7 @@ func (agc *AgencyController) AddBus(ctx *gin.Context) {
 	// claimsAny, exists := ctx.Get("agency")
 	// fmt.Println(exists, claimsAny)
 
-	claims := getAgencyClaims(ctx.Get("agency"))
+	claims := getClaims(ctx.Get("agency"))
 	// fmt.Println(claims)
 	if claims == nil {
 		fmt.Println("claims is nil")
@@ -170,7 +170,7 @@ func (agc *AgencyController) EditBus(ctx *gin.Context) {
 	}
 
 	claimsAny, exists := ctx.Get("agency")
-	claims := getAgencyClaims(claimsAny, exists)
+	claims := getClaims(claimsAny, exists)
 	if claims == nil {
 		ctx.JSON(400, gin.H{"error": "invalid token claims"})
 		return
@@ -199,7 +199,7 @@ func (agc *AgencyController) GetBusByID(ctx *gin.Context) {
 
 func (agc *AgencyController) GetAllBusesByAgencyID(ctx *gin.Context) {
 	claimsAny, exists := ctx.Get("agency")
-	claims := getAgencyClaims(claimsAny, exists)
+	claims := getClaims(claimsAny, exists)
 	if claims == nil {
 		ctx.JSON(400, gin.H{"error": "invalid token claims"})
 		return
@@ -269,7 +269,7 @@ func (agc *AgencyController) AddDriver(ctx *gin.Context) {
 	}
 
 	//assign the agency ID from the context claims
-	claims := getAgencyClaims(ctx.Get("agency"))
+	claims := getClaims(ctx.Get("agency"))
 	if claims == nil {
 		ctx.JSON(400, gin.H{"error": "invalid token claims"})
 		return
@@ -358,7 +358,7 @@ func (agc *AgencyController) EditDriver(ctx *gin.Context) {
 	}
 
 	//assign the agency ID from the context claims
-	claims := getAgencyClaims(ctx.Get("agency"))
+	claims := getClaims(ctx.Get("agency"))
 	if claims == nil {
 		ctx.JSON(400, gin.H{"error": "invalid token claims"})
 		return
@@ -396,7 +396,7 @@ func (agc *AgencyController) DeleteDriver(ctx *gin.Context) {
 
 	// get the agency ID from the claims
 	claimsAny, exists := ctx.Get("agency")
-	claims := getAgencyClaims(claimsAny, exists)
+	claims := getClaims(claimsAny, exists)
 	if claims == nil {
 		ctx.JSON(400, gin.H{"error": "invalid token claims"})
 		return
@@ -414,7 +414,7 @@ func (agc *AgencyController) DeleteDriver(ctx *gin.Context) {
 func (agc *AgencyController) GetAllDriversByAgencyID(ctx *gin.Context) {
 	// get the agency ID from the claims
 	claimsAny, exists := ctx.Get("agency")
-	claims := getAgencyClaims(claimsAny, exists)
+	claims := getClaims(claimsAny, exists)
 	if claims == nil {
 		ctx.JSON(400, gin.H{"error": "invalid token claims"})
 		return

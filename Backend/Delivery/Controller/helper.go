@@ -83,7 +83,7 @@ func checkAnyFile(fileHeader *multipart.FileHeader) string {
 	return ""
 }
 
-func getAgencyClaims(claimsAny any, exists bool) jwt.MapClaims {
+func getClaims(claimsAny any, exists bool) jwt.MapClaims {
 	if !exists {
 		return nil
 	}

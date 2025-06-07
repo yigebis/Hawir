@@ -12,7 +12,7 @@ type Event struct {
 	Desc          string             `json:"desc" bson:"desc,omitempty" validate:"required,min=10"`
 	DestinationID string             `json:"destination_id" bson:"destination_id,omitempty" validate:"required"`
 	Date          time.Time          `json:"date" bson:"date" validate:"required"`
-	MediaLinks    []string           `json:"media_links" bson:"media_links"`
+	MediaLink     string             `json:"media_link" bson:"media_link"`
 }
 
 type EventFilter struct {

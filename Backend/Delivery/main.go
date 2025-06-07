@@ -143,9 +143,9 @@ func main() {
 	auc := UseCase.NewAdminUseCase(admr, agr, ps, es, ts, ms, tx, rx)
 	buc := UseCase.NewBookingUseCase(br, tr, es)
 	duc := UseCase.NewDestinationUseCase(dr, es)
-	druc := UseCase.NewDriverUseCase(drr, es, ps, ts, ms, tx, rx)
+	druc := UseCase.NewDriverUseCase(drr, es, ps, ts, ms, cs, tx, rx)
 	euc := UseCase.NewEventUseCase(er, dr, es, cs)
-	btuc := UseCase.NewBusTrackingUseCase(btr, es)
+	btuc := UseCase.NewBusTrackingUseCase(btr, drr, tr, es)
 	aduc := UseCase.NewAdvertisementUseCase(adr, es)
 
 	// setting up the controllers
@@ -162,7 +162,7 @@ func main() {
 	bus_tracking_controller := Controller.NewBusTrackingController(hub, btuc)
 
 	maxPageSize, _ := strconv.Atoi(os.Getenv("MAX_SIZE_PER_PAGE"))
-	event_controller := Controller.NewEventController(euc, maxPageSize)
+	event_controller := Controller.NewEventController(euc, maxPageSize, cs)
 
 	apiKey := os.Getenv("CLOUDINARY_API_KEY")
 	apiSecret := os.Getenv("CLOUDINARY_API_SECRET")

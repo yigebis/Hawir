@@ -11,17 +11,19 @@ type DriverUseCase struct {
 	PasswordService IPasswordService
 	TokenService    ITokenService
 	MailService     IMailService
+	CloudService    ICloudService
 	TokenExpiry     int64
 	RefresherExpiry int64
 }
 
-func NewDriverUseCase(dr IDriverRepository, es IErrorService, ps IPasswordService, ts ITokenService, ms IMailService, tx, rx int64) IDriverUseCase {
+func NewDriverUseCase(dr IDriverRepository, es IErrorService, ps IPasswordService, ts ITokenService, ms IMailService, cs ICloudService, tx, rx int64) IDriverUseCase {
 	return &DriverUseCase{
 		DriverRepo:      dr,
 		ErrorService:    es,
 		PasswordService: ps,
 		MailService:     ms,
 		TokenService:    ts,
+		CloudService:    cs,
 		TokenExpiry:     tx,
 		RefresherExpiry: rx,
 	}
@@ -178,7 +180,21 @@ func (du *DriverUseCase) ChangePassword(id string, changePassword *Domain.Driver
 }
 
 func (du *DriverUseCase) EditPhoto(id string, url string) (int, error) {
-	err := du.DriverRepo.EditPhoto(id, url)
+	driver, err := du.DriverRepo.GetDriverByID(id)
+	if err != nil {
+		code, err := du.ErrorService.UserNotFound()
+		return code, err
+	}
+
+	// delete the old photo from cloudinary if the driver has one
+	if driver.Photo != "" {
+		err = du.CloudService.DeleteFromCloud(driver.Photo)
+		if err != nil {
+			fmt.Println("Error deleting old photo from cloudinary:", err)
+		}
+	}
+
+	err = du.DriverRepo.EditPhoto(id, url)
 	if err != nil {
 		code, err := du.ErrorService.InternalServer()
 		return code, err

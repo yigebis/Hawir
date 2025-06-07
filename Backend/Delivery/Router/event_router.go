@@ -19,6 +19,7 @@ func NewEventRouter(ec *Controller.EventController) *EventRouter {
 
 func (er *EventRouter) Run(router *gin.Engine, jwt_string string) {
 	// event endpoints
+	router.POST("/event/upload_preset", Infrastructure.AdminMiddleware(jwt_string), er.EventController.GetUploadPreset)
 	router.POST("/event/add", Infrastructure.AdminMiddleware(jwt_string), er.EventController.AddEvent)
 	router.PUT("/event/edit", Infrastructure.AdminMiddleware(jwt_string), er.EventController.EditEvent)
 	router.DELETE("/event/delete/:id", Infrastructure.AdminMiddleware(jwt_string), er.EventController.DeleteEvent)

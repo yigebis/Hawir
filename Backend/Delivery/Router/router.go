@@ -83,7 +83,7 @@ func (r *Router) Run() {
 	destinationRouter.Run(router)
 	driverRouter.Run(router, r.JWTSigner)
 	event_router.Run(router, r.JWTSigner)
-	busTrackingRouter.Run(router)
+	busTrackingRouter.Run(router, r.JWTSigner)
 	advertisementRouter.Run(router, r.JWTSigner)
 
 	router.Run()

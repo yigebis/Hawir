@@ -33,6 +33,16 @@ func NewBusTrackingController(hub *Infrastructure.Hub, btuc UseCase.IBusTracking
 
 func (btc *BusTrackingController) HandleWebSocket(c *gin.Context) {
 	fmt.Println("WebSocket connection requested")
+
+	// get the role of the user from the context
+	userRole := "N" // Default to non-driver
+	claims, exists := c.Get("driver")
+	mapClaims := getClaims(claims, exists)
+	if mapClaims != nil {
+		fmt.Println("driver")
+		userRole = "D"
+	}
+
 	conn, err := btc.upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		fmt.Println("Error upgrading connection:", err)
@@ -47,30 +57,98 @@ func (btc *BusTrackingController) HandleWebSocket(c *gin.Context) {
 		btc.Hub.Unregister <- conn
 	}()
 
-	for {
-		fmt.Println("Waiting for messages...")
-		_, message, err := conn.ReadMessage()
-		if err != nil {
-			fmt.Println("Error reading message:", err)
-			return
+	go func() {
+		for {
+			select {
+			case message, ok := <-btc.Hub.Broadcast:
+				if !ok {
+					fmt.Println("Broadcast channel closed")
+					return
+				}
+
+				err := conn.WriteMessage(websocket.TextMessage, message)
+				if err != nil {
+					fmt.Println("Error writing message to WebSocket:", err)
+					return
+				}
+			}
 		}
+	}()
 
-		var trackingData Domain.BusTracking
-		err = json.Unmarshal(message, &trackingData)
-		if err != nil {
-			fmt.Println("Error unmarshalling message:", err)
-			continue
+	// read messages only if the user is a driver
+	if userRole == "D" {
+		for {
+			fmt.Println("Waiting for messages...")
+			_, message, err := conn.ReadMessage()
+			if err != nil {
+				fmt.Println("Error reading message:", err)
+				return
+			}
+
+			var trackingData Domain.BusTracking
+			err = json.Unmarshal(message, &trackingData)
+			if err != nil {
+				fmt.Println("Error unmarshalling message:", err)
+				continue
+			}
+
+			trackingData.Timestamp = time.Now()
+
+			fmt.Println("Received tracking data:", trackingData)
+			_, err = btc.BusTrackingUseCase.SaveBusTracking(&trackingData)
+			if err != nil {
+				fmt.Println("Error saving bus tracking data:", err)
+				continue
+			}
+
+			btc.Hub.Broadcast <- message
 		}
-
-		trackingData.Timestamp = time.Now()
-
-		fmt.Println("Received tracking data:", trackingData)
-		_, err = btc.BusTrackingUseCase.SaveBusTracking(&trackingData)
-		if err != nil {
-			fmt.Println("Error saving bus tracking data:", err)
-			continue
-		}
-
-		btc.Hub.Broadcast <- message
+	} else {
+		select {}
 	}
+}
+
+func (btc *BusTrackingController) StartBusTracking(c *gin.Context) {
+	claims, exists := c.Get("driver")
+	mapClaims := getClaims(claims, exists)
+	if mapClaims == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	tripID := c.Param("tripID")
+	if tripID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Trip ID is required"})
+		return
+	}
+
+	code, err := btc.BusTrackingUseCase.StartBusTracking(tripID, mapClaims["id"].(string))
+	if err != nil {
+		c.JSON(code, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(code, gin.H{"message": "Bus tracking started successfully"})
+}
+
+func (btc *BusTrackingController) StopBusTracking(c *gin.Context) {
+	claims, exists := c.Get("driver")
+	mapClaims := getClaims(claims, exists)
+	if mapClaims == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	tripID := c.Query("tripID")
+	if tripID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Trip ID is required"})
+		return
+	}
+
+	code, err := btc.BusTrackingUseCase.StopBusTracking(tripID, mapClaims["id"].(string))
+	if err != nil {
+		c.JSON(code, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(code, gin.H{"message": "Bus tracking stopped successfully"})
 }

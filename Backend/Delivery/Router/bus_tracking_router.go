@@ -2,6 +2,7 @@ package Router
 
 import (
 	"Hawir/Delivery/Controller"
+	"Hawir/Infrastructure"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,6 +17,8 @@ func NewBusTrackingRouter(btc *Controller.BusTrackingController) *BusTrackingRou
 	}
 }
 
-func (btr *BusTrackingRouter) Run(router *gin.Engine) {
-	router.GET("/ws", btr.BusTrackingController.HandleWebSocket)
+func (btr *BusTrackingRouter) Run(router *gin.Engine, jwt_string string) {
+	router.GET("/ws", Infrastructure.AnyLoggedInMiddleware(jwt_string), btr.BusTrackingController.HandleWebSocket)
+	router.POST("/bus_tracking/start/:tripID", btr.BusTrackingController.StartBusTracking)
+	router.POST("/bus_tracking/stop/:tripID", btr.BusTrackingController.StopBusTracking)
 }
