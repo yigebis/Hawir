@@ -75,7 +75,7 @@ func (adc *AdvertisementController) AddAdvertisement(c *gin.Context) {
 
 	// get the agency ID from the JWT token
 	claims, exists := c.Get("agency")
-	mapClaims := getAgencyClaims(claims, exists)
+	mapClaims := getClaims(claims, exists)
 	if mapClaims == nil {
 		c.JSON(401, gin.H{"error": "Unauthorized"})
 		return
@@ -141,8 +141,8 @@ func (adc *AdvertisementController) DeleteAdvertisement(c *gin.Context) {
 	}
 
 	// get the agency ID from the JWT token
-	claims, exists := c.Get("agency_id")
-	mapClaims := getAgencyClaims(claims, exists)
+	claims, exists := c.Get("agency")
+	mapClaims := getClaims(claims, exists)
 	if mapClaims == nil {
 		c.JSON(401, gin.H{"error": "Unauthorized"})
 		return

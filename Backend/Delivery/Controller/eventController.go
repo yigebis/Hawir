@@ -11,17 +11,27 @@ import (
 )
 
 type EventController struct {
-	EventUseCase   UseCase.IEventUseCase
-	V              *validator.Validate
-	MaxSizePerPage int
+	EventUseCase      UseCase.IEventUseCase
+	V                 *validator.Validate
+	MaxSizePerPage    int
+	CloudinaryService UseCase.ICloudService
 }
 
-func NewEventController(euc UseCase.IEventUseCase, maxSizePerPage int) *EventController {
+func NewEventController(euc UseCase.IEventUseCase, maxSizePerPage int, cloudinaryService UseCase.ICloudService) *EventController {
 	return &EventController{
-		EventUseCase:   euc,
-		V:              validator.New(),
-		MaxSizePerPage: maxSizePerPage,
+		EventUseCase:      euc,
+		V:                 validator.New(),
+		MaxSizePerPage:    maxSizePerPage,
+		CloudinaryService: cloudinaryService,
 	}
+}
+
+func (ec *EventController) GetUploadPreset(ctx *gin.Context) {
+	cloudName, uploadPreset := ec.CloudinaryService.GetEventPublicID()
+	ctx.JSON(200, gin.H{
+		"cloud_name":    cloudName,
+		"upload_preset": uploadPreset,
+	})
 }
 
 func (ec *EventController) AddEvent(ctx *gin.Context) {
@@ -34,27 +44,28 @@ func (ec *EventController) AddEvent(ctx *gin.Context) {
 		ctx.JSON(400, gin.H{"error": "Invalid date format"})
 		return
 	}
+	mediaLink := ctx.PostForm("media_link")
 
-	form, err := ctx.MultipartForm()
-	if err != nil {
-		ctx.JSON(400, gin.H{"error": "invalid multipart form"})
-		return
-	}
-	media := form.File["media"]
+	// form, err := ctx.MultipartForm()
+	// if err != nil {
+	// 	ctx.JSON(400, gin.H{"error": "invalid multipart form"})
+	// 	return
+	// }
+	// media := form.File["media"]
 
-	for _, fileHeader := range media {
-		errMessage := checkAnyFile(fileHeader)
-		if errMessage != "" {
-			ctx.JSON(400, gin.H{"error": errMessage})
-			return
-		}
-	}
+	// for _, fileHeader := range media {
+	// 	errMessage := checkAnyFile(fileHeader)
+	// 	if errMessage != "" {
+	// 		ctx.JSON(400, gin.H{"error": errMessage})
+	// 		return
+	// 	}	}
 
 	event := Domain.Event{
 		Title:         title,
 		Desc:          desc,
 		DestinationID: destinationID,
 		Date:          date,
+		MediaLink:     mediaLink,
 	}
 
 	// fmt.Println("Event:", event)
@@ -65,7 +76,7 @@ func (ec *EventController) AddEvent(ctx *gin.Context) {
 		return
 	}
 
-	statusCode, err := ec.EventUseCase.AddEvent(&event, &media)
+	statusCode, err := ec.EventUseCase.AddEvent(&event)
 	if err != nil {
 		ctx.JSON(statusCode, gin.H{"error": err.Error()})
 		return
@@ -158,27 +169,29 @@ func (ec *EventController) EditEvent(ctx *gin.Context) {
 		ctx.JSON(400, gin.H{"error": "Invalid date format"})
 		return
 	}
+	mediaLink := ctx.PostForm("media_link")
 
-	form, err := ctx.MultipartForm()
-	if err != nil {
-		ctx.JSON(400, gin.H{"error": "invalid multipart form"})
-		return
-	}
-	media := form.File["media"]
+	// form, err := ctx.MultipartForm()
+	// if err != nil {
+	// 	ctx.JSON(400, gin.H{"error": "invalid multipart form"})
+	// 	return
+	// }
+	// media := form.File["media"]
 
-	for _, fileHeader := range media {
-		errMessage := checkAnyFile(fileHeader)
-		if errMessage != "" {
-			ctx.JSON(400, gin.H{"error": errMessage})
-			return
-		}
-	}
+	// for _, fileHeader := range media {
+	// 	errMessage := checkAnyFile(fileHeader)
+	// 	if errMessage != "" {
+	// 		ctx.JSON(400, gin.H{"error": errMessage})
+	// 		return
+	// 	}
+	// }
 
 	event := Domain.Event{
 		Title:         title,
 		Desc:          desc,
 		DestinationID: destinationID,
 		Date:          date,
+		MediaLink:     mediaLink,
 	}
 
 	err = ec.V.Struct(&event)
@@ -187,7 +200,7 @@ func (ec *EventController) EditEvent(ctx *gin.Context) {
 		return
 	}
 
-	statusCode, err := ec.EventUseCase.EditEvent(eventID, &event, &media)
+	statusCode, err := ec.EventUseCase.EditEvent(eventID, &event)
 	if err != nil {
 		ctx.JSON(statusCode, gin.H{"error": err.Error()})
 		return

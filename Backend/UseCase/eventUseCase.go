@@ -3,7 +3,8 @@ package UseCase
 import (
 	"Hawir/Domain"
 	"fmt"
-	"mime/multipart"
+
+	// "mime/multipart"
 	"time"
 )
 
@@ -23,7 +24,7 @@ func NewEventUseCase(er IEventRepository, dr IDestinationRepository, es IErrorSe
 	}
 }
 
-func (euc *EventUseCase) AddEvent(event *Domain.Event, media *[]*multipart.FileHeader) (int, error) {
+func (euc *EventUseCase) AddEvent(event *Domain.Event) (int, error) {
 	// check if the date is in the future
 	if event.Date.Before(time.Now()) {
 		return euc.ErrorService.InvalidEventDate()
@@ -37,13 +38,13 @@ func (euc *EventUseCase) AddEvent(event *Domain.Event, media *[]*multipart.FileH
 	}
 
 	// upload the media files
-	for _, fileHeader := range *media {
-		url, err := euc.CloudService.UploadEventMediaToCloud(fileHeader)
-		if err != nil {
-			return euc.ErrorService.UnableToUploadFile()
-		}
-		event.MediaLinks = append(event.MediaLinks, url)
-	}
+	// for _, fileHeader := range *media {
+	// 	url, err := euc.CloudService.UploadEventMediaToCloud(fileHeader)
+	// 	if err != nil {
+	// 		return euc.ErrorService.UnableToUploadFile()
+	// 	}
+	// 	event.MediaLinks = append(event.MediaLinks, url)
+	// }
 
 	err = euc.EventRepository.AddEvent(event)
 	if err != nil {
@@ -76,22 +77,34 @@ func (euc *EventUseCase) GetAllEvents(page, size int, eventFilter *Domain.EventF
 	return events, code, err
 }
 
-func (euc *EventUseCase) EditEvent(id string, event *Domain.Event, media *[]*multipart.FileHeader) (int, error) {
+func (euc *EventUseCase) EditEvent(id string, event *Domain.Event) (int, error) {
 	// check if the date is in the future
 	if event.Date.Before(time.Now()) {
 		return euc.ErrorService.InvalidEventDate()
 	}
 
 	// upload the media files
-	for _, fileHeader := range *media {
-		url, err := euc.CloudService.UploadEventMediaToCloud(fileHeader)
-		if err != nil {
-			return euc.ErrorService.UnableToUploadFile()
-		}
-		event.MediaLinks = append(event.MediaLinks, url)
+	// for _, fileHeader := range *media {
+	// 	url, err := euc.CloudService.UploadEventMediaToCloud(fileHeader)
+	// 	if err != nil {
+	// 		return euc.ErrorService.UnableToUploadFile()
+	// 	}
+	// 	event.MediaLinks = append(event.MediaLinks, url)
+	// }
+
+	// delete the old media file
+	oldEvent, err := euc.EventRepository.GetEventByID(id)
+	if err != nil {
+		code, err := euc.ErrorService.EventNotFound()
+		return code, err
 	}
 
-	err := euc.EventRepository.EditEvent(id, event)
+	err = euc.CloudService.DeleteFromCloud(oldEvent.MediaLink)
+	if err != nil {
+		fmt.Println("Error deleting old media files:", err)
+	}
+
+	err = euc.EventRepository.EditEvent(id, event)
 	if err != nil {
 		return euc.ErrorService.InternalServer()
 	}
@@ -107,14 +120,18 @@ func (euc *EventUseCase) DeleteEvent(id string) (int, error) {
 	}
 
 	// delete the media files
-	for _, url := range event.MediaLinks {
-		// this function will return an error if the file deletion is not successful, but it shouldn't affect the functionality
-		euc.CloudService.DeleteFromCloud(url)
-		if err != nil {
-			err = nil
-			// return euc.ErrorService.UnableToDeleteFile()
-		}
+	err = euc.CloudService.DeleteFromCloud(event.MediaLink)
+	if err != nil {
+		fmt.Println("Error deleting media files:", err)
 	}
+	// for _, url := range event.MediaLink {
+	// 	// this function will return an error if the file deletion is not successful, but it shouldn't affect the functionality
+	// 	euc.CloudService.DeleteFromCloud(url)
+	// 	if err != nil {
+	// 		err = nil
+	// 		// return euc.ErrorService.UnableToDeleteFile()
+	// 	}
+	// }
 
 	err = euc.EventRepository.DeleteEvent(id)
 	if err != nil {

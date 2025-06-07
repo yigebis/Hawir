@@ -19,8 +19,8 @@ type Bus struct {
 }
 
 type BusTracking struct {
-	BusID     string    `json:"bus_id" bson:"bus_id,omitempty"`
-	Latitude  float64   `json:"latitude" bson:"latitude,omitempty"`
-	Longitude float64   `json:"longitude" bson:"longitude,omitempty"`
+	BusID     string    `json:"bus_id" bson:"bus_id,omitempty" validate:"required"`
+	Latitude  float64   `json:"latitude" bson:"latitude,omitempty" validate:"required"`
+	Longitude float64   `json:"longitude" bson:"longitude,omitempty" validate:"required"`
 	Timestamp time.Time `json:"timestamp" bson:"timestamp,omitempty"`
 }

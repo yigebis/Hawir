@@ -91,13 +91,14 @@ func (dc *DestinationController) EditDestination(ctx *gin.Context) {
 	}
 
 	destination := Domain.Destination{}
-	destination.ID = objID
 
 	err = ctx.ShouldBindJSON(&destination)
 	if err != nil {
 		ctx.JSON(400, gin.H{"error": "invalid request payload"})
 		return
 	}
+
+	destination.ID = objID
 
 	err = dc.V.Struct(destination)
 	if err != nil {
