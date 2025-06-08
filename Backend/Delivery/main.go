@@ -129,7 +129,7 @@ func main() {
 	cr := Repository.NewCodeRepository(code_context, code_collection)
 	btr := Repository.NewBusTrackingRepository(bus_tracking_collection, bus_tracking_context)
 	adr := Repository.NewAdvertisementRepository(ads_collection, ads_context)
-	rr := Repository.NewReviewRepository(review_context, review_collection)
+	rr := Repository.NewReviewRepository(review_context, review_collection, ur)
 	arr := Repository.NewAgencyRatingRepository(agency_ratings_context, agency_ratings_collection)
 	trr := Repository.NewTravelRatingRepository(travel_ratings_context, travel_ratings_collection)
 
