@@ -35,6 +35,11 @@ func (rvc *ReviewController) PostReview(ctx *gin.Context) {
 	}
 
 	err = rvc.V.Struct(review)
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": "invalid request payload"})
+		return
+	}
+	
 	statusCode, err := rvc.ReviewUseCase.PostReview(&review)
 	if err != nil {
 		ctx.JSON(statusCode, gin.H{"error": err.Error()})
@@ -45,7 +50,7 @@ func (rvc *ReviewController) PostReview(ctx *gin.Context) {
 }
 
 func (rvc *ReviewController) GetReviewsForTravel(ctx *gin.Context) {
-	id := ctx.Param("id")
+	id := ctx.Param("travelId")
 
 	if id == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "missing travel ID"})

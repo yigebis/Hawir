@@ -15,3 +15,12 @@ type RatingAndFeedback struct {
 	TravelerID string             `json:"traveler_id" bson:"traveler_id" validate:"required"`
 	PostTime   time.Time          `json:"post_time" bson:"post_time,omitempty"`
 }
+
+type RatingAndFeedbackDisplay struct {
+	Comment       string    `json:"comment"`
+	Rating        int64     `json:"rating"`
+	TravelID      string    `json:"travel_id"`
+	TravelerName  string    `json:"traveler_name"`
+	TravelerPhoto string    `json:"traveler_photo"`
+	PostTime      time.Time `json:"post_time"`
+}

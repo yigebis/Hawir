@@ -72,7 +72,7 @@ func (rvu *ReviewUseCase) PostReview(review *Domain.RatingAndFeedback) (int, err
 	return rvu.ErrorService.NoError()
 }
 
-func (rvu *ReviewUseCase) GetReviewsForTravel(travelId string) ([]Domain.RatingAndFeedback, int, error) {
+func (rvu *ReviewUseCase) GetReviewsForTravel(travelId string) ([]Domain.RatingAndFeedbackDisplay, int, error) {
 	reviews, err := rvu.ReviewRepo.GetReviewsForTravel(travelId)
 	if err != nil {
 		statusCode, err := rvu.ErrorService.InternalServer()

@@ -18,7 +18,7 @@ import (
 	"google.golang.org/api/option"
 
 	// comment it for production
-	// "github.com/joho/godotenv"
+	"github.com/joho/godotenv"
 
 	"github.com/robfig/cron/v3" // Import the cron scheduler library
 
@@ -45,9 +45,9 @@ func initializeFirebaseApp() *firebase.App {
 
 func main() {
 	//comment it for production
-	// if err := godotenv.Load(); err != nil {
-	// 	log.Fatal("error loading .env file")
-	// }
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("error loading .env file")
+	}
 
 	firebaseApp = initializeFirebaseApp() // Initialize Firebase
 
@@ -129,7 +129,7 @@ func main() {
 	cr := Repository.NewCodeRepository(code_context, code_collection)
 	btr := Repository.NewBusTrackingRepository(bus_tracking_collection, bus_tracking_context)
 	adr := Repository.NewAdvertisementRepository(ads_collection, ads_context)
-	rr := Repository.NewReviewRepository(review_context, review_collection)
+	rr := Repository.NewReviewRepository(review_context, review_collection, ur)
 	arr := Repository.NewAgencyRatingRepository(agency_ratings_context, agency_ratings_collection)
 	trr := Repository.NewTravelRatingRepository(travel_ratings_context, travel_ratings_collection)
 
