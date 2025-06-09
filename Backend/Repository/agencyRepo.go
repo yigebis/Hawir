@@ -178,12 +178,7 @@ func (agr *AgencyRepository) EditAgencyAdmin(admin *Domain.AgencyAdmin) error {
 }
 
 func (agr *AgencyRepository) GetAgencyForUserById(agencyId string) (*Domain.AgencyDisplay, error) {
-	objId, err := primitive.ObjectIDFromHex(agencyId)
-	if err != nil {
-		return nil, errors.New("invalid agency ID format")
-	}
-
-	filter := bson.M{"_id": objId}
+	filter := bson.M{"unique_id": agencyId}
 	var agency Domain.Agency
 	res := agr.AgencyCollection.FindOne(agr.DbCtx, filter)
 
@@ -191,7 +186,7 @@ func (agr *AgencyRepository) GetAgencyForUserById(agencyId string) (*Domain.Agen
 		return nil, errors.New("agency not found")
 	}
 
-	err = res.Decode(&agency)
+	err := res.Decode(&agency)
 
 	if err != nil {
 		return nil, err

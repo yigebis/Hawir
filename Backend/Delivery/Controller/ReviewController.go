@@ -82,7 +82,7 @@ func (rvu *ReviewController) GetTravelRating(ctx *gin.Context) {
 }
 
 func (rvu *ReviewController) GetAgencyRating(ctx *gin.Context) {
-	agencyId := ctx.Param("AgencyId")
+	agencyId := ctx.Param("agencyId")
 	if agencyId == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "missing agency ID"})
 		return

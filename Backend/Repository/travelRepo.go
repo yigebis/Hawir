@@ -148,7 +148,7 @@ func (tr *TravelRepository) SearchTravel(searchParams *Domain.SearchParams) (*[]
 	}
 
 	if searchParams.StartLocation != "" {
-		filter["pickup_locations"] = bson.M{"$in": []string{searchParams.StartLocation}}
+		filter["start_location"] = searchParams.StartLocation
 	}
 
 	if !(searchParams.DateMin.IsZero()) {
