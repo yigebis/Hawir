@@ -23,7 +23,7 @@ func NewBookingController(buc UseCase.IBookingUseCase) *BookingController {
 
 func (bc *BookingController) Book(ctx *gin.Context) {
 	var booking = Domain.Booking{}
-	
+
 	err := ctx.ShouldBindJSON(&booking)
 	if err != nil {
 		ctx.JSON(400, gin.H{"error": "invalid request payload"})
@@ -53,6 +53,8 @@ func (bc *BookingController) ChooseSeat(ctx *gin.Context) {
 		ctx.JSON(400, gin.H{"error": "invalid request payload"})
 		return
 	}
+
+	seat.SeatNo -= 1 // Adjusting seat number to be zero-based
 
 	statusCode, err := bc.BookingUseCase.ChooseSeat(&seat)
 	if err != nil {
