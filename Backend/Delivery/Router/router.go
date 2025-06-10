@@ -20,6 +20,7 @@ type Router struct {
 	AdvertisementController *Controller.AdvertisementController
 	NotificationController  *Controller.NotificationController
 	ReviewController        *Controller.ReviewController
+	ReportController        *Controller.ReportController
 	JWTSigner               string
 }
 
@@ -36,6 +37,7 @@ func NewRouter(
 	adc *Controller.AdvertisementController,
 	nc *Controller.NotificationController,
 	rc *Controller.ReviewController,
+	repc *Controller.ReportController,
 	jwtSigner string,
 ) *Router {
 	return &Router{
@@ -50,7 +52,8 @@ func NewRouter(
 		BusTrackingController:   btc,
 		AdvertisementController: adc,
 		NotificationController:  nc,
-		ReviewController: rc,
+		ReviewController:        rc,
+		ReportController:        repc,
 		JWTSigner:               jwtSigner,
 	}
 }
@@ -81,6 +84,7 @@ func (r *Router) Run() {
 	advertisementRouter := NewAdvertisementRouter(r.AdvertisementController)
 	notificationRouter := NewNotificationRouter(r.NotificationController)
 	reviewRouter := NewReviewRouter(r.ReviewController)
+	reportRouter := NewReportRouter(*r.ReportController)
 
 	userRouter.Run(router, r.JWTSigner)
 	agencyRouter.Run(router, r.JWTSigner)
@@ -94,6 +98,7 @@ func (r *Router) Run() {
 	advertisementRouter.Run(router, r.JWTSigner)
 	notificationRouter.Run(router, r.JWTSigner)
 	reviewRouter.Run(router, r.JWTSigner)
+	reportRouter.Run(router, r.JWTSigner)
 
 	router.Run()
 }
