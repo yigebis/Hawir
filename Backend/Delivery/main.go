@@ -135,7 +135,7 @@ func main() {
 	rr := Repository.NewReviewRepository(review_context, review_collection, ur)
 	arr := Repository.NewAgencyRatingRepository(agency_ratings_context, agency_ratings_collection)
 	trr := Repository.NewTravelRatingRepository(travel_ratings_context, travel_ratings_collection)
-	repr := Repository.NewReportRepository(booking_collection, booking_context)
+	repr := Repository.NewReportRepository(booking_collection, travel_stat_collection, travel_collection, booking_context)
 	bus_r := Repository.NewBusRepository(bus_collection, bus_context)
 
 	jwtSecret := os.Getenv("JWT_SECRET")
