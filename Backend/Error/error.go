@@ -44,10 +44,12 @@ var ErrInvalidStartTime = errors.New("planned start time is in the past")
 var ErrStartPickupLocation = errors.New("start location is not in the pickup locations")
 var ErrInvalidPrice = errors.New("price is invalid")
 var ErrDriverBusy = errors.New("driver is busy")
+var ErrDriverNotFound = errors.New("driver not found")
 
 // Agency errors
 var ErrAgencyNotFound = errors.New("agency not found")
 var ErrBusNotFound = errors.New("bus not found")
+var ErrBusBusy = errors.New("bus is busy")
 
 // bus errors
 var ErrIncorrectPlateNumber = errors.New("incorrect plate number")
@@ -171,6 +173,10 @@ func (e *Error) DriverBusy() (int, error) {
 	return http.StatusConflict, ErrDriverBusy
 }
 
+func (e *Error) DriverNotFound() (int, error) {
+	return http.StatusNotFound, ErrDriverNotFound
+}
+
 // Agency errors
 func (e *Error) AgencyNotFound() (int, error) {
 	return http.StatusNotFound, ErrAgencyNotFound
@@ -182,6 +188,10 @@ func (e *Error) IncorrectPlateNo() (int, error) {
 
 func (e *Error) BusNotFound() (int, error) {
 	return http.StatusNotFound, ErrBusNotFound
+}
+
+func (e *Error) BusBusy() (int, error) {
+	return http.StatusConflict, ErrBusBusy
 }
 
 // Booking errors

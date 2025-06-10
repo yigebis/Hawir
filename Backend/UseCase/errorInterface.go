@@ -36,10 +36,12 @@ type IErrorService interface {
 	InvalidEstArrivalTime() (int, error)
 	InvalidPrice() (int, error)
 	DriverBusy() (int, error)
+	DriverNotFound() (int, error)
 
 	// Agency errors
 	AgencyNotFound() (int, error)
 	BusNotFound() (int, error)
+	BusBusy() (int, error)
 
 	// Booking errors
 	BookingNotFound() (int, error)

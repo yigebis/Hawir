@@ -12,6 +12,7 @@ type AgencyUseCase struct {
 	AgencyRepo      IAgencyRepository
 	DriverRepo      IDriverRepository
 	CodeRepo        ICodeRepository
+	BusRepo         IBusRepository
 	PasswordService IPasswordService
 	TokenService    ITokenService
 	ErrorService    IErrorService
@@ -23,11 +24,12 @@ type AgencyUseCase struct {
 	RefresherExpiry int64
 }
 
-func NewAgencyUseCase(agr IAgencyRepository, drr IDriverRepository, cr ICodeRepository, ps IPasswordService, ts ITokenService, es IErrorService, ms IMailService, cs ICloudService, ex, tx, rx int64) IAgencyUseCase {
+func NewAgencyUseCase(agr IAgencyRepository, drr IDriverRepository, cr ICodeRepository, bus_r IBusRepository, ps IPasswordService, ts ITokenService, es IErrorService, ms IMailService, cs ICloudService, ex, tx, rx int64) IAgencyUseCase {
 	return &AgencyUseCase{
 		AgencyRepo:      agr,
 		DriverRepo:      drr,
 		CodeRepo:        cr,
+		BusRepo:         bus_r,
 		PasswordService: ps,
 		TokenService:    ts,
 		ErrorService:    es,
@@ -137,7 +139,7 @@ func (aguc *AgencyUseCase) GetAllAgencies() (*[]Domain.Agency, int, error) {
 
 func (aguc *AgencyUseCase) AddBus(bus *Domain.Bus) (int, error) {
 	// Check if the bus with the same plate number exists
-	_, err := aguc.AgencyRepo.GetBusByPlateNumber(bus.PlateNumber)
+	_, err := aguc.BusRepo.GetBusByPlateNumber(bus.PlateNumber)
 
 	if err == nil {
 		// Bus with plate number already exists
@@ -154,7 +156,7 @@ func (aguc *AgencyUseCase) AddBus(bus *Domain.Bus) (int, error) {
 	bus.RegistrationDate = time.Now()
 	bus.CurrentTrips = []string{}
 
-	err = aguc.AgencyRepo.AddBus(bus)
+	err = aguc.BusRepo.AddBus(bus)
 	if err != nil {
 		return aguc.ErrorService.InternalServer()
 	}
@@ -164,7 +166,7 @@ func (aguc *AgencyUseCase) AddBus(bus *Domain.Bus) (int, error) {
 
 func (aguc *AgencyUseCase) EditBus(bus *Domain.Bus, agencyID string) (int, error) {
 	// first get the bus info
-	busInfo, err := aguc.AgencyRepo.GetBusByID(bus.ID.Hex())
+	busInfo, err := aguc.BusRepo.GetBusByID(bus.ID.Hex())
 	if err != nil {
 		return aguc.ErrorService.BusNotFound()
 	}
@@ -173,7 +175,7 @@ func (aguc *AgencyUseCase) EditBus(bus *Domain.Bus, agencyID string) (int, error
 		return aguc.ErrorService.NotAuthorized()
 	}
 
-	err = aguc.AgencyRepo.EditBus(bus)
+	err = aguc.BusRepo.EditBus(bus)
 	if err != nil {
 		return aguc.ErrorService.InternalServer()
 	}
@@ -182,7 +184,7 @@ func (aguc *AgencyUseCase) EditBus(bus *Domain.Bus, agencyID string) (int, error
 }
 
 func (aguc *AgencyUseCase) GetBusByID(id string) (*Domain.Bus, int, error) {
-	bus, err := aguc.AgencyRepo.GetBusByID(id)
+	bus, err := aguc.BusRepo.GetBusByID(id)
 	if err != nil {
 		// code, err := aguc.ErrorService.BusNotFound()
 		code, err := aguc.ErrorService.NoError()
@@ -194,7 +196,7 @@ func (aguc *AgencyUseCase) GetBusByID(id string) (*Domain.Bus, int, error) {
 }
 
 func (aguc *AgencyUseCase) GetAllBusesByAgencyID(agencyID string) (*[]Domain.Bus, int, error) {
-	buses, err := aguc.AgencyRepo.GetAllBusesByAgencyID(agencyID)
+	buses, err := aguc.BusRepo.GetAllBusesByAgencyID(agencyID)
 	if err != nil {
 		// code, err := aguc.ErrorService.BusNotFound()
 		code, err := aguc.ErrorService.NoError()
@@ -304,7 +306,6 @@ func (aguc *AgencyUseCase) EditDriver(driver *Domain.Driver, fileHeader *multipa
 		filePath = url
 		driver.Photo = filePath
 	}
-	
 
 	err = aguc.DriverRepo.UpdateDriver(driver.ID.Hex(), driver)
 	if err != nil {

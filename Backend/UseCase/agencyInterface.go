@@ -44,11 +44,4 @@ type IAgencyRepository interface {
 	GetAgencyAdmin(email string) (*Domain.AgencyAdmin, error)
 	GetAgencyForUserById(string) (*Domain.AgencyDisplay, error)
 	ResetAgencyAdminPassword(email, password string) error
-
-	// Vehicle management
-	AddBus(bus *Domain.Bus) error
-	EditBus(bus *Domain.Bus) error
-	GetBusByID(id string) (*Domain.Bus, error)
-	GetBusByPlateNumber(plateNumber string) (*Domain.Bus, error)
-	GetAllBusesByAgencyID(agencyID string) (*[]Domain.Bus, error)
 }
