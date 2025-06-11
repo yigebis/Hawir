@@ -61,6 +61,7 @@ type TravelBookings struct {
 	SeatNo        int       `json:"seat_no"`
 	Phone         string    `json:"phone"`
 	Email         string    `json:"email"`
+	PaymentType   string    `json:"payment_type"`
 	BookTime      time.Time `json:"book_time"`
 	BookTimeLimit time.Time `json:"book_time_limit"`
 	PayStatus     string    `json:"pay_status"`
