@@ -93,9 +93,9 @@ func (tuc *TravelUseCase) CheckDriverAvailability(driverID string, plannedStartT
 	return code, err
 }
 
-func (tuc *TravelUseCase) CheckBusAvailability(busID string, plannedStartTime time.Time) (int, error) {
+func (tuc *TravelUseCase) CheckBusAvailability(busRef string, plannedStartTime time.Time) (int, error) {
 	// get the bus by ID
-	bus, err := tuc.BusRepo.GetBusByID(busID)
+	bus, err := tuc.BusRepo.GetBusByPlateNumber(busRef)
 	if err != nil {
 		code, err := tuc.ErrorService.BusNotFound()
 		return code, err
