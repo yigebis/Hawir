@@ -88,13 +88,13 @@ func (br *BusRepository) GetAllBusesByAgencyID(agencyID string) (*[]Domain.Bus, 
 	return &buses, nil
 }
 
-func (br *BusRepository) AssignTrip(id string, tripID string) error {
-	objID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return err
-	}
+func (br *BusRepository) AssignTrip(busRef string, tripID string) error {
+	// objID, err := primitive.ObjectIDFromHex(id)
+	// if err != nil {
+	// 	return err
+	// }
 
-	filter := bson.M{"_id": objID}
+	filter := bson.M{"plate_number": busRef}
 	update := bson.M{"$push": bson.M{"current_trips": tripID}}
 
 	_, err = br.BusCollection.UpdateOne(br.DbCtx, filter, update)
