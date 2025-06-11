@@ -229,13 +229,12 @@ func (b *BookingRepository) GetBookingByBookingRef(booking_ref string) (*Domain.
 func (b *BookingRepository) GetAllBookings(travelID string) (*[]Domain.TravelBookings, error) {
 	filter := bson.M{"travel_id": travelID}
 
-	var bookings []Domain.Booking
-
 	cursor, err := b.BookingCollection.Find(b.DbCtx, filter)
 	if err != nil {
 		return nil, err
 	}
 
+	var travelBookings []Domain.TravelBookings
 	defer cursor.Close(b.DbCtx)
 	for cursor.Next(b.DbCtx) {
 		var booking Domain.Booking
@@ -244,41 +243,20 @@ func (b *BookingRepository) GetAllBookings(travelID string) (*[]Domain.TravelBoo
 			return nil, err
 		}
 
-		bookings = append(bookings, booking)
-	}
-
-	if err := cursor.Err(); err != nil {
-		return nil, err
-	}
-
-	var travelBookings []Domain.TravelBookings
-	for _, booking := range bookings {
-		// Assuming TravelerID is stored as a string ObjectID in Booking
-		objId, err := primitive.ObjectIDFromHex(booking.TravelerID)
-		if err != nil {
-			// Log or handle this error appropriately - invalid TravelerID in a booking
-			fmt.Printf("Invalid traveler ID format in booking %s: %v\n", booking.ID.Hex(), err)
-			continue // Skip this booking if TravelerID is invalid
-		}
-
-		filter = bson.M{"_id": objId} // Filter by user's ObjectID
-		var user Domain.User
-		err = b.UserCollection.FindOne(b.DbCtx, filter).Decode(&user)
-		if err != nil {
-			// Log or handle this error - user not found for a booking
-			fmt.Printf("User not found for traveler ID %s in booking %s: %v\n", booking.TravelerID, booking.ID.Hex(), err)
-			continue // Skip this booking if user is not found
-		}
-
 		travelBookings = append(travelBookings, Domain.TravelBookings{
-			TravelerName:  user.FirstName + " " + user.LastName,
+			TravelerName:  booking.FirstName + " " + booking.LastName,
 			SeatNo:        booking.SeatNo,
-			Phone:         user.PhoneNumber,
-			Email:         user.Email,
+			Phone:         booking.PhoneNumber,
+			Email:         booking.Email,
+			PaymentType:   booking.PaymentType,
 			BookTime:      booking.BookTime,
 			BookTimeLimit: booking.BookTimeLimit,
 			PayStatus:     booking.Status,
 		})
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
 	}
 
 	return &travelBookings, nil

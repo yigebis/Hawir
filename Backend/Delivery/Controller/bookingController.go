@@ -48,7 +48,7 @@ func (bc *BookingController) BookAndPayFromAgency(ctx *gin.Context) {
 		return
 	}
 
-	createdBooking, statusCode, err := bc.BookingUseCase.Book(&booking)
+	createdBooking, statusCode, err := bc.BookingUseCase.BookAndPayFromAgency(&booking)
 	if err != nil {
 		ctx.JSON(statusCode, gin.H{"error": err.Error()})
 		return
