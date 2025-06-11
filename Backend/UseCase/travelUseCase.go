@@ -22,12 +22,13 @@ type TravelUseCase struct {
 	BusRepo             IBusRepository // Assuming you have a bus repository interface
 }
 
-func NewTravelUseCase(travelRepo ITravelRepository, travelStatsRepo ITravelStatsRepository, agencyRepo IAgencyRepository, driverRepo IDriverRepository, errorService IErrorService, bookingRepo IBookingRepository, notificationService INotificationUseCase, travelRating ITravelRatingRepository) ITravelUseCase {
+func NewTravelUseCase(travelRepo ITravelRepository, travelStatsRepo ITravelStatsRepository, agencyRepo IAgencyRepository, driverRepo IDriverRepository, busRepo IBusRepository, errorService IErrorService, bookingRepo IBookingRepository, notificationService INotificationUseCase, travelRating ITravelRatingRepository) ITravelUseCase {
 	return &TravelUseCase{
 		TravelRepo:          travelRepo,
 		TravelStatsRepo:     travelStatsRepo,
 		AgencyRepo:          agencyRepo,
 		DriverRepo:          driverRepo,
+		BusRepo:             busRepo,
 		ErrorService:        errorService,
 		BookingRepository:   bookingRepo,
 		NotificationService: notificationService,
@@ -35,7 +36,7 @@ func NewTravelUseCase(travelRepo ITravelRepository, travelStatsRepo ITravelStats
 	}
 }
 
-func (tuc *TravelUseCase) CheckDriverAvailability(driverID string, plannedStartTime time.Time) (int, error) {
+func (tuc *TravelUseCase) CheckDriverAvailability(driverID string, plannedStartTime time.Time, estArrivalTime time.Time) (int, error) {
 	// get the driver by ID
 	driver, err := tuc.DriverRepo.GetDriverByID(driverID)
 	if err != nil {
@@ -59,6 +60,7 @@ func (tuc *TravelUseCase) CheckDriverAvailability(driverID string, plannedStartT
 
 	for _, tripID := range driver.CurrentTrips {
 		wg.Add(1)
+		tripIDCopy := tripID // create a copy of the tripID to avoid
 		go func(tripID string) {
 			defer wg.Done()
 			// get the estimated arrival time of the trip
@@ -68,14 +70,16 @@ func (tuc *TravelUseCase) CheckDriverAvailability(driverID string, plannedStartT
 				resultCh <- AvailabilityError{Err: err, Code: code}
 				return
 			}
-			// if the estimated arrival time of the last trip is after the planned start time of the new trip,
-			// then the driver is available
-			if tripDetails.EstArrivalTime.After(plannedStartTime) {
+			// if the two trips overlap, driver is busy
+			isCurrentEstArrivalBetween := tripDetails.EstArrivalTime.After(plannedStartTime) && tripDetails.EstArrivalTime.Before(estArrivalTime)
+			isCurrentPlannedStartBetween := tripDetails.PlannedStartTime.After(plannedStartTime) && tripDetails.PlannedStartTime.Before(estArrivalTime)
+
+			if isCurrentEstArrivalBetween || isCurrentPlannedStartBetween {
 				code, err := tuc.ErrorService.DriverBusy()
 				resultCh <- AvailabilityError{Err: err, Code: code}
 				return
 			}
-		}(tripID)
+		}(tripIDCopy)
 	}
 
 	go func() {
@@ -93,7 +97,7 @@ func (tuc *TravelUseCase) CheckDriverAvailability(driverID string, plannedStartT
 	return code, err
 }
 
-func (tuc *TravelUseCase) CheckBusAvailability(busRef string, plannedStartTime time.Time) (int, error) {
+func (tuc *TravelUseCase) CheckBusAvailability(busRef string, plannedStartTime time.Time, estArrivalTime time.Time) (int, error) {
 	// get the bus by ID
 	bus, err := tuc.BusRepo.GetBusByPlateNumber(busRef)
 	if err != nil {
@@ -117,6 +121,7 @@ func (tuc *TravelUseCase) CheckBusAvailability(busRef string, plannedStartTime t
 
 	for _, tripID := range bus.CurrentTrips {
 		wg.Add(1)
+		tripIDCopy := tripID
 		go func(tripID string) {
 			defer wg.Done()
 			// get the estimated arrival time of the trip
@@ -126,14 +131,16 @@ func (tuc *TravelUseCase) CheckBusAvailability(busRef string, plannedStartTime t
 				resultCh <- AvailabilityError{Err: err, Code: code}
 				return
 			}
-			// if the estimated arrival time of the last trip is after the planned start time of the new trip,
-			// then the driver is available
-			if tripDetails.EstArrivalTime.After(plannedStartTime) {
-				code, err := tuc.ErrorService.BusBusy()
+
+			isCurrentEstArrivalBetween := tripDetails.EstArrivalTime.After(plannedStartTime) && tripDetails.EstArrivalTime.Before(estArrivalTime)
+			isCurrentPlannedStartBetween := tripDetails.PlannedStartTime.After(plannedStartTime) && tripDetails.PlannedStartTime.Before(estArrivalTime)
+
+			if isCurrentEstArrivalBetween || isCurrentPlannedStartBetween {
+				code, err := tuc.ErrorService.DriverBusy()
 				resultCh <- AvailabilityError{Err: err, Code: code}
 				return
 			}
-		}(tripID)
+		}(tripIDCopy)
 	}
 
 	go func() {
@@ -160,8 +167,8 @@ func (tuc *TravelUseCase) AssignDriver(driverID string, travelID string) (int, e
 	return tuc.ErrorService.NoError()
 }
 
-func (tuc *TravelUseCase) AssignBus(busID, travelID string) (int, error) {
-	err := tuc.BusRepo.AssignTrip(busID, travelID)
+func (tuc *TravelUseCase) AssignBus(busRef, travelID string) (int, error) {
+	err := tuc.BusRepo.AssignTrip(busRef, travelID)
 	if err != nil {
 		return tuc.ErrorService.InternalServer()
 	}
@@ -209,13 +216,19 @@ func (tuc *TravelUseCase) CreateTravel(travel *Domain.Travel) (int, error) {
 
 	// check if the driver can be assigned
 	if travel.DriverID != "" {
-		code, err := tuc.CheckDriverAvailability(travel.DriverID, travel.PlannedStartTime)
+		code, err := tuc.CheckDriverAvailability(travel.DriverID, travel.PlannedStartTime, travel.EstArrivalTime)
 		if err != nil {
 			return code, err
 		}
 	}
 
 	// check if the bus can be assigned
+	if travel.BusRef != "" {
+		code, err := tuc.CheckBusAvailability(travel.BusRef, travel.PlannedStartTime, travel.EstArrivalTime)
+		if err != nil {
+			return code, err
+		}
+	}
 
 	travelID, err := tuc.TravelRepo.CreateTravel(travel)
 	if err != nil {
@@ -287,7 +300,7 @@ func (tuc *TravelUseCase) EditTravel(travel *Domain.Travel) (int, error) {
 	// check if the driver and the bus are available
 	isNewDriver := travel.DriverID != "" && travel.DriverID != existingTravel.DriverID
 	if isNewDriver {
-		code, err = tuc.CheckDriverAvailability(travel.DriverID, travel.PlannedStartTime)
+		code, err = tuc.CheckDriverAvailability(travel.DriverID, travel.PlannedStartTime, travel.EstArrivalTime)
 		if err != nil {
 			return code, err
 		}
@@ -295,7 +308,7 @@ func (tuc *TravelUseCase) EditTravel(travel *Domain.Travel) (int, error) {
 
 	isNewBus := travel.BusRef != "" && travel.BusRef != existingTravel.BusRef
 	if isNewBus {
-		code, err = tuc.CheckBusAvailability(travel.BusRef, travel.PlannedStartTime)
+		code, err = tuc.CheckBusAvailability(travel.BusRef, travel.PlannedStartTime, travel.EstArrivalTime)
 		if err != nil {
 			return code, err
 		}

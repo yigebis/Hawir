@@ -18,7 +18,7 @@ import (
 	"google.golang.org/api/option"
 
 	// comment it for production
-	// "github.com/joho/godotenv"
+	"github.com/joho/godotenv"
 
 	"github.com/robfig/cron/v3" // Import the cron scheduler library
 
@@ -45,9 +45,9 @@ func initializeFirebaseApp() *firebase.App {
 
 func main() {
 	//comment it for production
-	// if err := godotenv.Load(); err != nil {
-	// 	log.Fatal("error loading .env file")
-	// }
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("error loading .env file")
+	}
 
 	firebaseApp = initializeFirebaseApp() // Initialize Firebase
 
@@ -178,7 +178,7 @@ func main() {
 	nuc := UseCase.NewNotificationUseCase(ur, br, nr, tr, firebaseApp)
 	uuc := UseCase.NewUserUseCase(ur, cr, ps, ts, ms, es, cs, ex, tx, rx)
 	aguc := UseCase.NewAgencyUseCase(agr, drr, cr, bus_r, ps, ts, es, ms, cs, ex, tx, rx)
-	tuc := UseCase.NewTravelUseCase(tr, tsr, agr, drr, es, br, nuc, trr)
+	tuc := UseCase.NewTravelUseCase(tr, tsr, agr, drr, bus_r, es, br, nuc, trr)
 	auc := UseCase.NewAdminUseCase(admr, agr, ps, es, ts, ms, tx, rx, arr)
 	buc := UseCase.NewBookingUseCase(br, tr, es)
 	duc := UseCase.NewDestinationUseCase(dr, es)

@@ -3,6 +3,7 @@ package Repository
 import (
 	"Hawir/Domain"
 	"Hawir/UseCase"
+	"fmt"
 
 	"context"
 
@@ -98,18 +99,16 @@ func (br *BusRepository) AssignTrip(busRef string, tripID string) error {
 	update := bson.M{"$push": bson.M{"current_trips": tripID}}
 
 	_, err := br.BusCollection.UpdateOne(br.DbCtx, filter, update)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 	return err
 }
 
 func (br *BusRepository) RemoveTripFromBus(busID string, tripID string) error {
-	objID, err := primitive.ObjectIDFromHex(busID)
-	if err != nil {
-		return err
-	}
-
-	filter := bson.M{"_id": objID}
+	filter := bson.M{"plate_number": busID}
 	update := bson.M{"$pull": bson.M{"current_trips": tripID}}
 
-	_, err = br.BusCollection.UpdateOne(br.DbCtx, filter, update)
+	_, err := br.BusCollection.UpdateOne(br.DbCtx, filter, update)
 	return err
 }
