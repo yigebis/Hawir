@@ -294,17 +294,17 @@ func (agc *AgencyController) AddDriver(ctx *gin.Context) {
 		ctx.JSON(code, gin.H{"error": err.Error()})
 		return
 	}
-  ctx.JSON(code, gin.H{"message": "driver added successfully"})
+	ctx.JSON(code, gin.H{"message": "driver added successfully"})
 }
 
- func (agc *AgencyController) GetAgencyForUser(ctx *gin.Context) {
+func (agc *AgencyController) GetAgencyForUser(ctx *gin.Context) {
 	agencyID := ctx.Param("id")
 
 	agency, code, err := agc.AgencyUseCase.GetAgencyForUser(agencyID)
 	if err != nil {
 		ctx.JSON(code, gin.H{"error": err.Error()})
 		return
-	}	
+	}
 	ctx.JSON(code, agency)
 }
 
