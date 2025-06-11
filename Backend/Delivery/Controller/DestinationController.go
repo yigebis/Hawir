@@ -86,7 +86,7 @@ func (dc *DestinationController) EditDestination(ctx *gin.Context) {
 	id := ctx.Param("id")
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid request payload"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -94,7 +94,7 @@ func (dc *DestinationController) EditDestination(ctx *gin.Context) {
 
 	err = ctx.ShouldBindJSON(&destination)
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": "invalid request payload"})
+		ctx.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -102,7 +102,7 @@ func (dc *DestinationController) EditDestination(ctx *gin.Context) {
 
 	err = dc.V.Struct(destination)
 	if err != nil {
-		ctx.JSON(400, gin.H{"error": "invalid request payload", "details": err.Error()})
+		ctx.JSON(400, gin.H{"error": err.Error(), "details": err.Error()})
 		return
 	}
 

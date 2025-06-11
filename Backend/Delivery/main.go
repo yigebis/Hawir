@@ -62,12 +62,14 @@ func main() {
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 
 	if err != nil {
+		// fmt.Println(uri)
 		log.Fatal(err)
 	}
 
 	err = client.Ping(context.TODO(), nil)
 
 	if err != nil {
+		// fmt.Println(uri)
 		log.Fatal(err)
 	}
 
@@ -108,6 +110,7 @@ func main() {
 	review_context := context.TODO()
 	agency_ratings_context := context.TODO()
 	travel_ratings_context := context.TODO()
+	bus_context := context.TODO()
 
 	admr := Repository.NewAdminRepository(admin_context, admin_collection)
 	ur := Repository.NewUserRepository(user_context, user_collection)
@@ -132,6 +135,8 @@ func main() {
 	rr := Repository.NewReviewRepository(review_context, review_collection, ur)
 	arr := Repository.NewAgencyRatingRepository(agency_ratings_context, agency_ratings_collection)
 	trr := Repository.NewTravelRatingRepository(travel_ratings_context, travel_ratings_collection)
+	repr := Repository.NewReportRepository(booking_collection, travel_stat_collection, travel_collection, booking_context)
+	bus_r := Repository.NewBusRepository(bus_collection, bus_context)
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	es := Error.NewErrorService()
@@ -172,7 +177,7 @@ func main() {
 
 	nuc := UseCase.NewNotificationUseCase(ur, br, nr, tr, firebaseApp)
 	uuc := UseCase.NewUserUseCase(ur, cr, ps, ts, ms, es, cs, ex, tx, rx)
-	aguc := UseCase.NewAgencyUseCase(agr, drr, cr, ps, ts, es, ms, cs, ex, tx, rx)
+	aguc := UseCase.NewAgencyUseCase(agr, drr, cr, bus_r, ps, ts, es, ms, cs, ex, tx, rx)
 	tuc := UseCase.NewTravelUseCase(tr, tsr, agr, drr, es, br, nuc, trr)
 	auc := UseCase.NewAdminUseCase(admr, agr, ps, es, ts, ms, tx, rx, arr)
 	buc := UseCase.NewBookingUseCase(br, tr, es)
@@ -184,6 +189,7 @@ func main() {
 	ruc := UseCase.NewReviewUseCase(rr, ur, arr, trr, es)
 	aruc := UseCase.NewAgencyRatingUseCase(arr, es)
 	truc := UseCase.NewTravelRatingUseCase(trr, es)
+	repuc := UseCase.NewReportUseCase(repr, es)
 
 	// setting up the controllers
 	user_controller := Controller.NewUserController(uuc, aguc, ts, oauthService, ps, vs, rx, websiteDomainName)
@@ -196,6 +202,7 @@ func main() {
 
 	notification_controller := Controller.NewNotificationController(nuc)
 	review_controller := Controller.NewReviewController(ruc, truc, aruc)
+	report_controller := Controller.NewReportController(repuc)
 
 	hub := Infrastructure.NewHub()
 	go hub.Run()
@@ -223,6 +230,6 @@ func main() {
 	fmt.Println("Cron scheduler started.")
 
 	// setting up the router
-	router := Router.NewRouter(user_controller, agency_controller, travel_controller, admin_controller, booking_controller, destination_controller, driver_controller, event_controller, bus_tracking_controller, advertisement_controller, notification_controller, review_controller, jwtSecret)
+	router := Router.NewRouter(user_controller, agency_controller, travel_controller, admin_controller, booking_controller, destination_controller, driver_controller, event_controller, bus_tracking_controller, advertisement_controller, notification_controller, review_controller, report_controller, jwtSecret)
 	router.Run()
 }

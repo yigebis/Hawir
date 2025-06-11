@@ -59,6 +59,7 @@ func (dr *DestinationRepository) EditDestination(destination *Domain.Destination
 	filter := bson.M{"_id": destination.ID}
 	updateData := bson.M{
 		"name":     destination.Name,
+		"image" : destination.Image,
 		"stations": destination.Stations,
 	}
 
