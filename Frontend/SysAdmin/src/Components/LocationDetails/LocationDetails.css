@@ -85,3 +85,10 @@
 .remove-hotel-btn:hover {
   background-color: #005000;
 }
+
+@media (max-width: 700px) {
+  .back-btn {
+    /* margin-left: 48px;  */
+    margin-top: 50px;
+  }
+}

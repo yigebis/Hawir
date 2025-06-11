@@ -21,6 +21,7 @@ const EditAgency = ({ agencyData, onClose, onSave }) => {
     digit: false,
     special: false,
   });
+  const [passwordTouched, setPasswordTouched] = useState(false);
 
   useEffect(() => {
     const pwd = formData.password;
@@ -138,26 +139,35 @@ const EditAgency = ({ agencyData, onClose, onSave }) => {
             placeholder="New Password (leave blank to keep current)"
             value={formData.password}
             onChange={handleChange}
+            onFocus={() => setPasswordTouched(true)}
+            onBlur={() => setPasswordTouched(formData.password.length > 0)}
+            autoComplete="new-password"
           />
           {errors.password && <span className="error">{errors.password}</span>}
 
-          <ul className="password-rules">
-            <li className={passwordValidations.length ? "valid" : ""}>
-              Minimum 8 characters
-            </li>
-            <li className={passwordValidations.upper ? "valid" : ""}>
-              At least one uppercase letter
-            </li>
-            <li className={passwordValidations.lower ? "valid" : ""}>
-              At least one lowercase letter
-            </li>
-            <li className={passwordValidations.digit ? "valid" : ""}>
-              At least one digit (0–9)
-            </li>
-            <li className={passwordValidations.special ? "valid" : ""}>
-              At least one special character (!@#$...)
-            </li>
-          </ul>
+          {passwordTouched && (
+            <ul className="password-rules">
+              <li className={passwordValidations.length ? "valid" : "invalid"}>
+                {passwordValidations.length ? "✔" : "✖"} Minimum 8 characters
+              </li>
+              <li className={passwordValidations.upper ? "valid" : "invalid"}>
+                {passwordValidations.upper ? "✔" : "✖"} At least one uppercase
+                letter
+              </li>
+              <li className={passwordValidations.lower ? "valid" : "invalid"}>
+                {passwordValidations.lower ? "✔" : "✖"} At least one lowercase
+                letter
+              </li>
+              <li className={passwordValidations.digit ? "valid" : "invalid"}>
+                {passwordValidations.digit ? "✔" : "✖"} At least one digit (0–9)
+              </li>
+              <li className={passwordValidations.special ? "valid" : "invalid"}>
+                {passwordValidations.special
+                  ? "✔"
+                  : "✖"} At least one special character (!@#$...)
+              </li>
+            </ul>
+          )}
 
           <div className="form-actions">
             <button type="submit" className="save-btn">

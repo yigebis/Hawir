@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchLocations, deleteLocation } from "../../api/api";
 import Sidebar from "../Sidebar/Sidebar";
-import "./DeleteLocationsPage.css";
+import { API_BASE_URL } from "../../api/api";
+import "./DeleteEventsPage.css";
 
-const DeleteLocationsPage = () => {
-  const [locations, setLocations] = useState([]);
-  const [locationToDelete, setLocationToDelete] = useState(null);
+const DeleteEventsPage = () => {
+  const [events, setEvents] = useState([]);
+  const [eventToDelete, setEventToDelete] = useState(null);
   const [adminPassword, setAdminPassword] = useState("");
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -15,22 +15,21 @@ const DeleteLocationsPage = () => {
   const itemsPerPage = 5;
   const navigate = useNavigate();
 
-  // Centralized fetch function
-  const fetchAndSetLocations = async () => {
-    try {
-      const data = await fetchLocations();
-      setLocations(data);
-    } catch (error) {
-      console.error("Error fetching locations:", error);
-    }
-  };
-
   useEffect(() => {
-    fetchAndSetLocations();
+    const loadEvents = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/event/all?page=1`);
+        const data = await response.json();
+        setEvents(data || []);
+      } catch (error) {
+        console.error("Error fetching events:", error);
+      }
+    };
+    loadEvents();
   }, []);
 
-  const handleDeleteClick = (location) => {
-    setLocationToDelete(location);
+  const handleDeleteClick = (event) => {
+    setEventToDelete(event);
     setAdminPassword("");
     setError("");
   };
@@ -41,22 +40,27 @@ const DeleteLocationsPage = () => {
       return;
     }
 
-    setPendingDeletion(locationToDelete);
-    setLocations((prev) =>
-      prev.filter((location) => location.id !== locationToDelete.id)
-    );
-    setLocationToDelete(null);
+    const event = eventToDelete; // capture the event reference
+    setPendingDeletion(event);
+    setEvents((prev) => prev.filter((ev) => ev.id !== event.id));
+    setEventToDelete(null);
     setError("");
 
     const deleteTimer = setTimeout(async () => {
       try {
-        await deleteLocation(locationToDelete.id, { password: adminPassword });
+        await fetch(`${API_BASE_URL}/event/delete/${event.id}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ password: adminPassword }),
+        });
         setPendingDeletion(null);
-        fetchAndSetLocations(); // Refetch after successful delete
       } catch (error) {
-        console.error("Error deleting location:", error);
-        setError("Failed to delete location. Please check your password.");
-        setLocations((prev) => [...prev, locationToDelete]);
+        console.error("Error deleting event:", error);
+        setError("Failed to delete event. Please check your password.");
+        setEvents((prev) => [...prev, event]);
         setPendingDeletion(null);
       }
     }, 5000);
@@ -66,8 +70,7 @@ const DeleteLocationsPage = () => {
 
   const handleUndoDelete = () => {
     if (!pendingDeletion) return;
-
-    setLocations((prev) => [...prev, pendingDeletion]);
+    setEvents((prev) => [...prev, pendingDeletion]);
     setPendingDeletion(null);
     clearTimeout(timer);
     setTimer(null);
@@ -77,37 +80,40 @@ const DeleteLocationsPage = () => {
     setCurrentPage(pageNumber);
   };
 
-  const paginatedLocations = locations.slice(
+  const paginatedEvents = events.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
   return (
-    <div className="delete-locations-page">
+    <div className="delete-events-page">
       <Sidebar />
-      <main className="delete-locations-main">
+      <main className="delete-events-main">
         <button className="back-btn" onClick={() => navigate("/settings")}>
           &larr; Back
         </button>
-
-        <h1>Delete Locations</h1>
-        <table className="location-table">
+        <h1>Delete Events</h1>
+        <table className="event-table">
           <thead>
             <tr>
               <th>No</th>
-              <th>Location Name</th>
+              <th>Event Name</th>
+              <th>Date</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {paginatedLocations.map((location, index) => (
-              <tr key={location.id}>
+            {paginatedEvents.map((event, index) => (
+              <tr key={event.id}>
                 <td>{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                <td>{location.name}</td>
+                <td>{event.title}</td>
+                <td>
+                  {event.date ? new Date(event.date).toLocaleDateString() : ""}
+                </td>
                 <td>
                   <button
                     className="delete-btn"
-                    onClick={() => handleDeleteClick(location)}
+                    onClick={() => handleDeleteClick(event)}
                   >
                     Delete
                   </button>
@@ -119,7 +125,7 @@ const DeleteLocationsPage = () => {
 
         <div className="pagination">
           {Array.from(
-            { length: Math.ceil(locations.length / itemsPerPage) },
+            { length: Math.ceil(events.length / itemsPerPage) },
             (_, index) => (
               <button
                 key={index}
@@ -134,13 +140,13 @@ const DeleteLocationsPage = () => {
           )}
         </div>
 
-        {locationToDelete && (
+        {eventToDelete && (
           <div className="modal-overlay">
             <div className="modal-content">
               <h3>Confirm Deletion</h3>
               <p>
                 Enter your password to confirm the deletion of{" "}
-                <strong>{locationToDelete.name}</strong>.
+                <strong>{eventToDelete.title}</strong>.
               </p>
               <input
                 type="password"
@@ -152,7 +158,7 @@ const DeleteLocationsPage = () => {
               <div className="modal-actions">
                 <button
                   className="cancel-btn"
-                  onClick={() => setLocationToDelete(null)}
+                  onClick={() => setEventToDelete(null)}
                 >
                   Cancel
                 </button>
@@ -167,8 +173,8 @@ const DeleteLocationsPage = () => {
         {pendingDeletion && (
           <div className="undo-container">
             <p>
-              Location <strong>{pendingDeletion.name}</strong> will be deleted
-              in 5 seconds.
+              Event <strong>{pendingDeletion.title}</strong> will be deleted in
+              5 seconds.
             </p>
             <button className="undo-btn" onClick={handleUndoDelete}>
               Undo
@@ -180,4 +186,4 @@ const DeleteLocationsPage = () => {
   );
 };
 
-export default DeleteLocationsPage;
+export default DeleteEventsPage;

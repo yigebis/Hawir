@@ -9,6 +9,12 @@ export const fetchAgencies = async () => {
   return response.data;
 };
 
+// Fetch all events
+export const fetchEvents = async () => {
+  const response = await fetch(`${API_BASE_URL}/event/all?page=1`);
+  return await response.json();
+};
+
 // Fetch all locations
 export const fetchLocations = async () => {
   try {
@@ -28,7 +34,10 @@ export const addAgency = async (agency) => {
 
 // Edit an agency
 export const editAgency = async (id, updatedAgency) => {
-  const response = await axios.put(`${API_BASE_URL}/agency/edit/${id}`, updatedAgency);
+  const response = await axios.put(
+    `${API_BASE_URL}/agency/edit/${id}`,
+    updatedAgency
+  );
   return response.data;
 };
 
@@ -74,8 +83,6 @@ export const deleteLocation = async (id, payload) => {
     throw error;
   }
 };
-
-
 
 // Admin login
 export const adminLogin = async (credentials) => {

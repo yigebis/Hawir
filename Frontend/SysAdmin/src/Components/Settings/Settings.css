@@ -210,3 +210,48 @@
   font-size: 14px;
   margin-bottom: 20px;
 }
+
+@media (max-width: 900px) {
+  .danger-zone,
+  .password-change-section,
+  .edit-destination-details-section {
+    padding: 12px;
+  }
+  .settings-main {
+    padding: 10px;
+  }
+  /* .settings-main h1 {
+    padding-left: 60px;
+  } */
+}
+
+@media (max-width: 700px) {
+  .settings-main {
+    padding: 10px;
+  }
+  .settings-main h1 {
+    padding-left: 60px;
+  }
+}
+
+@media (max-width: 600px) {
+  .settings-main {
+    padding: 10px;
+  }
+  .settings-main h1 {
+    padding-left: 60px;
+  }
+  .danger-zone,
+  .password-change-section,
+  .edit-destination-details-section {
+    padding: 8px;
+  }
+  .danger-buttons {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .back-btn {
+    /* margin-left: 44px; */
+    margin-top: 10px;
+  }
+}

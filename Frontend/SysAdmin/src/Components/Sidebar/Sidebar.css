@@ -1,5 +1,5 @@
 .sidebar {
-  width: 230px;
+  width: 235px;
   background-color: #f3f6fa; /* Light gray background */
   color: #333; /* Dark text color */
   display: flex;
@@ -7,6 +7,11 @@
   padding: 20px;
   height: 100vh;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar.collapsed {
+  width: 60px;
+  padding: 20px 8px;
 }
 
 .sidebar-header {
@@ -24,6 +29,50 @@
   font-size: 20px;
   font-weight: 600;
   color: #333;
+}
+
+.sidebar-toggle-btn {
+  background: none;
+  border: none;
+  color: #444;
+  font-size: 20px;
+  cursor: pointer;
+  margin-left: 8px;
+  outline: none;
+  transition: color 0.2s;
+}
+
+.sidebar-toggle-btn:hover {
+  color: #1ca21c;
+}
+
+.sidebar.collapsed .sidebar-header {
+  justify-content: center;
+  margin-bottom: 30px;
+  padding-top: 20px;
+}
+
+.sidebar.collapsed .sidebar-logo {
+  margin-right: 0;
+}
+
+.sidebar.collapsed .sidebar-header h2 {
+  display: none;
+}
+
+.sidebar.collapsed .sidebar-toggle-btn {
+  margin-left: 0;
+  margin-right: 0;
+  /* position: absolute; */
+  right: 10px;
+  top: 18px;
+}
+
+.sidebar.collapsed .sidebar-menu li,
+.sidebar.collapsed .sidebar-footer li {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .sidebar-menu {
@@ -100,3 +149,167 @@
 .sidebar-footer li:hover a {
   color: white;
 }
+
+.sidebar.collapsed .sidebar-menu li a,
+.sidebar.collapsed .sidebar-footer ul li a {
+  position: relative;
+}
+
+.sidebar.collapsed .sidebar-menu li a:hover::after,
+.sidebar.collapsed .sidebar-footer ul li a:hover::after {
+  content: attr(data-label);
+  position: absolute;
+  left: 55px;
+  background: #222;
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 4px;
+  white-space: nowrap;
+  font-size: 13px;
+  z-index: 10;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* --- Ensure icons are centered --- */
+.sidebar-menu li a,
+.sidebar-footer li a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar.collapsed .sidebar-menu li a i,
+.sidebar.collapsed .sidebar-footer li a i {
+  margin: 0 auto;
+}
+
+/* --- Optional: Hide divider in collapsed mode --- */
+.sidebar.collapsed hr {
+  display: none;
+}
+
+.sidebar-menu,
+.sidebar-footer ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-menu .nav-link,
+.sidebar-footer .nav-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.sidebar-menu .nav-link li,
+.sidebar-footer .nav-link li {
+  padding: 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  transition: background 0.2s, color 0.2s;
+}
+
+.sidebar-menu .nav-link.active li,
+.sidebar-menu .nav-link li:hover,
+.sidebar-footer .nav-link.active li,
+.sidebar-footer .nav-link li:hover {
+  background-color: #f35b04;
+  color: white;
+}
+
+.sidebar-menu .nav-link.active li i,
+.sidebar-menu .nav-link li:hover i,
+.sidebar-footer .nav-link.active li i,
+.sidebar-footer .nav-link li:hover i {
+  color: white;
+}
+
+.sidebar-menu .nav-link li i,
+.sidebar-footer .nav-link li i {
+  margin-right: 10px;
+  color: #333;
+}
+
+.sidebar.collapsed .sidebar-menu .nav-link li,
+.sidebar.collapsed .sidebar-footer .nav-link li {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.sidebar.collapsed .sidebar-menu .nav-link li span,
+.sidebar.collapsed .sidebar-footer .nav-link li span {
+  display: none;
+}
+
+/* Hamburger button (mobile only) */
+.sidebar-hamburger {
+  display: none;
+  position: fixed;
+  top: 18px;
+  left: 18px;
+  z-index: 3001;
+  background: #f35b04;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 22px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+@media (max-width: 700px) {
+  .sidebar-hamburger {
+    display: block;
+  }
+  .sidebar {
+    display: none;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 3002;
+    height: 100vh;
+    width: 75vw;
+    max-width: 320px;
+    min-width: 0;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.18);
+    background: #f3f6fa;
+    transition: transform 0.3s;
+    transform: translateX(-100%);
+  }
+  .sidebar.mobile-open {
+    display: block;
+    transform: translateX(0);
+  }
+  .sidebar-mobile-overlay {
+    display: block;
+    position: fixed;
+    z-index: 3000;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.25);
+  }
+  .sidebar-mobile-close {
+    display: block;
+    background: none;
+    border: none;
+    color: #f35b04;
+    font-size: 26px;
+    margin-left: auto;
+    cursor: pointer;
+  }
+}
+
+/* Hide close button on desktop */
+.sidebar-mobile-close {
+  display: none;
+}
+

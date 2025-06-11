@@ -133,12 +133,27 @@ const LocationDetails = () => {
                 <p>
                   <strong>Name:</strong> {hotel.name}
                 </p>
-                <p>
-                  <strong>Image URL:</strong> {hotel.image_url}
-                </p>
+                {hotel.image_url && (
+                  <div style={{ margin: "8px 0" }}>
+                    <img
+                      src={hotel.image_url}
+                      alt={hotel.name}
+                      style={{
+                        maxWidth: "25%",
+                        maxHeight: "25%",
+                        borderRadius: "6px",
+                        border: "1px solid #ccc",
+                      }}
+                    />
+                  </div>
+                )}
                 <p>
                   <strong>Map Link:</strong>{" "}
-                  <a href={hotel.map_link} target="_blank" rel="noopener noreferrer">
+                  <a
+                    href={hotel.map_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     View on Map
                   </a>
                 </p>
@@ -252,7 +267,11 @@ const LocationDetails = () => {
                   </button>
                 </div>
               ))}
-              <button type="button" className="add-hotel-btn" onClick={addHotel}>
+              <button
+                type="button"
+                className="add-hotel-btn"
+                onClick={addHotel}
+              >
                 Add Hotel
               </button>
 

@@ -11,6 +11,7 @@
   flex: 1;
   padding: 20px;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 /* 
 h1 {
@@ -19,7 +20,7 @@ h1 {
   margin-bottom: 20px;
 } */
 
-.title-actions{
+.title-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -80,6 +81,19 @@ h1 {
   height: 100%;
   object-fit: cover;
   border-radius: 50%;
+}
+
+.agency-logo-fallback {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #f35b04;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  font-weight: bold;
 }
 
 .agency-name {
@@ -249,4 +263,98 @@ h1 {
 
 .pagination-btn:hover:not(:disabled) {
   background-color: #0056b3;
+}
+
+.agency-id-chip {
+  display: inline-block;
+  margin-bottom: 10px;
+  margin-left: 4px;
+  background: #f7f7f7;
+  color: #b85c00;
+  font-size: 0.78em;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 8px;
+  letter-spacing: 0.5px;
+  box-shadow: none;
+}
+.spinner {
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #4caf50;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive styles for ManageAgencies */
+@media (max-width: 900px) {
+  .manage-agencies-main {
+    padding: 10px 4px;
+  }
+  .title-actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .title-actions h1 {
+    /* margin-left: 65px; */
+    align-self: center;
+  }
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .search-input {
+    min-width: 0;
+    width: 100%;
+  }
+  .agency-list {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+  }
+}
+
+@media (max-width: 600px) {
+  .manage-agencies-main {
+    padding: 6px 2px;
+  }
+  .title-actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .title-actions h1 {
+    align-self: center;
+
+  }
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .agency-list {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .agency-card {
+    padding: 12px;
+    min-width: 0;
+  }
+  .search-input {
+    width: 100%;
+    min-width: 0;
+  }
 }

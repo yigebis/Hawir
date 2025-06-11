@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "../Sidebar/Sidebar";
 import AddLocation from "../AddLocation/AddLocation";
 import EditLocation from "../EditLocation/EditLocation";
 import "./ManageLocations.css";
-import harar from "../../assets/harar.jpeg";
 import { API_BASE_URL } from "../../api/api";
 
 const ManageLocations = () => {
@@ -19,11 +18,14 @@ const ManageLocations = () => {
   const [undoTimeout, setUndoTimeout] = useState(null);
   const [undoAvailable, setUndoAvailable] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const locationsPerPage = 6; // Number of locations per page
+  const [loading, setLoading] = useState(true);
+  const locationsPerPage = 6;
   const navigate = useNavigate();
+  const location = useLocation();
 
-  useEffect(() => {
-    // Fetch all destinations on component mount
+  // Centralized fetch function
+  const fetchDestinations = () => {
+    setLoading(true);
     fetch(`${API_BASE_URL}/destination/all`)
       .then((response) => {
         if (!response.ok) {
@@ -36,8 +38,30 @@ const ManageLocations = () => {
         return response.json();
       })
       .then((data) => setDestinations(data))
-      .catch((error) => console.error("Error fetching destinations:", error));
-  }, []);
+      .catch((error) => console.error("Error fetching destinations:", error))
+      .finally(() => setLoading(false));
+  };
+
+  // Read page from URL on mount and when location changes
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const pageFromUrl = parseInt(params.get("page"), 10);
+    if (pageFromUrl && pageFromUrl > 0) {
+      setCurrentPage(pageFromUrl);
+    } else {
+      setCurrentPage(1);
+    }
+    fetchDestinations();
+    // eslint-disable-next-line
+  }, [location]);
+
+  // Update URL when page changes
+  const setPageAndUrl = (page) => {
+    setCurrentPage(page);
+    const params = new URLSearchParams(location.search);
+    params.set("page", page);
+    navigate({ search: params.toString() }, { replace: true });
+  };
 
   const handleAddDestination = (newDestination) => {
     fetch(`${API_BASE_URL}/destination/add`, {
@@ -50,51 +74,62 @@ const ManageLocations = () => {
       .then((response) => {
         if (!response.ok) {
           return response.text().then((text) => {
-            throw new Error(
-              `Failed to add destination: ${response.status} - ${text}`
-            );
+            let errorMsg = `Failed to add destination: ${response.status}`;
+            try {
+              const errObj = JSON.parse(text);
+              if (errObj.error) errorMsg = errObj.error;
+            } catch {}
+            throw new Error(errorMsg);
           });
         }
         return response.json();
       })
-      .then((data) => {
-        // Ensure the response contains the required fields
-        if (!data.id || !data.name || !data.stations) {
-          console.error("Invalid response from server:", data);
-          return;
-        }
-
-        setDestinations((prev) => [...prev, data]);
+      .then(() => {
+        fetchDestinations(); // Refetch after add
         setShowAddModal(false);
       })
-      .catch((error) => console.error("Error adding destination:", error));
+      .catch((error) => {
+        alert(error.message);
+        console.error("Error adding destination:", error);
+      });
   };
 
   const handleEditDestination = (updatedDestination) => {
+    console.log("Editing destination:", updatedDestination); 
     fetch(`${API_BASE_URL}/destination/edit/${updatedDestination.id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(updatedDestination),
+      body: JSON.stringify({
+        name: updatedDestination.name,
+        stations: Array.isArray(updatedDestination.stations)
+          ? updatedDestination.stations.filter((s) => s && s.trim())
+          : [],
+        image: updatedDestination.image,
+      }),
     })
       .then((response) => {
         if (!response.ok) {
           return response.text().then((text) => {
-            throw new Error(
-              `Failed to edit destination: ${response.status} - ${text}`
-            );
+            let errorMsg = `Failed to edit destination: ${response.status}`;
+            try {
+              const errObj = JSON.parse(text);
+              if (errObj.error) errorMsg = errObj.error;
+            } catch {}
+            throw new Error(errorMsg);
           });
         }
         return response.json();
       })
-      .then((data) => {
-        setDestinations((prev) =>
-          prev.map((dest) => (dest.id === data.id ? data : dest))
-        );
+      .then(() => {
+        fetchDestinations(); // Refetch after edit
         setShowEditModal(false);
       })
-      .catch((error) => console.error("Error editing destination:", error));
+      .catch((error) => {
+        alert(error.message);
+        console.error("Error editing destination:", error);
+      });
   };
 
   const handleDeleteClick = (destination) => {
@@ -111,19 +146,18 @@ const ManageLocations = () => {
       .then((response) => {
         if (!response.ok) {
           return response.text().then((text) => {
-            throw new Error(
-              `Failed to delete destination: ${response.status} - ${text}`
-            );
+            let errorMsg = `Failed to delete destination: ${response.status}`;
+            try {
+              const errObj = JSON.parse(text);
+              if (errObj.error) errorMsg = errObj.error;
+            } catch {}
+            throw new Error(errorMsg);
           });
         }
-        // No need to parse JSON for a successful DELETE, might return empty or a message
-        return response.text(); // Or response.json() if your backend returns JSON on delete
+        return response.text();
       })
       .then(() => {
-        const updatedDestinations = destinations.filter(
-          (dest) => dest.id !== selectedDestination.id
-        );
-        setDestinations(updatedDestinations);
+        fetchDestinations(); // Refetch after delete
         setDeletedDestination(selectedDestination);
         setUndoAvailable(true);
         const timeout = setTimeout(() => {
@@ -133,7 +167,10 @@ const ManageLocations = () => {
         setUndoTimeout(timeout);
         setSelectedDestination(null);
       })
-      .catch((error) => console.error("Error deleting destination:", error));
+      .catch((error) => {
+        alert(error.message);
+        console.error("Error deleting destination:", error);
+      });
   };
 
   const undoDeleteDestination = () => {
@@ -148,19 +185,25 @@ const ManageLocations = () => {
       .then((response) => {
         if (!response.ok) {
           return response.text().then((text) => {
-            throw new Error(
-              `Failed to undo delete: ${response.status} - ${text}`
-            );
+            let errorMsg = `Failed to undo delete: ${response.status}`;
+            try {
+              const errObj = JSON.parse(text);
+              if (errObj.error) errorMsg = errObj.error;
+            } catch {}
+            throw new Error(errorMsg);
           });
         }
         return response.json();
       })
-      .then((data) => {
-        setDestinations((prev) => [...prev, data]);
+      .then(() => {
+        fetchDestinations(); // Refetch after undo
         setDeletedDestination(null);
         setUndoAvailable(false);
       })
-      .catch((error) => console.error("Error undoing delete:", error));
+      .catch((error) => {
+        alert(error.message);
+        console.error("Error undoing delete:", error);
+      });
   };
 
   const filteredDestinations = useMemo(() => {
@@ -176,7 +219,7 @@ const ManageLocations = () => {
       case "name":
         filtered.sort((a, b) => a.name.localeCompare(b.name));
         break;
-      default: // Assuming your backend handles sorting by date if needed
+      default:
         break;
     }
 
@@ -193,13 +236,13 @@ const ManageLocations = () => {
 
   const handlePreviousPage = () => {
     if (currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
+      setPageAndUrl(currentPage - 1);
     }
   };
 
   const handleNextPage = () => {
     if (currentPage < totalPages) {
-      setCurrentPage((prev) => prev + 1);
+      setPageAndUrl(currentPage + 1);
     }
   };
 
@@ -238,68 +281,104 @@ const ManageLocations = () => {
         </div>
 
         <div className="locations-list">
-          {paginatedDestinations.map((destination) => (
-            <div className="location-card" key={destination.id}>
-              <div className="location-image">
-                <img src={harar} alt={destination.name} />{" "}
-                {/* Consider dynamic images */}
-              </div>
-              <div className="location-details">
-                <h3 className="location-name">{destination.name}</h3>
-                {destination.stations && (
-                  <p className="location-info">
-                    <strong>Stations:</strong> {destination.stations.join(", ")}
-                  </p>
-                )}
-                <div className="location-actions">
-                  <button
-                    className="edit-btn"
-                    onClick={() => {
-                      setSelectedDestination(destination);
-                      setShowEditModal(true);
-                    }}
-                  >
-                    <i className="fas fa-edit"></i> Edit
-                  </button>
-                  <button
-                    className="view-more-btn"
-                    onClick={() =>
-                      navigate(`/location-details/${destination.id}`)
-                    }
-                  >
-                    View More
-                  </button>
+          {loading ? (
+            <div
+              className="loading-spinner"
+              style={{
+                width: "100%",
+                textAlign: "center",
+                padding: "2rem",
+              }}
+            >
+              <div className="spinner"></div>
+            </div>
+          ) : paginatedDestinations.length === 0 ? (
+            <p>No destinations found.</p>
+          ) : (
+            paginatedDestinations.map((destination) => (
+              <div className="location-card" key={destination.id}>
+                <div className="location-image">
+                  {destination.image ? (
+                    <img
+                      src={
+                        destination.image.includes("/upload/")
+                          ? destination.image.replace(
+                              "/upload/",
+                              "/upload/f_auto,q_auto/"
+                            )
+                          : destination.image
+                      }
+                      alt={destination.name}
+                    />
+                  ) : (
+                    <div className="location-image-fallback">
+                      {destination.name?.charAt(0).toUpperCase() || "L"}
+                    </div>
+                  )}
+                </div>
+                <div className="location-details">
+                  <h3 className="location-name">{destination.name}</h3>
+                  {destination.stations && (
+                    <p className="location-info">
+                      <strong>Stations:</strong>{" "}
+                      {destination.stations.join(", ")}
+                    </p>
+                  )}
+                  <div className="location-actions">
+                    <button
+                      className="edit-btn"
+                      onClick={() => {
+                        setSelectedDestination(destination);
+                        setShowEditModal(true);
+                      }}
+                    >
+                      <i className="fas fa-edit"></i> Edit
+                    </button>
+                    <button
+                      className="view-more-btn"
+                      onClick={() =>
+                        navigate(`/location-details/${destination.id}`)
+                      }
+                    >
+                      View More
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-          {paginatedDestinations.length === 0 && <p>No destinations found.</p>}
+            ))
+          )}
         </div>
 
-        <div className="pagination-controls">
-          <button
-            className="pagination-btn"
-            onClick={handlePreviousPage}
-            disabled={currentPage === 1}
-          >
-            Previous
-          </button>
-          <span>
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            className="pagination-btn"
-            onClick={handleNextPage}
-            disabled={currentPage === totalPages}
-          >
-            Next
-          </button>
-        </div>
+        {/* Pagination controls: only show when not loading and there are destinations */}
+        {!loading && paginatedDestinations.length > 0 && (
+          <div className="pagination-controls">
+            <button
+              className="pagination-btn"
+              onClick={handlePreviousPage}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </button>
+            <span>
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              className="pagination-btn"
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </button>
+          </div>
+        )}
 
         {showAddModal && (
           <AddLocation
             onClose={() => setShowAddModal(false)}
-            onSave={handleAddDestination}
+            onSave={() => {
+              fetchDestinations();
+              setShowAddModal(false);
+            }}
           />
         )}
 
@@ -307,7 +386,10 @@ const ManageLocations = () => {
           <EditLocation
             destinationData={selectedDestination}
             onClose={() => setShowEditModal(false)}
-            onSave={handleEditDestination}
+            onSave={() => {
+              fetchDestinations();
+              setShowEditModal(false);
+            }}
           />
         )}
 

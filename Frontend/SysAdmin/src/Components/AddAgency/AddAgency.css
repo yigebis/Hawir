@@ -71,13 +71,24 @@
   list-style: none;
   padding-left: 0;
   margin-top: 8px;
-  font-size: 0.85rem;
+  font-size: 0.95rem;
+  margin-bottom: 8px;
 }
 
 .password-rules li {
-  color: red;
+  margin-bottom: 2px;
+  font-size: 0.95em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .password-rules li.valid {
-  color: green;
+  color: #1ca21c;
+  font-weight: 500;
+}
+
+.password-rules li.invalid {
+  color: #e53935;
+  font-weight: 400;
 }

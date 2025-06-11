@@ -1,0 +1,87 @@
+/* Universal responsive grid for cards/lists */
+.grid, .agency-list, .locations-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  width: 100%;
+}
+
+/* Responsive containers and paddings */
+.manage-agencies-main,
+.manage-locations-content,
+.dashboard-main {
+  padding: 24px 32px;
+}
+
+@media (max-width: 900px) {
+  .grid, .agency-list, .locations-list {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+  }
+  .manage-agencies-main,
+  .manage-locations-content,
+  .dashboard-main {
+    padding: 12px 8px;
+  }
+}
+
+@media (max-width: 600px) {
+  .grid, .agency-list, .locations-list {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .manage-agencies-main,
+  .manage-locations-content,
+  .dashboard-main {
+    padding: 6px 2px;
+  }
+  .sidebar {
+    width: 100%;
+    min-width: 0;
+  }
+  .header,
+  .title-actions,
+  .header-actions {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px;
+  }
+  .search-input {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+/* Card responsiveness */
+.agency-card,
+.location-card {
+  padding: 18px;
+  border-radius: 10px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Responsive images */
+.agency-logo,
+.location-image img {
+  width: 100%;
+  height: auto;
+  max-height: 160px;
+  object-fit: cover;
+  border-radius: 8px 8px 0 0;
+}
+
+/* Fallback for images */
+.agency-logo-fallback,
+.location-image-fallback {
+  width: 100%;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f35b04;
+  color: #fff;
+  font-size: 2.5rem;
+  font-weight: bold;
+  border-radius: 8px 8px 0 0;
+}
