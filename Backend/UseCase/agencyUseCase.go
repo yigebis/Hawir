@@ -2,6 +2,7 @@ package UseCase
 
 import (
 	"Hawir/Domain"
+	"fmt"
 	"mime/multipart"
 	"time"
 
@@ -221,11 +222,13 @@ func (aguc *AgencyUseCase) GetAgencyForUser(id string) (*Domain.AgencyDisplay, i
 func (aguc *AgencyUseCase) AddDriver(driver *Domain.Driver, fileHeader *multipart.FileHeader) (int, error) {
 	// check if the driver with the same email exists
 	existingDriver, err := aguc.DriverRepo.GetDriverByEmail(driver.Email)
+	isExisting := false
 	if err == nil {
 		if existingDriver.Verified {
 			return aguc.ErrorService.UserExists()
 		}
 		driver = existingDriver
+		isExisting = true
 	}
 
 	driver.RegistrationDate = time.Now()
@@ -258,9 +261,20 @@ func (aguc *AgencyUseCase) AddDriver(driver *Domain.Driver, fileHeader *multipar
 	}
 	driver.Password = hashedPassword
 
+	if isExisting {
+		// if the driver already exists, we just update the driver info
+		err = aguc.DriverRepo.UpdateDriver(driver.ID.Hex(), driver)
+		if err != nil {
+			fmt.Println("repo", err.Error())
+			return aguc.ErrorService.InternalServer()
+		}
+		return aguc.ErrorService.NoError()
+	}
+
+	// if the driver doesn't exist, we add the driver to the repo
 	err = aguc.DriverRepo.AddDriver(driver)
 	if err != nil {
-		// fmt.Println("repo", err.Error())
+		fmt.Println("repo", err.Error())
 		return aguc.ErrorService.InternalServer()
 	}
 
