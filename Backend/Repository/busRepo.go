@@ -97,7 +97,7 @@ func (br *BusRepository) AssignTrip(busRef string, tripID string) error {
 	filter := bson.M{"plate_number": busRef}
 	update := bson.M{"$push": bson.M{"current_trips": tripID}}
 
-	_, err = br.BusCollection.UpdateOne(br.DbCtx, filter, update)
+	_, err := br.BusCollection.UpdateOne(br.DbCtx, filter, update)
 	return err
 }
 
