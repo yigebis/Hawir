@@ -1,0 +1,137 @@
+
+{
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "manageTravels": "Manage Travels",
+    "reports": "Reports",
+    "manageTours": "Manage Tours",
+    "advertisement": "Advertisement",
+    "fleet": "Fleet",
+    "profile": "Profile",
+    "changePassword": "Change Password",
+    "logout": "Log out"
+  },
+  "dashboard": {
+    "title": "DASHBOARD",
+    "totalCustomers": "Total Customers",
+    "activeTravels": "Active Travels",
+    "totalDestinations": "Total Destinations",
+    "canceledTravels": "Canceled Travels",
+    "recentActivity": "Recent Activity",
+    "addNew": "Add New"
+  },
+  "manageTravels": {
+    "title": "MANAGE TRAVELS",
+    "ongoing": "Ongoing",
+    "upcoming": "Upcoming",
+    "completed": "Completed",
+    "search": "Search travels..."
+  },
+  "reports": {
+    "title": "REPORTS & ANALYTICS",
+    "totalRevenue": "Total Revenue",
+    "revenueGrowth": "Revenue Growth",
+    "totalCustomers": "Total Customers",
+    "activeCustomers": "Active Customers",
+    "newCustomers": "New Customers",
+    "averageRating": "Average Rating",
+    "revenueTrend": "Revenue Trend",
+    "monthly": "Monthly",
+    "daily": "Daily",
+    "backToMonthly": "Back to Monthly View",
+    "activityHeatmap": "Activity Heatmap",
+    "trips": "Trips",
+    "bookings": "Bookings",
+    "popularDestinations": "Popular Destinations",
+    "destination": "Destination",
+    "totalTravelers": "Total Travelers",
+    "less": "Less",
+    "more": "More"
+  },
+  "tours": {
+    "title": "TOURS",
+    "upcomingTravels": "Upcoming Travels",
+    "ongoingTravels": "Ongoing Travels",
+    "completedTravels": "Completed Travels",
+    "search": "Search travels..."
+  },
+  "advertisement": {
+    "title": "ADVERTISEMENT",
+    "videoTitle": "Title of the Video",
+    "videoTitlePlaceholder": "Enter video title",
+    "description": "Description",
+    "descriptionPlaceholder": "Describe your video content or promotional message",
+    "videoUploader": "Video Uploader",
+    "uploadButton": "Upload Advertisement Video",
+    "uploading": "Uploading...",
+    "uploadSuccess": "Video uploaded successfully!",
+    "uploadError": "Failed to upload video. Please try again.",
+    "fileTooSmall": "File must be at least 70MB",
+    "invalidFormat": "Invalid file format. Please upload .mp4, .mov, or .webm files",
+    "dragAndDrop": "Drag and drop your video here, or click to browse",
+    "acceptedFormats": "Accepted formats: MP4, MOV, WEBM (minimum 70MB)"
+  },
+  "profile": {
+    "title": "Profile Settings",
+    "backToDashboard": "Back to Dashboard",
+    "fullName": "Full Name",
+    "phoneNumber": "Phone Number",
+    "position": "Position",
+    "description": "Description (Optional)",
+    "email": "Email",
+    "agencyId": "Agency ID",
+    "clickToUpdate": "Click to update profile picture",
+    "saveChanges": "Save Changes"
+  },
+  "changePassword": {
+    "title": "Change Password",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm New Password",
+    "cancel": "Cancel",
+    "updatePassword": "Update Password",
+    "updating": "Updating..."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "tripStarted": "🚐 Travel ID #{travelId} from {origin} to {destination} has started. Please monitor its progress.",
+    "tripCompleted": "✅ Travel ID #{travelId} from {origin} to {destination} has been successfully completed.",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "thisWeek": "This Week",
+    "markAllRead": "Mark all as read",
+    "clearAll": "Clear all",
+    "noNotifications": "No notifications",
+    "started": "Started",
+    "completed": "Completed"
+  },
+  "fleet": {
+    "title": "FLEET MANAGEMENT"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "close": "Close",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "reset": "Reset"
+  },
+  "validation": {
+    "required": "This field is required",
+    "email": "Please enter a valid email",
+    "password": "Password must be at least 8 characters",
+    "confirmPassword": "Passwords must match",
+    "maxLength": "Maximum {max} characters allowed",
+    "minLength": "Minimum {min} characters required"
+  }
+}

@@ -25,7 +25,7 @@ import autoTable from 'jspdf-autotable';
 
 export interface TravelEventType {
   id: string;
-  title: string;
+  start_location: string;
   start: Date;
   terminals: string[];
   end: Date;
@@ -35,7 +35,8 @@ export interface TravelEventType {
   price?: number;
   totalSeats?: number;
   busRef?: string;
-  driverName?: string;
+  driverId?: string;
+  last_mod_time?: Date;
   status?: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
 }
 
@@ -104,7 +105,7 @@ const TravelEvent: React.FC<TravelEventProps> = ({ event, onClick, onEdit }) => 
     
     console.log("clicked export to pdf");
     const doc = new jsPDF();
-    const title = `Travelers for ${event.title}`;
+    const title = `Travelers for ${event.start_location} -> ${event.destination}`;
     doc.setFontSize(18);
     doc.text(title, doc.internal.pageSize.getWidth() / 2, 10, { align: 'center' });
 
@@ -132,7 +133,7 @@ const TravelEvent: React.FC<TravelEventProps> = ({ event, onClick, onEdit }) => 
       body: tableRows,
       startY: 20,
     });
-    doc.save(`travelers_${event.title.replace(/\s+/g, '_')}.pdf`);
+    doc.save(`travelers_${(event.start_location + ' TO ' + event.destination).replace(/\s+/g, '_')}.pdf`);
   };
 
   // Filter travelers based on search query and payment status
@@ -173,7 +174,7 @@ const TravelEvent: React.FC<TravelEventProps> = ({ event, onClick, onEdit }) => 
           <div className="flex flex-col">
             <div className="flex items-center">
               <div className={`w-2 h-2 rounded-full mr-2 ${getStatusColor()}`}></div>
-              <span className="font-medium">{event.title}</span>
+              <span className="font-medium">{`${event.start_location} -> ${event.destination}`}</span>
             </div>
             <div className="text-sm text-gray-600 mt-1">
               {format(event.start, "h:mm a")}

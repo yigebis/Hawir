@@ -1,0 +1,178 @@
+/* src/styles/calendar-overrides.css */
+
+/* --- Core Event Sizing and Spacing --- */
+.rbc-time-content .rbc-event {
+    min-width: 0 !important;
+    /* Allow events to shrink to very small widths */
+    box-sizing: border-box !important;
+    /* Standard box model */
+    /* REMOVE any margin-right that was here previously */
+    /* margin-right: 3px !important; <-- REMOVED */
+    /* Optional: For debugging, temporarily add a visible background to see the actual event box */
+    /* background-color: rgba(255, 0, 0, 0.05); */
+}
+
+/* Ensure the wrapper around your custom event component is flexible */
+/* This is where we'll add the visual spacing via padding */
+.rbc-event-content {
+    display: flex;
+    /* Make it a flex container to manage its children */
+    flex-direction: column;
+    /* Stack contents vertically */
+    min-width: 0;
+    /* Allow this container to shrink */
+    flex-shrink: 1;
+    /* Allow it to shrink if placed in a flex context */
+    overflow: hidden;
+    /* Clip content if it overflows its calculated size */
+
+    /* --- Create Visual Spacing (Padding) --- */
+    /* This padding will create space *inside* the event's calculated width.
+       The rbc-event box will still occupy its full space calculated by R-B-C,
+       but its content will be slightly narrower, creating the visual gap. */
+    padding: 2px 6px 2px 2px !important;
+    /* Top:2px, Right:6px, Bottom:2px, Left:2px */
+    /* 6px on the right will create the apparent "space between travels" */
+    background-color: inherit !important;
+    /* Ensure the event's background color propagates */
+}
+
+/* --- TravelEvent Component Styling for Compactness & Clickability --- */
+
+/* Target the root div of your TravelEvent component */
+.rbc-event .p-2.border.rounded-md {
+    /* This should be the outermost div in your TravelEvent.tsx */
+    display: flex;
+    flex-direction: column;
+    /* Stack main info and buttons vertically */
+    justify-content: space-between;
+    /* Pushes content (top) and buttons (bottom) */
+    height: 100%;
+    /* Ensure it fills the vertical space given by R-B-C */
+    min-width: 0;
+    /* Allow internal content to shrink */
+    flex-shrink: 1;
+    position: relative;
+    /* Needed for z-index on hover to work correctly */
+    padding: 0 !important;
+    /* Remove any padding from TravelEvent's root, as rbc-event-content handles it */
+    border: none !important;
+    /* Remove individual border if eventPropGetter already applies it */
+    background-color: transparent !important;
+    /* Ensure transparency or inherit background */
+}
+
+/* Bring the entire hovered event to the front so its buttons are clickable */
+.rbc-event .p-2.border.rounded-md:hover {
+    z-index: 10 !important;
+    /* Bring hovered event to the very front */
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8), 0 0 5px rgba(0, 0, 0, 0.3);
+    /* Subtle hover effect */
+    /* Optional: background-color: rgba(0,0,0,0.1); for a slight dark overlay on hover */
+}
+
+/* --- Text Content within Event (Title, Time) --- */
+.rbc-event .font-medium,
+.rbc-event .text-sm,
+.rbc-event .text-xs {
+    white-space: nowrap;
+    /* Keep text on one line */
+    overflow: hidden;
+    /* Clip text */
+    text-overflow: ellipsis;
+    /* Add ellipsis for clipped text */
+    min-width: 0;
+    /* Allow text to shrink */
+    flex-shrink: 1;
+    /* Allow text to shrink */
+    line-height: 1.1;
+    /* Reduce line height for compactness */
+    font-size: 0.75rem !important;
+    /* Ensure readable font size for main text */
+    padding: 0;
+    /* Remove any padding */
+    margin: 0;
+    /* Remove any margin */
+}
+
+/* For event time, make it even smaller if needed */
+.rbc-event .text-xs {
+    font-size: 0.65rem !important;
+}
+
+
+/* --- Buttons within Event (Edit Trip, Travelers) --- */
+.rbc-event .flex.gap-1 {
+    /* The container for your Edit and Users buttons */
+    flex-wrap: nowrap;
+    /* Prevent buttons from wrapping (would increase height) */
+    min-width: 0;
+    flex-shrink: 1;
+    /* Allow the button container to shrink */
+    justify-content: flex-end;
+    /* Align buttons to the right */
+    align-items: center;
+    /* Vertically align buttons */
+    padding: 1px 0 !important;
+    /* Minimal vertical padding for the button row */
+}
+
+/* Make buttons very small and icon-only for compactness */
+.rbc-event .flex.gap-1 button {
+    padding: 0 !important;
+    /* Remove all internal button padding */
+    height: 20px !important;
+    /* Fixed small height for button */
+    width: 20px !important;
+    /* Fixed small width for button */
+    min-width: 20px !important;
+    /* Ensure buttons don't shrink below this */
+    min-height: 20px !important;
+    font-size: 0 !important;
+    /* Hide button text to save space */
+    flex-shrink: 0;
+    /* Prevent buttons from shrinking themselves */
+    border-radius: 4px;
+    /* Maintain rounded corners */
+    display: flex;
+    /* Use flex to center icon */
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.2);
+    /* Slight transparent background for visibility */
+    color: white;
+    /* Ensure icons are white */
+    margin-left: 2px !important;
+    /* Small gap between buttons */
+    cursor: pointer;
+    /* Ensure cursor is pointer when hovering */
+    pointer-events: auto !important;
+    /* Explicitly ensure buttons are clickable */
+    border: none !important;
+    /* Remove button borders */
+}
+
+/* Style for Lucide icons within the buttons */
+.rbc-event .lucide-react {
+    min-width: 14px !important;
+    /* Smallest icon width */
+    max-width: 14px !important;
+    /* Max icon width */
+    height: 14px !important;
+    /* Smallest icon height */
+    width: 14px !important;
+    margin: 0 !important;
+    /* Remove any default margins */
+    padding: 0 !important;
+}
+
+/* Hide any span elements within buttons (like "Travelers" text) to ensure only icons show */
+.rbc-event .flex.gap-1 button span {
+    display: none !important;
+}
+
+/* Optional: Improve hover state for buttons */
+.rbc-event .flex.gap-1 button:hover {
+    background-color: rgba(255, 255, 255, 0.4);
+    /* Slightly more opaque on hover */
+}

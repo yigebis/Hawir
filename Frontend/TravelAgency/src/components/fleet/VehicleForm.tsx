@@ -1,3 +1,4 @@
+// src/components/fleet/VehicleForm.tsx
 
 import React from "react";
 import { useForm } from "react-hook-form";
@@ -10,6 +11,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription, // Make sure to import FormDescription
 } from "@/components/ui/form";
 import {
   Select,
@@ -19,47 +21,64 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox"; // Import the Checkbox component
 
+// Define the interface for the form's internal state
+export interface VehicleFormFields {
+  id?: string;
+  plate_number: string;
+  capacity: number; // Assuming capacity is a number
+  description: string;
+  status: string; // e.g., 'available', 'in service', 'maintenance'
+  is_reserved: boolean; // Correct type for the checkbox
+}
+
+// Define the props for the VehicleForm component
 interface VehicleFormProps {
-  vehicle?: {
-    id: string;
-    carNumber: string;
-    capacity: string;
-    assignedDriver: string;
-    status: string;
-  };
-  onSubmit: (data: any) => void;
+  initialData?: VehicleFormFields; // For editing an existing vehicle
+  onSubmit: (data: VehicleFormFields) => void;
   onCancel: () => void;
   onDelete?: (id: string) => void;
   isAdd: boolean;
-  availableDrivers?: string[];
 }
 
-const VehicleForm: React.FC<VehicleFormProps> = ({ 
-  vehicle, 
-  onSubmit, 
-  onCancel, 
+const VehicleForm: React.FC<VehicleFormProps> = ({
+  initialData,
+  onSubmit,
+  onCancel,
   onDelete,
   isAdd,
-  availableDrivers = ["Alex T.", "John D.", "Unassigned"]
 }) => {
-  const form = useForm({
+  const form = useForm<VehicleFormFields>({
     defaultValues: {
-      id: vehicle?.id || "",
-      carNumber: vehicle?.carNumber || "",
-      capacity: vehicle?.capacity || "",
-      assignedDriver: vehicle?.assignedDriver || "Unassigned",
-      status: vehicle?.status || "Available"
-    }
+      id: initialData?.id || "",
+      plate_number: initialData?.plate_number || "",
+      capacity: initialData?.capacity || 0, // Default to 0 for number type
+      description: initialData?.description || "",
+      status: initialData?.status || "available", // Default status
+      is_reserved: initialData?.is_reserved || false, // Default to false for boolean
+    },
   });
 
-  const handleSubmit = (data: any) => {
+  // Effect to reset form if initialData changes
+  React.useEffect(() => {
+    form.reset({
+      id: initialData?.id || "",
+      plate_number: initialData?.plate_number || "",
+      capacity: initialData?.capacity || 0,
+      description: initialData?.description || "",
+      status: initialData?.status || "available",
+      is_reserved: initialData?.is_reserved ?? false, // Use nullish coalescing for boolean
+    });
+  }, [initialData, form]);
+
+  const handleSubmit = (data: VehicleFormFields) => {
     onSubmit(data);
   };
 
   const handleDelete = () => {
-    if (onDelete && vehicle) {
-      onDelete(vehicle.id);
+    if (onDelete && initialData?.id) {
+      onDelete(initialData.id);
     }
   };
 
@@ -81,21 +100,21 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
             )}
           />
         )}
-        
+
         <FormField
           control={form.control}
-          name="carNumber"
+          name="plate_number"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Car Number</FormLabel>
+              <FormLabel>Plate Number</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="e.g. AA-1234" />
+                <Input {...field} placeholder="e.g., AA-12345" />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="capacity"
@@ -103,67 +122,81 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
             <FormItem>
               <FormLabel>Capacity</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="e.g. 50 seats" />
+                <Input
+                  type="number" // Ensure input type is number
+                  {...field}
+                  onChange={(e) => field.onChange(parseInt(e.target.value))} // Convert to number
+                  placeholder="e.g., 50"
+                  min="1" // Minimum capacity
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
-          name="assignedDriver"
+          name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Assigned Driver</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select driver" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {availableDrivers.map((driver) => (
-                    <SelectItem key={driver} value={driver}>
-                      {driver}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Input {...field} placeholder="e.g., Luxury bus, 2-level" />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="status"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Status</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-              >
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="Available">Available</SelectItem>
-                  <SelectItem value="In Service">In Service</SelectItem>
-                  <SelectItem value="Maintenance">Maintenance</SelectItem>
+                  <SelectItem value="available">Available</SelectItem>
+                  <SelectItem value="in service">In Service</SelectItem>
+                  <SelectItem value="maintenance">Maintenance</SelectItem>
+                  <SelectItem value="retired">Retired</SelectItem> {/* Add other statuses if needed */}
                 </SelectContent>
               </Select>
               <FormMessage />
             </FormItem>
           )}
         />
-        
+
+        {/* --- VehicleForm: IS_RESERVED CHECKBOX FIELD (MATCHES DRIVER FORM STYLE) --- */}
+        <FormField
+          control={form.control}
+          name="is_reserved"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>Is Reserved?</FormLabel>
+                <FormDescription>
+                  Mark if the bus is currently reserved.
+                </FormDescription>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        {/* --- END IS_RESERVED CHECKBOX FIELD --- */}
+
         <div className="flex justify-between pt-4">
           {isAdd ? (
             <>
@@ -171,7 +204,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                 Cancel
               </Button>
               <Button type="submit" className="bg-[#F35B04] hover:bg-[#d14e03]">
-                Add
+                Add Vehicle
               </Button>
             </>
           ) : (

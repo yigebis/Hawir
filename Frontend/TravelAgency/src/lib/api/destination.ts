@@ -3,50 +3,35 @@
 import { API_BASE_URL } from "@/lib/api/config"; // Assuming you have a config file for your API base URL
 
 export interface Destination {
-    id: string;
+    id: string; // Assuming the backendObjectID is sent as a string
     name: string;
-    latitude: string;
-    longitude: string;
-    description: string;
-    hotels: Hotel[][];
-    culture: string;
-    history: string;
-    population: string;
-    touristAttractions: TouristAttraction[][];
-    post_date: string; // Or Date, depending on how you want to handle it
-}
-
-interface Hotel {
-    name: string;
-    imageUrl: string;
-    mapLink: string;
-}
-
-interface TouristAttraction {
-    name: string;
-    desc: string;
-    imageUrl: string;
-}
-
-interface ApiResponse<T> {
-    data: T;
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
+    stations: string[];
 }
 
 export const getAllDestinations = async (): Promise<Destination[]> => {
     try {
-        const response = await fetch(`${API_BASE_URL}/destination/all`); // Adjust the endpoint if needed
+        // Adjust the endpoint if needed, keeping /destination/all for fetching all
+        const response = await fetch(`${API_BASE_URL}/destination/all`);
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || `HTTP error! status: ${response.status}`);
+            // Attempt to parse error message from the response body if available
+            const errorBody = await response.text(); // Read as text first to avoid JSON parsing errors on non-JSON responses
+            let errorMessage = `HTTP error! status: ${response.status}`;
+            try {
+                const errorJson = JSON.parse(errorBody);
+                errorMessage = errorJson.message || errorMessage;
+            } catch (e) {
+                // Ignore if parsing fails, use the default HTTP error message
+            }
+            throw new Error(errorMessage);
         }
-        const data: ApiResponse<Destination[]> = await response.json();
-        return data.data;
+        // The backend returns ApiResponse<Destination[]>, so we expect data.data to be Destination[]
+        const data: Destination[] = await response.json();
+        console.log("Fetched destinations:");
+        console.log(data);
+        return data;
     } catch (error: any) {
         console.error("Error fetching destinations:", error);
+        // Re-throw the error so calling code can handle it
         throw error;
     }
 };

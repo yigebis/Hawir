@@ -79,7 +79,7 @@ const Login: React.FC = () => {
       <div className="w-full max-w-[416px] bg-white rounded-xl shadow-[0px_8px_24px_0px_rgba(0,0,0,0.08)] p-6">
         <div className="flex justify-center mb-6">
           <div className="flex items-center gap-1">
-            <img alt="Hawir Logo" className="w-16 h-16" src="/lovable-uploads/214b2982-c671-40f6-9c44-c4f4ddf94148.png" />
+            <img alt="Hawir Logo" className="w-16 h-16" src="../public/Hawir-01.svg" />
             <div className="text-[#F35B04] font-['Jost'] text-xl font-bold tracking-wider">
               HAWIR
             </div>
