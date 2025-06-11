@@ -82,6 +82,58 @@ func (buc *BookingUseCase) UnchooseSeat(seat *Domain.Seat) (int, error) {
 	return buc.ErrorService.NoError()
 }
 
+func (buc *BookingUseCase) BookAndPayFromAgency(booking *Domain.Booking) (*Domain.Booking, int, error) {
+	// check whether the seat has been choosen by the traveler or not
+	_, err := buc.BookingRepo.GetSeatByTravelerID(booking.TravelerID, booking.TravelID)
+	if err != nil {
+		// Return nil booking on error
+		statusCode, err := buc.ErrorService.SeatNotChosen()
+		return nil, statusCode, err
+	}
+
+	// delete the seat
+	err = buc.BookingRepo.DeleteSeat(booking.TravelerID, booking.TravelID)
+	if err != nil {
+		// Return nil booking on error
+		statusCode, err := buc.ErrorService.SeatNotChosen()
+		return nil, statusCode, err
+	}
+
+	booking.PaymentRef = Domain.Payment{}
+	// Generate a unique PaymentRef for this booking
+	UUID := fmt.Sprintf("hw-booking-%s", uuid.New().String())
+
+	booking.PaymentRef.CurrentPaymentRef = UUID
+	booking.PaymentRef.PaymentSuccessful = true
+	booking.PaymentRef.FailedPaymentRef = []string{}
+	booking.BookingRef = UUID
+	booking.Status = Domain.BookingStatusPaid
+	booking.NotificationSent = false
+	booking.PaymentType = "inperson"
+
+	// Set the booking time to the current time
+	booking.BookTime = time.Now()
+	booking.PayTime = time.Now()
+	print("before\n")
+	err = buc.BookingRepo.Book(booking)
+	if err != nil {
+		// Return nil booking on error
+		statusCode, err := buc.ErrorService.SeatNotChosen()
+		return nil, statusCode, err
+	}
+
+	fmt.Println("after booking")
+	booking, err = buc.BookingRepo.GetBookingByBookingRef(booking.BookingRef)
+	if err != nil {
+		statusCode, err := buc.ErrorService.BookingNotFound()
+		return nil, statusCode, err
+	}
+
+	// Return the booking object after successful saving
+	statusCode, err := buc.ErrorService.NoError()
+	return booking, statusCode, err
+}
+
 // this will make the seat reserved for 30 minutes
 func (buc *BookingUseCase) Book(booking *Domain.Booking) (*Domain.Booking, int, error) {
 	// check whether the seat has been choosen by the traveler or not
@@ -108,7 +160,7 @@ func (buc *BookingUseCase) Book(booking *Domain.Booking) (*Domain.Booking, int, 
 		return nil, statusCode, err
 	}
 
-	maxTime := time.Now().Add(time.Duration(bookReservationSpan) * time.Minute) // Assuming span is in minutes
+	maxTime := time.Now().Add(time.Duration(bookReservationSpan) * time.Second) // Assuming span is in minutes
 	booking.BookTimeLimit = maxTime
 
 	booking.PaymentRef = Domain.Payment{}
@@ -121,6 +173,7 @@ func (buc *BookingUseCase) Book(booking *Domain.Booking) (*Domain.Booking, int, 
 	booking.BookingRef = UUID
 	booking.Status = Domain.BookingStatusPending
 	booking.NotificationSent = false
+	booking.PaymentType = "online"
 
 	// Set the booking time to the current time
 	booking.BookTime = time.Now()
@@ -229,7 +282,7 @@ func (buc *BookingUseCase) UpdateBooking(bookingStatus *Domain.BookingStatus) (*
 		booking.NotificationSent = false
 	} else {
 		statusCode, err := buc.ErrorService.UnableToSeekFile()
-		return nil, statusCode, err;
+		return nil, statusCode, err
 	}
 
 	err = buc.BookingRepo.UpdateBooking(booking)

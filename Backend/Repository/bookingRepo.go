@@ -20,7 +20,7 @@ type BookingRepository struct {
 	TravelStatsCollection *mongo.Collection
 	SeatCollection        *mongo.Collection
 	UserCollection        *mongo.Collection
-	TravelCollection      *mongo.Collection 
+	TravelCollection      *mongo.Collection
 }
 
 // NewBookingRepository creates a new instance of BookingRepository.
@@ -30,7 +30,7 @@ func NewBookingRepository(
 	travelStatsCollection *mongo.Collection,
 	SeatCollection *mongo.Collection,
 	UserCollection *mongo.Collection,
-	TravelCollection *mongo.Collection, 
+	TravelCollection *mongo.Collection,
 ) UseCase.IBookingRepository {
 	return &BookingRepository{
 		DbCtx:                 dbCtx,
@@ -38,7 +38,7 @@ func NewBookingRepository(
 		TravelStatsCollection: travelStatsCollection,
 		SeatCollection:        SeatCollection,
 		UserCollection:        UserCollection,
-		TravelCollection: TravelCollection,
+		TravelCollection:      TravelCollection,
 	}
 }
 
@@ -123,7 +123,6 @@ func (b *BookingRepository) GetSeatByTravelerID(travelerID, travelID string) (*D
 	return &seat, nil
 }
 
-
 // CancelBook implements UseCase.IBookingRepository.
 func (b *BookingRepository) CancelBook(bookingID string) error {
 	objId, err := primitive.ObjectIDFromHex(bookingID)
@@ -160,6 +159,7 @@ func (b *BookingRepository) EditBook(booking *Domain.Booking) error {
 		"seat_no":        booking.SeatNo,
 		"trip_Type":      booking.TripType,
 		"start_location": booking.StartLocation,
+		"destination":    booking.Destination,
 		"price":          booking.Price,
 		"payment_type":   booking.PaymentType,
 		"payment_ref":    booking.PaymentRef,
@@ -360,7 +360,7 @@ func (b *BookingRepository) GetTravelSeats(travelID string) (*[]bool, error) {
 	return &travelStats.Seats, nil
 }
 
-func (b *BookingRepository) UpdateBooking(booking *Domain.Booking) (error) {
+func (b *BookingRepository) UpdateBooking(booking *Domain.Booking) error {
 	objId, err := primitive.ObjectIDFromHex(booking.ID.Hex())
 	if err != nil {
 		return err
@@ -370,9 +370,9 @@ func (b *BookingRepository) UpdateBooking(booking *Domain.Booking) (error) {
 
 	// Only include fields that are intended to be updated by this method
 	updateData := bson.M{
-		"payment_ref":    booking.PaymentRef,
-		"pay_time":       booking.PayTime,
-		"status":         booking.Status,
+		"payment_ref": booking.PaymentRef,
+		"pay_time":    booking.PayTime,
+		"status":      booking.Status,
 	}
 
 	update := bson.M{"$set": updateData}
@@ -396,7 +396,7 @@ func (b *BookingRepository) FindConfirmedBookingsForUpcomingTravel(ctx context.C
 			// Match confirmed bookings that haven't had a notification sent
 			"$match": bson.M{
 				"status":            Domain.BookingStatusPaid, // Match confirmed bookings
-				"notification_sent": false, // Match bookings where notification hasn't been sent
+				"notification_sent": false,                    // Match bookings where notification hasn't been sent
 			},
 		},
 		{
@@ -431,20 +431,21 @@ func (b *BookingRepository) FindConfirmedBookingsForUpcomingTravel(ctx context.C
 			// Project the fields from the original booking document
 			// This reshapes the output to match the Domain.Booking struct
 			"$project": bson.M{
-				"_id": 1,
-				"booking_ref": 1,
-				"travel_id": 1,
-				"traveler_id": 1,
-				"seat_no": 1,
-				"trip_type": 1,
-				"start_location": 1,
-				"price": 1,
-				"payment_type": 1,
-				"payment_ref": 1, // Assuming PaymentRef is a struct or needs specific projection
-				"book_time": 1,
-				"pay_time": 1,
-				"book_time_limit": 1,
-				"status": 1,
+				"_id":               1,
+				"booking_ref":       1,
+				"travel_id":         1,
+				"traveler_id":       1,
+				"seat_no":           1,
+				"trip_type":         1,
+				"start_location":    1,
+				"destination":       1,
+				"price":             1,
+				"payment_type":      1,
+				"payment_ref":       1, // Assuming PaymentRef is a struct or needs specific projection
+				"book_time":         1,
+				"pay_time":          1,
+				"book_time_limit":   1,
+				"status":            1,
 				"notification_sent": 1,
 				// Add other fields from the Booking struct as needed
 				// Exclude the joined travel_info field
@@ -476,7 +477,7 @@ func (b *BookingRepository) MarkNotificationSent(ctx context.Context, bookingID 
 	objID, err := primitive.ObjectIDFromHex(bookingID)
 	if err != nil {
 		fmt.Printf("Invalid booking ID format for marking notification sent: %v\n", err) // Log error
-		return fmt.Errorf("invalid booking ID format: %w", err) // Return a wrapped error
+		return fmt.Errorf("invalid booking ID format: %w", err)                          // Return a wrapped error
 	}
 
 	// Define the filter to find the booking document by its ObjectID
@@ -489,13 +490,13 @@ func (b *BookingRepository) MarkNotificationSent(ctx context.Context, bookingID 
 	result, err := b.BookingCollection.UpdateOne(ctx, filter, update)
 	if err != nil {
 		fmt.Printf("Error updating booking %s to mark notification sent: %v\n", bookingID, err) // Log error
-		return fmt.Errorf("failed to update booking notification status: %w", err) // Return a wrapped error
+		return fmt.Errorf("failed to update booking notification status: %w", err)              // Return a wrapped error
 	}
 
 	// Check if a document was matched and modified
 	if result.MatchedCount == 0 {
 		fmt.Printf("Booking %s not found for marking notification sent.\n", bookingID) // Log
-		return errors.New("booking not found") // Return a "booking not found" error
+		return errors.New("booking not found")                                         // Return a "booking not found" error
 	}
 	if result.ModifiedCount == 0 {
 		fmt.Printf("Booking %s already had notification_sent set to true.\n", bookingID) // Log

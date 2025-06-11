@@ -10,7 +10,8 @@ type IBookingUseCase interface {
 	// Yigerem
 	ChooseSeat(seat *Domain.Seat) (int, error) //this will make the seat reserved for 5 minutes
 	Book(booking *Domain.Booking) (*Domain.Booking, int, error) //this will make the seat reserved for 30 minutes
-
+	BookAndPayFromAgency(booking *Domain.Booking) (*Domain.Booking, int, error)
+	
 	// Yohannes
 	CancelBook(bookingID string) (int, error)
 	EditBook(booking *Domain.Booking) (int, error)

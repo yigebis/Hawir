@@ -12,9 +12,14 @@ type Booking struct {
 	BookingRef       string             `json:"booking_ref" bson:"booking_ref,omitempty"`
 	TravelID         string             `json:"travel_id" bson:"travel_id,omitempty"`
 	TravelerID       string             `json:"traveler_id" bson:"traveler_id,omitempty"`
+	FirstName        string             `json:"first_name" bson:"first_name"`
+	LastName         string             `json:"last_name" bson:"last_name"`
+	Email            string             `json:"email" bson:"email"`
+	PhoneNumber      string             `json:"phone_number" bson:"phone_number"`
 	SeatNo           int                `json:"seat_no" bson:"seat_no,omitempty"`
 	TripType         string             `json:"trip_type" bson:"trip_type,omitempty"`
 	StartLocation    string             `json:"start_location" bson:"start_location,omitempty"`
+	Destination      string             `json:"destination" bson:"destination,omitempty"`
 	Price            float64            `json:"price" bson:"price,omitempty"`
 	PaymentType      string             `json:"payment_type" bson:"payment_type,omitempty"`
 	PaymentRef       Payment            `json:"payment_ref" bson:"payment_ref"`
@@ -46,8 +51,8 @@ const (
 
 type Seat struct {
 	TravelID   string    `json:"travel_id" bson:"travel_id,omitempty" validate:"required"`
-	TravelerID string    `json:"traveler_id" bson:"traveler_id,omitempty" validate:"required"`
-	SeatNo     int       `json:"seat_no" bson:"seat_no,omitempty" validate:"required"`
+	TravelerID string    `json:"traveler_id" bson:"traveler_id,omitempty"`
+	SeatNo     int       `json:"seat_no" bson:"seat_no" validate:"required"`
 	MaxTime    time.Time `json:"max_time" bson:"max_time,omitempty"`
 }
 
