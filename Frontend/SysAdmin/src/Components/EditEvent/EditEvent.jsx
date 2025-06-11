@@ -1,112 +1,206 @@
 import React, { useState } from "react";
 import "./EditEvent.css";
+import { API_BASE_URL } from "../../api/api";
 
-const EditEvent = ({ eventData, onClose, onSave }) => {
-  const [formData, setFormData] = useState({ ...eventData });
+const EditEvent = ({ eventData, destinations = [], onClose, onSave }) => {
+  const [formData, setFormData] = useState({
+    title: eventData.title || "",
+    desc: eventData.desc || "",
+    destination_id: eventData.destination_id || "",
+    date: eventData.date ? eventData.date.split("T")[0] : "",
+    media_link: eventData.media_link || "",
+    mediaFile: null,
+  });
+
+  const [preview, setPreview] = useState(eventData.media_link || null);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, files } = e.target;
+
+    if (name === "media") {
+      if (files && files[0]) {
+        const file = files[0];
+        setFormData((prev) => ({
+          ...prev,
+          mediaFile: file,
+        }));
+        const reader = new FileReader();
+        reader.onloadend = () => setPreview(reader.result);
+        reader.readAsDataURL(file);
+      }
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
-  const handleSubmit = (e) => {
+  // Helper: Get Cloudinary preset and cloud name from backend
+  const getCloudinaryPreset = async () => {
+    const res = await fetch(`${API_BASE_URL}/event/upload_preset`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+      },
+    });
+    if (!res.ok) throw new Error("Failed to get Cloudinary preset");
+    return res.json();
+  };
+
+  // Helper: Upload image to Cloudinary
+  const uploadToCloudinary = async (file, uploadPreset, cloudName) => {
+    const data = new FormData();
+    data.append("file", file);
+    data.append("upload_preset", uploadPreset);
+
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+      {
+        method: "POST",
+        body: data,
+      }
+    );
+    if (!res.ok) throw new Error("Failed to upload image to Cloudinary");
+    return res.json(); // contains .secure_url
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate required fields
-    if (!formData.name || !formData.location || !formData.startDate) {
+    if (
+      !formData.title ||
+      !formData.desc ||
+      !formData.destination_id ||
+      !formData.date
+    ) {
       alert("Please fill in all required fields.");
       return;
     }
 
-    onSave(formData); // Pass the updated event data to the parent component
+    let mediaLink = formData.media_link;
+
+    // If a new file is selected, upload to Cloudinary
+    if (formData.mediaFile) {
+      try {
+        const { cloud_name, upload_preset } = await getCloudinaryPreset();
+        const uploadRes = await uploadToCloudinary(
+          formData.mediaFile,
+          upload_preset,
+          cloud_name
+        );
+        mediaLink = uploadRes.secure_url;
+      } catch (err) {
+        alert("Image upload failed: " + err.message);
+        return;
+      }
+    }
+
+    // Prepare form data for backend
+    const backendForm = new FormData();
+    backendForm.append("id", eventData.id || eventData._id);
+    backendForm.append("title", formData.title);
+    backendForm.append("desc", formData.desc);
+    backendForm.append("destination_id", formData.destination_id);
+    backendForm.append("date", formData.date);
+    backendForm.append("media_link", mediaLink);
+
+    onSave(backendForm);
   };
 
   return (
-    <div className="edit-event-modal">
-      <div className="modal-content">
-        <h2>Edit Event</h2>
+    <div className="modal-overlay">
+      <div className="modal-form">
+        <h2>{eventData.id ? "Edit Event" : "Create Event"}</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="name">Event Name</label>
+            <label htmlFor="title">Event Name *</label>
             <input
               type="text"
-              id="name"
-              name="name"
-              value={formData.name}
+              id="title"
+              name="title"
+              value={formData.title}
               onChange={handleChange}
+              placeholder="Enter event name"
               required
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="description">Description</label>
+            <label htmlFor="desc">Description *</label>
             <textarea
-              id="description"
-              name="description"
-              value={formData.description}
+              id="desc"
+              name="desc"
+              value={formData.desc}
               onChange={handleChange}
+              placeholder="Enter event description"
+              rows="3"
+              required
             ></textarea>
           </div>
 
           <div className="form-group">
-            <label htmlFor="location">Location</label>
-            <input
-              type="text"
-              id="location"
-              name="location"
-              value={formData.location}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="startDate">Start Date</label>
-            <input
-              type="date"
-              id="startDate"
-              name="startDate"
-              value={formData.startDate}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="endDate">End Date</label>
-            <input
-              type="date"
-              id="endDate"
-              name="endDate"
-              value={formData.endDate}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="status">Status</label>
+            <label htmlFor="destination_id">Destination *</label>
             <select
-              id="status"
-              name="status"
-              value={formData.status}
+              id="destination_id"
+              name="destination_id"
+              value={formData.destination_id}
               onChange={handleChange}
+              required
             >
-              <option value="Educational & Business">Educational & Business</option>
-              <option value="IT and Technology">IT and Technology</option>
-              <option value="Sports & Fitness">Sports & Fitness</option>
-              <option value="Cultural & Arts">Cultural & Arts</option>
+              <option value="">Select a destination</option>
+              {destinations.map((dest) => (
+                <option key={dest.id || dest._id} value={dest.id || dest._id}>
+                  {dest.name}
+                </option>
+              ))}
             </select>
           </div>
 
           <div className="form-group">
-            <label htmlFor="image">Image URL</label>
+            <label htmlFor="date">Date *</label>
             <input
-              type="text"
-              id="image"
-              name="image"
-              value={formData.image}
+              type="date"
+              id="date"
+              name="date"
+              value={formData.date}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="media">Event Image</label>
+            <input
+              type="file"
+              id="media"
+              name="media"
+              accept="image/*"
               onChange={handleChange}
             />
+            {(preview || formData.media_link) && (
+              <div className="media-preview">
+                <p>Current Image:</p>
+                <img
+                  src={
+                    preview
+                      ? preview
+                      : formData.media_link
+                      ? formData.media_link.includes("/upload/")
+                        ? formData.media_link.replace(
+                            "/upload/",
+                            "/upload/f_auto,q_auto/"
+                          )
+                        : formData.media_link
+                      : "/placeholder.jpg"
+                  }
+                  alt={formData.title || "Event Image"}
+                  style={{
+                    maxWidth: "100%",
+                    maxHeight: "200px",
+                    marginTop: "10px",
+                    display: "block",
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           <div className="form-actions">
@@ -114,7 +208,7 @@ const EditEvent = ({ eventData, onClose, onSave }) => {
               Cancel
             </button>
             <button type="submit" className="save-btn">
-              Save Changes
+              {eventData.id ? "Save Changes" : "Create Event"}
             </button>
           </div>
         </form>

@@ -70,7 +70,13 @@ h3 {
 }
 
 .form-group input:focus {
-  border-color: #006400;
+  border-color: #006400; /* Matches the theme color */
+}
+
+.error-message {
+  color: red;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
 }
 
 .checkbox-group {

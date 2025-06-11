@@ -1,140 +1,250 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "../Sidebar/Sidebar";
 import AddLocation from "../AddLocation/AddLocation";
 import EditLocation from "../EditLocation/EditLocation";
 import "./ManageLocations.css";
-import harar from "../../assets/harar.jpeg";
+import { API_BASE_URL } from "../../api/api";
 
-const ManageLocations = ({ locations, setLocations }) => {
-  // const [locations, setLocations] = useState([
-  //   {
-  //     id: 1,
-  //     name: "Harar",
-  //     desc: "A historic city known for its ancient walls and vibrant culture.",
-  //     currentWeather: "Cloudy, 22°C",
-  //     hotels: [
-  //       {
-  //         name: "Heritage Plaza Hotel",
-  //         imageUrl: "https://via.placeholder.com/150",
-  //       },
-  //       {
-  //         name: "Harar Guest House",
-  //         imageUrl: "https://via.placeholder.com/150",
-  //       },
-  //     ],
-  //     culture: "Famous for its diverse traditions and coffee culture.",
-  //     history: "Known as the City of Saints, with over 82 mosques.",
-  //     people: "Welcoming and culturally diverse community.",
-  //     population: "122,000",
-  //     touristAttractions: [
-  //       {
-  //         name: "Harar Jugol",
-  //         desc: "A UNESCO World Heritage Site with ancient walls.",
-  //       },
-  //       {
-  //         name: "Hyena Feeding",
-  //         desc: "A unique tradition of feeding wild hyenas.",
-  //       },
-  //     ],
-  //     postDate: "2025-04-26",
-  //   },
-  // ]);
+const ManageLocations = () => {
+  const [destinations, setDestinations] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterOption, setFilterOption] = useState("all");
   const [sortOption, setSortOption] = useState("newest");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState(null);
-  const [deletedLocation, setDeletedLocation] = useState(null);
+  const [selectedDestination, setSelectedDestination] = useState(null);
+  const [deletedDestination, setDeletedDestination] = useState(null);
   const [undoTimeout, setUndoTimeout] = useState(null);
   const [undoAvailable, setUndoAvailable] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const locationsPerPage = 6;
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleAddLocation = (newLocation) => {
-    setLocations((prev) => [...prev, { ...newLocation, id: Date.now() }]);
+  // Centralized fetch function
+  const fetchDestinations = () => {
+    setLoading(true);
+    fetch(`${API_BASE_URL}/destination/all`)
+      .then((response) => {
+        if (!response.ok) {
+          return response.text().then((text) => {
+            throw new Error(
+              `Failed to fetch destinations: ${response.status} - ${text}`
+            );
+          });
+        }
+        return response.json();
+      })
+      .then((data) => setDestinations(data))
+      .catch((error) => console.error("Error fetching destinations:", error))
+      .finally(() => setLoading(false));
   };
 
-  const handleEditLocation = (updatedLocation) => {
-    setLocations((prev) =>
-      prev.map((location) =>
-        location.id === updatedLocation.id ? updatedLocation : location
-      )
-    );
-    setShowEditModal(false);
+  // Read page from URL on mount and when location changes
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const pageFromUrl = parseInt(params.get("page"), 10);
+    if (pageFromUrl && pageFromUrl > 0) {
+      setCurrentPage(pageFromUrl);
+    } else {
+      setCurrentPage(1);
+    }
+    fetchDestinations();
+    // eslint-disable-next-line
+  }, [location]);
+
+  // Update URL when page changes
+  const setPageAndUrl = (page) => {
+    setCurrentPage(page);
+    const params = new URLSearchParams(location.search);
+    params.set("page", page);
+    navigate({ search: params.toString() }, { replace: true });
   };
 
-  const handleDeleteClick = (location) => {
-    setSelectedLocation(location);
+  const handleAddDestination = (newDestination) => {
+    fetch(`${API_BASE_URL}/destination/add`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newDestination),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          return response.text().then((text) => {
+            let errorMsg = `Failed to add destination: ${response.status}`;
+            try {
+              const errObj = JSON.parse(text);
+              if (errObj.error) errorMsg = errObj.error;
+            } catch {}
+            throw new Error(errorMsg);
+          });
+        }
+        return response.json();
+      })
+      .then(() => {
+        fetchDestinations(); // Refetch after add
+        setShowAddModal(false);
+      })
+      .catch((error) => {
+        alert(error.message);
+        console.error("Error adding destination:", error);
+      });
+  };
+
+  const handleEditDestination = (updatedDestination) => {
+    console.log("Editing destination:", updatedDestination); 
+    fetch(`${API_BASE_URL}/destination/edit/${updatedDestination.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: updatedDestination.name,
+        stations: Array.isArray(updatedDestination.stations)
+          ? updatedDestination.stations.filter((s) => s && s.trim())
+          : [],
+        image: updatedDestination.image,
+      }),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          return response.text().then((text) => {
+            let errorMsg = `Failed to edit destination: ${response.status}`;
+            try {
+              const errObj = JSON.parse(text);
+              if (errObj.error) errorMsg = errObj.error;
+            } catch {}
+            throw new Error(errorMsg);
+          });
+        }
+        return response.json();
+      })
+      .then(() => {
+        fetchDestinations(); // Refetch after edit
+        setShowEditModal(false);
+      })
+      .catch((error) => {
+        alert(error.message);
+        console.error("Error editing destination:", error);
+      });
+  };
+
+  const handleDeleteClick = (destination) => {
+    setSelectedDestination(destination);
     setShowDeleteModal(true);
   };
 
-  const confirmDeleteLocation = () => {
+  const confirmDeleteDestination = () => {
     setShowDeleteModal(false);
 
-    const updatedLocations = locations.filter(
-      (location) => location.id !== selectedLocation.id
-    );
-    setLocations(updatedLocations);
-
-    setDeletedLocation(selectedLocation);
-    setUndoAvailable(true);
-
-    const timeout = setTimeout(() => {
-      setDeletedLocation(null);
-      setUndoAvailable(false);
-    }, 5000);
-
-    setUndoTimeout(timeout);
-    setSelectedLocation(null);
+    fetch(`${API_BASE_URL}/destination/delete/${selectedDestination.id}`, {
+      method: "DELETE",
+    })
+      .then((response) => {
+        if (!response.ok) {
+          return response.text().then((text) => {
+            let errorMsg = `Failed to delete destination: ${response.status}`;
+            try {
+              const errObj = JSON.parse(text);
+              if (errObj.error) errorMsg = errObj.error;
+            } catch {}
+            throw new Error(errorMsg);
+          });
+        }
+        return response.text();
+      })
+      .then(() => {
+        fetchDestinations(); // Refetch after delete
+        setDeletedDestination(selectedDestination);
+        setUndoAvailable(true);
+        const timeout = setTimeout(() => {
+          setDeletedDestination(null);
+          setUndoAvailable(false);
+        }, 5000);
+        setUndoTimeout(timeout);
+        setSelectedDestination(null);
+      })
+      .catch((error) => {
+        alert(error.message);
+        console.error("Error deleting destination:", error);
+      });
   };
 
-  const undoDeleteLocation = () => {
+  const undoDeleteDestination = () => {
     clearTimeout(undoTimeout);
-    setLocations((prev) => [...prev, deletedLocation]);
-    setDeletedLocation(null);
-    setUndoAvailable(false);
+    fetch(`${API_BASE_URL}/destination/add`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(deletedDestination),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          return response.text().then((text) => {
+            let errorMsg = `Failed to undo delete: ${response.status}`;
+            try {
+              const errObj = JSON.parse(text);
+              if (errObj.error) errorMsg = errObj.error;
+            } catch {}
+            throw new Error(errorMsg);
+          });
+        }
+        return response.json();
+      })
+      .then(() => {
+        fetchDestinations(); // Refetch after undo
+        setDeletedDestination(null);
+        setUndoAvailable(false);
+      })
+      .catch((error) => {
+        alert(error.message);
+        console.error("Error undoing delete:", error);
+      });
   };
 
-  // Filter and search logic
-  const filteredLocations = useMemo(() => {
-    let filtered = locations;
+  const filteredDestinations = useMemo(() => {
+    let filtered = destinations;
 
-    // Apply search filter
     if (searchQuery) {
-      filtered = filtered.filter(
-        (location) =>
-          location.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          location.desc.toLowerCase().includes(searchQuery.toLowerCase())
+      filtered = filtered.filter((dest) =>
+        dest.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
-    // Apply filter option
-    if (filterOption !== "all") {
-      filtered = filtered.filter((location) =>
-        filterOption === "highPopulation"
-          ? parseInt(location.population.replace(/,/g, ""), 10) > 100000
-          : filterOption === "lowPopulation"
-          ? parseInt(location.population.replace(/,/g, ""), 10) <= 100000
-          : true
-      );
-    }
-
-    // Apply sort option
     switch (sortOption) {
       case "name":
         filtered.sort((a, b) => a.name.localeCompare(b.name));
         break;
-      case "oldest":
-        filtered.sort((a, b) => new Date(a.postDate) - new Date(b.postDate));
-        break;
-      case "newest":
       default:
-        filtered.sort((a, b) => new Date(b.postDate) - new Date(a.postDate));
         break;
     }
 
     return filtered;
-  }, [locations, searchQuery, filterOption, sortOption]);
+  }, [destinations, searchQuery, sortOption]);
+
+  const paginatedDestinations = useMemo(() => {
+    const startIndex = (currentPage - 1) * locationsPerPage;
+    const endIndex = startIndex + locationsPerPage;
+    return filteredDestinations.slice(startIndex, endIndex);
+  }, [filteredDestinations, currentPage, locationsPerPage]);
+
+  const totalPages = Math.ceil(filteredDestinations.length / locationsPerPage);
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setPageAndUrl(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setPageAndUrl(currentPage + 1);
+    }
+  };
 
   return (
     <div className="manage-locations-container">
@@ -142,9 +252,9 @@ const ManageLocations = ({ locations, setLocations }) => {
 
       <div className="manage-locations-content">
         <header className="locations-header">
-          <h1>Manage Locations</h1>
+          <h1>Manage Destinations</h1>
           <button className="add-btn" onClick={() => setShowAddModal(true)}>
-            Add Location
+            Add Destination
           </button>
         </header>
 
@@ -163,7 +273,7 @@ const ManageLocations = ({ locations, setLocations }) => {
           </label>
           <input
             type="text"
-            placeholder="Search locations..."
+            placeholder="Search destinations..."
             className="search-input"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -171,65 +281,115 @@ const ManageLocations = ({ locations, setLocations }) => {
         </div>
 
         <div className="locations-list">
-          {filteredLocations.map((location) => (
-            <div className="location-card" key={location.id}>
-              <div className="location-image">
-                <img src={harar} alt={location.name} />
-              </div>
-              <div className="location-details">
-                <h3 className="location-name">{location.name}</h3>
-                <p className="location-desc">{location.desc}</p>
-                <p className="location-info">
-                  <strong>Culture:</strong> {location.culture}
-                </p>
-                <p className="location-info">
-                  <strong>Weather:</strong> {location.currentWeather}
-                </p>
-                <div className="tourist-attractions">
-                  <strong>Tourist Attractions:</strong>
-                  <ul>
-                    {location.touristAttractions.map((attraction, index) => (
-                      <li key={index}>
-                        <strong>{attraction.name}:</strong> {attraction.desc}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="location-actions">
-                  <button
-                    className="edit-btn"
-                    onClick={() => {
-                      setSelectedLocation(location);
-                      setShowEditModal(true);
-                    }}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className="delete-btn"
-                    onClick={() => handleDeleteClick(location)}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
+          {loading ? (
+            <div
+              className="loading-spinner"
+              style={{
+                width: "100%",
+                textAlign: "center",
+                padding: "2rem",
+              }}
+            >
+              <div className="spinner"></div>
             </div>
-          ))}
-          {filteredLocations.length === 0 && <p>No locations found.</p>}
+          ) : paginatedDestinations.length === 0 ? (
+            <p>No destinations found.</p>
+          ) : (
+            paginatedDestinations.map((destination) => (
+              <div className="location-card" key={destination.id}>
+                <div className="location-image">
+                  {destination.image ? (
+                    <img
+                      src={
+                        destination.image.includes("/upload/")
+                          ? destination.image.replace(
+                              "/upload/",
+                              "/upload/f_auto,q_auto/"
+                            )
+                          : destination.image
+                      }
+                      alt={destination.name}
+                    />
+                  ) : (
+                    <div className="location-image-fallback">
+                      {destination.name?.charAt(0).toUpperCase() || "L"}
+                    </div>
+                  )}
+                </div>
+                <div className="location-details">
+                  <h3 className="location-name">{destination.name}</h3>
+                  {destination.stations && (
+                    <p className="location-info">
+                      <strong>Stations:</strong>{" "}
+                      {destination.stations.join(", ")}
+                    </p>
+                  )}
+                  <div className="location-actions">
+                    <button
+                      className="edit-btn"
+                      onClick={() => {
+                        setSelectedDestination(destination);
+                        setShowEditModal(true);
+                      }}
+                    >
+                      <i className="fas fa-edit"></i> Edit
+                    </button>
+                    <button
+                      className="view-more-btn"
+                      onClick={() =>
+                        navigate(`/location-details/${destination.id}`)
+                      }
+                    >
+                      View More
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
+
+        {/* Pagination controls: only show when not loading and there are destinations */}
+        {!loading && paginatedDestinations.length > 0 && (
+          <div className="pagination-controls">
+            <button
+              className="pagination-btn"
+              onClick={handlePreviousPage}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </button>
+            <span>
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              className="pagination-btn"
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </button>
+          </div>
+        )}
 
         {showAddModal && (
           <AddLocation
             onClose={() => setShowAddModal(false)}
-            onSave={handleAddLocation}
+            onSave={() => {
+              fetchDestinations();
+              setShowAddModal(false);
+            }}
           />
         )}
 
-        {showEditModal && selectedLocation && (
+        {showEditModal && selectedDestination && (
           <EditLocation
-            locationData={selectedLocation}
+            destinationData={selectedDestination}
             onClose={() => setShowEditModal(false)}
-            onSave={handleEditLocation}
+            onSave={() => {
+              fetchDestinations();
+              setShowEditModal(false);
+            }}
           />
         )}
 
@@ -238,8 +398,8 @@ const ManageLocations = ({ locations, setLocations }) => {
             <div className="modal-content">
               <h3>Confirm Deletion</h3>
               <p>
-                Are you sure you want to delete the location{" "}
-                <strong>{selectedLocation?.name}</strong>?
+                Are you sure you want to delete the destination{" "}
+                <strong>{selectedDestination?.name}</strong>?
               </p>
               <div className="modal-actions">
                 <button
@@ -248,7 +408,10 @@ const ManageLocations = ({ locations, setLocations }) => {
                 >
                   Cancel
                 </button>
-                <button className="confirm-btn" onClick={confirmDeleteLocation}>
+                <button
+                  className="confirm-btn"
+                  onClick={confirmDeleteDestination}
+                >
                   Confirm
                 </button>
               </div>
@@ -256,11 +419,11 @@ const ManageLocations = ({ locations, setLocations }) => {
           </div>
         )}
 
-        {undoAvailable && deletedLocation && (
+        {undoAvailable && deletedDestination && (
           <div className="undo-notification">
             <p>
-              Location <strong>{deletedLocation.name}</strong> deleted.{" "}
-              <button onClick={undoDeleteLocation}>Undo</button>
+              Destination <strong>{deletedDestination.name}</strong> deleted.{" "}
+              <button onClick={undoDeleteDestination}>Undo</button>
             </p>
           </div>
         )}

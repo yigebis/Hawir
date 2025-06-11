@@ -20,11 +20,10 @@ const AddAgency = ({ onClose, onSave }) => {
     digit: false,
     special: false,
   });
+  const [passwordTouched, setPasswordTouched] = useState(false);
 
-  // Real-time password validation
   useEffect(() => {
     const pwd = formData.password;
-
     setPasswordValidations({
       length: pwd.length >= 8,
       upper: /[A-Z]/.test(pwd),
@@ -58,7 +57,6 @@ const AddAgency = ({ onClose, onSave }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
     if (!validateForm()) return;
 
     const newAgency = {
@@ -72,8 +70,8 @@ const AddAgency = ({ onClose, onSave }) => {
       password: formData.password,
     };
 
-    onSave(newAgency); // Call the onSave function passed from ManageAgencies
-    onClose(); // Close the modal
+    onSave(newAgency);
+    onClose();
   };
 
   return (
@@ -138,26 +136,33 @@ const AddAgency = ({ onClose, onSave }) => {
             placeholder="Password *"
             value={formData.password}
             onChange={handleChange}
+            onFocus={() => setPasswordTouched(true)}
+            onBlur={() => setPasswordTouched(formData.password.length > 0)}
+            autoComplete="new-password"
           />
+          {/* Only show error after submit */}
           {errors.password && <span className="error">{errors.password}</span>}
 
-          <ul className="password-rules">
-            <li className={passwordValidations.length ? "valid" : ""}>
-              Minimum 8 characters
-            </li>
-            <li className={passwordValidations.upper ? "valid" : ""}>
-              At least one uppercase letter
-            </li>
-            <li className={passwordValidations.lower ? "valid" : ""}>
-              At least one lowercase letter
-            </li>
-            <li className={passwordValidations.digit ? "valid" : ""}>
-              At least one digit (0–9)
-            </li>
-            <li className={passwordValidations.special ? "valid" : ""}>
-              At least one special character (!@#$...)
-            </li>
-          </ul>
+          {/* Show rules only when password field is focused or has value */}
+          {passwordTouched && (
+            <ul className="password-rules">
+              <li className={passwordValidations.length ? "valid" : "invalid"}>
+                {passwordValidations.length ? "✔" : "✖"} Minimum 8 characters
+              </li>
+              <li className={passwordValidations.upper ? "valid" : "invalid"}>
+                {passwordValidations.upper ? "✔" : "✖"} At least one uppercase letter
+              </li>
+              <li className={passwordValidations.lower ? "valid" : "invalid"}>
+                {passwordValidations.lower ? "✔" : "✖"} At least one lowercase letter
+              </li>
+              <li className={passwordValidations.digit ? "valid" : "invalid"}>
+                {passwordValidations.digit ? "✔" : "✖"} At least one digit (0–9)
+              </li>
+              <li className={passwordValidations.special ? "valid" : "invalid"}>
+                {passwordValidations.special ? "✔" : "✖"} At least one special character (!@#$...)
+              </li>
+            </ul>
+          )}
 
           <div className="form-actions">
             <button type="submit" className="save-btn">
