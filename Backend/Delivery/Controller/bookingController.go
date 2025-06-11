@@ -39,6 +39,24 @@ func (bc *BookingController) Book(ctx *gin.Context) {
 	ctx.JSON(statusCode, createdBooking)
 }
 
+func (bc *BookingController) BookAndPayFromAgency(ctx *gin.Context) {
+	var booking = Domain.Booking{}
+	
+	err := ctx.ShouldBindJSON(&booking)
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": "invalid request payload"})
+		return
+	}
+
+	createdBooking, statusCode, err := bc.BookingUseCase.Book(&booking)
+	if err != nil {
+		ctx.JSON(statusCode, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(statusCode, createdBooking)
+}
+
 func (bc *BookingController) ChooseSeat(ctx *gin.Context) {
 	seat := Domain.Seat{}
 	err := ctx.ShouldBindJSON(&seat)
@@ -54,6 +72,7 @@ func (bc *BookingController) ChooseSeat(ctx *gin.Context) {
 		return
 	}
 
+	seat.SeatNo -= 1 // Adjusting seat no to be zero-indexed
 	statusCode, err := bc.BookingUseCase.ChooseSeat(&seat)
 	if err != nil {
 		ctx.JSON(statusCode, gin.H{"error": err.Error()})
