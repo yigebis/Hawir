@@ -1,51 +1,39 @@
-
 import React, { ReactNode } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import TravelItem from "@/components/dashboard/TravelItem";
+import { TravelEventType } from "@/components/travels/TravelEvent"; // Import TravelEventType
+import { format } from "date-fns"; // For formatting dates
 
-// Sample travel data
-const recentTravels = [
-  {
-    id: "TR-7890",
-    title: "Addis Ababa to Bahir Dar",
-    departureDate: "15 Mar 2024, 08:00 AM",
-    price: "ETB 1,200"
-  },
-  {
-    id: "TR-4567",
-    title: "Addis Ababa to Hawassa",
-    departureDate: "14 Mar 2024, 07:30 AM",
-    price: "ETB 850"
-  },
-  {
-    id: "TR-2345",
-    title: "Bahir Dar to Gondar",
-    departureDate: "13 Mar 2024, 10:15 AM",
-    price: "ETB 650"
-  }
-];
-
+// Define the props interface for ActivityList
 interface ActivityListProps {
   headerRight?: ReactNode;
+  recentTravels: TravelEventType[]; // <--- NEW PROP: Array of TravelEventType
 }
 
-const ActivityList: React.FC<ActivityListProps> = ({ headerRight }) => {
+const ActivityList: React.FC<ActivityListProps> = ({ headerRight, recentTravels }) => {
   return (
-    <Card>
+    <Card className="col-span-full md:col-span-1"> {/* Adjusted col-span for better layout */}
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-lg font-bold">Recent Activity</CardTitle>
         {headerRight}
       </CardHeader>
       <CardContent className="space-y-4">
-        {recentTravels.map((travel) => (
-          <TravelItem
-            key={travel.id}
-            id={travel.id}
-            title={travel.title}
-            departureDate={travel.departureDate}
-            price={travel.price}
-          />
-        ))}
+        {recentTravels.length === 0 ? (
+          <p className="text-center text-gray-500 py-4">No recent activities to display.</p>
+        ) : (
+          recentTravels.map((travel) => (
+            <TravelItem
+              key={travel.id}
+              id={travel.id}
+              // Construct title from start_location and destination
+              title={`${travel.start_location || travel.location || 'Unknown'} to ${travel.destination || 'Unknown'}`}
+              // Format planned_start_time for display
+              departureDate={travel.start ? format(new Date(travel.start), "dd MMM yyyy, HH:mm a") : 'N/A'}
+              // Format price for display
+              price={travel.price ? `ETB ${travel.price.toLocaleString()}` : 'N/A'}
+            />
+          ))
+        )}
       </CardContent>
     </Card>
   );

@@ -1,8 +1,7 @@
-
 import React from "react";
 
 interface StatisticCardProps {
-  value: string;
+  value: string | number; // value can now be string or number
   label: string;
   color: string;
 }
@@ -37,13 +36,26 @@ const StatisticCard: React.FC<StatisticCardProps> = ({
   );
 };
 
-const StatisticsCards: React.FC = () => {
+// --- NEW PROPS FOR STATISTICS CARDS ---
+interface StatisticsCardsProps {
+  totalCustomers: string; // Keeping this as string for now if not dynamic
+  activeTravels: number;
+  totalDestinations: number;
+  canceledTravels: number;
+}
+
+const StatisticsCards: React.FC<StatisticsCardsProps> = ({
+  totalCustomers,
+  activeTravels,
+  totalDestinations,
+  canceledTravels,
+}) => {
   return (
     <section className="w-full">
-      <div 
-        className="relative bg-cover bg-center rounded-lg overflow-hidden py-10" 
-        style={{ 
-          backgroundImage: "url('../../../public/Bgimg.png')",
+      <div
+        className="relative bg-cover bg-center rounded-lg overflow-hidden py-10"
+        style={{
+          backgroundImage: "url('/Bgimg.png')", // Use absolute path from public
           backgroundSize: 'cover',
           backgroundPosition: 'center'
         }}
@@ -53,25 +65,25 @@ const StatisticsCards: React.FC = () => {
           <h2 className="text-2xl font-bold text-black">Manage your travels with ease</h2>
           <p className="text-sm text-black text-opacity-90 mt-2">Discover new destination with Hawir</p>
         </div>
-        
+
         <div className="relative z-10 flex flex-wrap gap-4 px-6">
           <StatisticCard
-            value="10,234"
+            value={totalCustomers} // Dynamic, but still hardcoded from Index.tsx
             label="Total Customer"
             color="red-600"
           />
           <StatisticCard
-            value="842"
+            value={activeTravels} // Dynamic
             label="Active Travel"
             color="green-700"
           />
           <StatisticCard
-            value="67"
-            label="Destination"
+            value={totalDestinations} // Dynamic
+            label="Unique Destinations" // Changed label slightly for clarity
             color="yellow-500"
           />
           <StatisticCard
-            value="8"
+            value={canceledTravels} // Dynamic
             label="Canceled Travels"
             color="orange-500"
           />

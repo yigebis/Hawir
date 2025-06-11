@@ -7,18 +7,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
 import { TravelEventType } from "@/components/travels/TravelEvent";
 import { format, differenceInDays } from "date-fns";
 import { Driver } from "@/lib/api/driver";
 
-// Define the props interface for ToursTable
-interface ToursTableProps {
+// Define the props interface for OngoingTravelsTable
+interface OngoingTravelsTableProps {
   tours: TravelEventType[];
   drivers: Driver[]; 
 }
 
-const ToursTable: React.FC<ToursTableProps> = ({ tours = [], drivers = [] }) => {
+const OngoingTravelsTable: React.FC<OngoingTravelsTableProps> = ({ tours = [], drivers = [] }) => {
   // Create a Map for quick driver lookup by ID
   const driverMap = React.useMemo(() => {
     const map = new Map<string, Driver>();
@@ -53,7 +52,7 @@ const ToursTable: React.FC<ToursTableProps> = ({ tours = [], drivers = [] }) => 
           {tours.length === 0 ? (
             <TableRow>
               <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                No tours available.
+                No ongoing travels found.
               </TableCell>
             </TableRow>
           ) : (
@@ -78,7 +77,6 @@ const ToursTable: React.FC<ToursTableProps> = ({ tours = [], drivers = [] }) => 
                     {startDate ? format(startDate, "EEEE MMMM do, yyyy") : 'N/A'}
                   </TableCell>
                   <TableCell className="text-center">{duration}</TableCell>
-                  {/* Display driver name using the helper function */}
                   <TableCell className="text-center">{getDriverName(tour.driverId)}</TableCell> {/* <--- UPDATED */}
                   <TableCell className="text-center">
                     <button className="text-[#D97706] hover:text-amber-600">
@@ -95,4 +93,4 @@ const ToursTable: React.FC<ToursTableProps> = ({ tours = [], drivers = [] }) => 
   );
 };
 
-export default ToursTable;
+export default OngoingTravelsTable;

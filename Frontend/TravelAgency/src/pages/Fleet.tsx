@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, User, Bus, CheckCircle, Settings, Edit, Trash, ArrowDownAZ, ArrowUpZA } from "lucide-react";
+import { Plus, Search, User, Bus, CheckCircle, Settings, Edit, ArrowDownAZ, ArrowUpZA } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -14,36 +14,30 @@ import {
 } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import DriverForm from "@/components/fleet/DriverForm";
-import VehicleForm from "@/components/fleet/VehicleForm";
+import VehicleForm, { VehicleFormFields } from "@/components/fleet/VehicleForm";
+import { addBus, getBusesByAgencyId, updateBus, deleteBus, Bus as BackendBusType } from "@/lib/api/vehicle"; // Alias Bus as BackendBusType to avoid conflict
 import DestinationForm from "@/components/fleet/DestinationForm";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useAuth } from "@/contexts/AuthContext";
+import { createDriver, getDriversByAgencyId, updateDriver, deleteDriver, Driver } from "@/lib/api/driver";
 
-const stats = [
-  { title: "Total Vehicles", count: 50, icon: <Bus className="w-5 h-5" /> },
-  { title: "Total Drivers", count: 25, icon: <User className="w-5 h-5" /> },
-  { title: "Available Vehicles", count: 30, icon: <CheckCircle className="w-5 h-5" /> },
-  { title: "Under Maintenance", count: 10, icon: <Settings className="w-5 h-5" /> }
-];
-
-const initialDrivers = [
-  {
-    id: "D001",
-    name: "Alex T.",
-    phone: "+251-912-345678",
-    license: "LIC-12345",
-    vehicle: "Bus #XA234",
-    status: "Active"
-  },
-  {
-    id: "D002",
-    name: "John D.",
-    phone: "+251-911-987654",
-    license: "LIC-67890",
-    vehicle: "Bus #XB567",
-    status: "On Leave"
-  }
-];
+// Define the shape of data that the DriverForm will submit.
+// This matches the DriverFormFields interface from the updated DriverForm component.
+interface DriverFormFields {
+  id?: string;
+  firstName: string;
+  lastName: string;
+  sex: string;
+  dateOfBirth: string; // YYYY-MM-DD
+  email: string;
+  phone: string;
+  photo: File | null; // File for photo upload, or null if not provided
+  password?: string; // Optional for edit, required for add
+  // license and vehicle are not part of backend Driver struct
+  license?: string; // Kept as optional for form but not persisted
+  vehicle?: string; // Kept as optional for form but not persisted
+}
 
 const initialVehicles = [
   {
@@ -71,37 +65,104 @@ const initialVehicles = [
 
 const Fleet: React.FC = () => {
   const { toast } = useToast();
+  const { token, user } = useAuth();
+
   const [activeTab, setActiveTab] = useState("drivers");
   const [searchQuery, setSearchQuery] = useState("");
-  const [drivers, setDrivers] = useState(initialDrivers);
+  const [drivers, setDrivers] = useState<Driver[]>([]);
   const [vehicles, setVehicles] = useState(initialVehicles);
+  const [buses, setBuses] = useState<BackendBusType[]>([]); // State for fetched buses
+
   const [destinations, setDestinations] = useState([
     {
       id: "D1",
       name: "Addis Ababa",
-      terminals: ["Terminal A", "Terminal B"]
     },
     {
       id: "D2",
       name: "Bahir Dar",
-      terminals: ["Terminal C"]
     },
     {
       id: "D3",
       name: "Hawassa",
-      terminals: ["Terminal A", "Terminal D"]
     }
   ]);
+
   const [addDriverOpen, setAddDriverOpen] = useState(false);
   const [editDriverOpen, setEditDriverOpen] = useState(false);
   const [addVehicleOpen, setAddVehicleOpen] = useState(false);
   const [editVehicleOpen, setEditVehicleOpen] = useState(false);
   const [addDestinationOpen, setAddDestinationOpen] = useState(false);
   const [editDestinationOpen, setEditDestinationOpen] = useState(false);
-  const [currentDriver, setCurrentDriver] = useState<any>(null);
-  const [currentVehicle, setCurrentVehicle] = useState<any>(null);
+  // currentDriver will hold the data formatted for the DriverForm
+  const [currentDriver, setCurrentDriver] = useState<DriverFormFields | null>(null);
+  const [currentVehicle, setCurrentVehicle] = useState<BackendBusType | null>(null); // Type for current bus being edited
   const [currentDestination, setCurrentDestination] = useState<any>(null);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'ascending' | 'descending' } | null>(null);
+  const [isLoadingDrivers, setIsLoadingDrivers] = useState(false);
+  const [isLoadingBuses, setIsLoadingBuses] = useState(false);
+
+  const stats = useMemo(() => {
+    const totalVehicles = buses.length;
+    const availableVehicles = buses.filter(bus => bus.status === 'available').length;
+    const maintenanceVehicles = buses.filter(bus => bus.status === 'maintenance').length;
+    return [
+      { title: "Total Vehicles", count: totalVehicles, icon: <Bus className="w-5 h-5" /> }, // Still static, or fetch from backend
+      { title: "Total Drivers", count: drivers.length, icon: <User className="w-5 h-5" /> }, // <--- DYNAMICALLY UPDATED HERE
+      { title: "Available Vehicles", count: availableVehicles, icon: <CheckCircle className="w-5 h-5" /> }, // Still static
+      { title: "Under Maintenance", count: maintenanceVehicles, icon: <Settings className="w-5 h-5" /> } // Still static
+    ];
+  }, [drivers.length]);
+
+  // --- Data Fetching Effect ---
+  useEffect(() => {
+    const fetchDrivers = async () => {
+      if (!token || !user?.agencyId) {
+        setDrivers([]);
+        return;
+      }
+      setIsLoadingDrivers(true);
+      try {
+        const fetchedDrivers = await getDriversByAgencyId(token);
+        setDrivers(fetchedDrivers);
+      } catch (error: any) {
+        console.error("Failed to fetch drivers:", error);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to load drivers.",
+          variant: "destructive",
+        });
+        setDrivers([]);
+      } finally {
+        setIsLoadingDrivers(false);
+      }
+    };
+
+    const fetchBuses = async () => {
+      if (!token || !user?.agencyId) {
+        setBuses([]);
+        return;
+      }
+      setIsLoadingBuses(true);
+      try {
+        const fetchedBuses = await getBusesByAgencyId(token);
+        setBuses(fetchedBuses);
+      } catch (error: any) {
+        console.error("Failed to fetch buses:", error);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to load vehicles.",
+          variant: "destructive",
+        });
+        setBuses([]);
+      } finally {
+        setIsLoadingBuses(false);
+      }
+    };
+
+    fetchDrivers();
+    fetchBuses();
+  }, [token, user?.agencyId]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -111,22 +172,20 @@ const Fleet: React.FC = () => {
     const query = searchQuery.toLowerCase();
     return (
       driver.id.toLowerCase().includes(query) ||
-      driver.name.toLowerCase().includes(query) ||
+      driver.first_name.toLowerCase().includes(query) || // Use firstName from API
+      driver.last_name.toLowerCase().includes(query) ||   // Use lastName from API
       driver.phone.toLowerCase().includes(query) ||
-      driver.license.toLowerCase().includes(query) ||
-      driver.vehicle.toLowerCase().includes(query) ||
-      driver.status.toLowerCase().includes(query)
+      driver.email.toLowerCase().includes(query)
     );
   });
 
-  const filteredVehicles = vehicles.filter(vehicle => {
+  const filteredVehicles = buses.filter(bus => { // Filter buses, not initialVehicles
     const query = searchQuery.toLowerCase();
     return (
-      vehicle.id.toLowerCase().includes(query) ||
-      vehicle.carNumber.toLowerCase().includes(query) ||
-      vehicle.capacity.toLowerCase().includes(query) ||
-      vehicle.assignedDriver.toLowerCase().includes(query) ||
-      vehicle.status.toLowerCase().includes(query)
+      bus.id.toLowerCase().includes(query) ||
+      bus.plate_number.toLowerCase().includes(query) ||
+      bus.status.toLowerCase().includes(query) ||
+      (bus.description && bus.description.toLowerCase().includes(query)) // Check if description exists
     );
   });
 
@@ -136,9 +195,11 @@ const Fleet: React.FC = () => {
   });
 
   const sortedVehicles = React.useMemo(() => {
-    let sortableVehicles = [...filteredVehicles];
+    let sortableVehicles = [...filteredVehicles]; // Uses the filteredVehicles from the previous step
     if (sortConfig !== null) {
       sortableVehicles.sort((a: any, b: any) => {
+        // ... existing sort logic ...
+        // Ensure keys like 'plate_number', 'capacity', 'status' are used for sorting
         if (a[sortConfig.key] < b[sortConfig.key]) {
           return sortConfig.direction === 'ascending' ? -1 : 1;
         }
@@ -149,7 +210,7 @@ const Fleet: React.FC = () => {
       });
     }
     return sortableVehicles;
-  }, [filteredVehicles, sortConfig]);
+  }, [filteredVehicles, sortConfig]); // Dependencies are correct
 
   const requestSort = (key: string) => {
     let direction: 'ascending' | 'descending' = 'ascending';
@@ -159,82 +220,258 @@ const Fleet: React.FC = () => {
     setSortConfig({ key, direction });
   };
 
-  const handleAddDriver = (driverData: any) => {
-    const newId = `D${String(drivers.length + 1).padStart(3, '0')}`;
-    const newDriver = {
-      id: newId,
-      ...driverData
-    };
-    
-    setDrivers([...drivers, newDriver]);
-    setAddDriverOpen(false);
-    toast({
-      title: "Driver Added",
-      description: `${driverData.name} has been added successfully.`
-    });
+  // --- Driver API Interactions ---
+  const handleAddDriver = async (formData: DriverFormFields) => {
+    if (!token || !user?.agencyId) {
+      toast({
+        title: "Authentication Error",
+        description: "You are not logged in or agency ID is missing. Please log in again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // --- START MODIFICATIONS FOR handleAddDriver ---
+      const requestFormData = new FormData();
+      requestFormData.append("first_name", formData.firstName);
+      requestFormData.append("last_name", formData.lastName);
+      requestFormData.append("sex", formData.sex);
+      // Ensure dateOfBirth is in YYYY-MM-DD format as expected by backend
+      requestFormData.append("date_of_birth", formData.dateOfBirth);
+
+      requestFormData.append("email", formData.email);
+      requestFormData.append("phone", formData.phone);
+      requestFormData.append("password", formData.password || ''); // Password is required for new driver
+
+      // Append the photo File object if it exists
+      if (formData.photo) { // formData.photo is already a File | null from DriverForm
+        requestFormData.append("photo", formData.photo);
+      }
+
+      // IMPORTANT: Do NOT append agency_id here. The backend extracts it from the JWT claims.
+      // requestFormData.append("agency_id", user.agencyId); // <-- REMOVE THIS LINE IF PRESENT
+
+      // Call the createDriver API with the FormData object
+      // (createDriver API function in driver.ts will also need to be updated)
+      const result = await createDriver(token, requestFormData); // Backend returns { message: "..." }
+
+      setAddDriverOpen(false);
+      toast({
+        title: "Driver Added",
+        description: result.message || "Driver has been added successfully.", // Use result.message from backend
+      });
+
+      // CRUCIAL: Re-fetch drivers to update the UI
+      // because the backend only returns a message, not the full driver object.
+      await getDriversByAgencyId(token).then(setDrivers);
+      // --- END MODIFICATIONS FOR handleAddDriver ---
+
+    } catch (error: any) {
+      console.error("Failed to add driver:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add driver. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleEditDriver = (driverData: any) => {
-    setDrivers(drivers.map(driver => 
-      driver.id === driverData.id ? driverData : driver
-    ));
-    setEditDriverOpen(false);
-    toast({
-      title: "Driver Updated",
-      description: `${driverData.name}'s information has been updated.`
-    });
+  const handleEditDriver = async (formData: DriverFormFields) => {
+    if (!token || !formData.id) {
+      toast({
+        title: "Error",
+        description: "Authentication token or driver ID is missing.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // --- START MODIFICATIONS FOR handleEditDriver ---
+      const requestFormData = new FormData();
+      // Only append fields that are potentially updated
+      requestFormData.append("id", formData.id);
+      requestFormData.append("first_name", formData.firstName);
+      requestFormData.append("last_name", formData.lastName);
+      requestFormData.append("sex", formData.sex);
+      requestFormData.append("date_of_birth", formData.dateOfBirth);
+
+      requestFormData.append("email", formData.email);
+      requestFormData.append("phone", formData.phone);
+
+      // Only send password if it's provided (i.e., being changed)
+      if (formData.password) {
+        requestFormData.append("password", formData.password);
+      }
+
+      // Append the photo File object if a new one is selected
+      if (formData.photo) { // formData.photo is already a File | null from DriverForm
+        requestFormData.append("photo", formData.photo);
+      }
+
+      // Call the updateDriver API with the FormData object
+      // (updateDriver API function in driver.ts will also need to be updated)
+      const result = await updateDriver(token, formData.id, requestFormData); // Backend returns { message: "..." }
+
+      setEditDriverOpen(false);
+      toast({
+        title: "Driver Updated",
+        description: result.message || "Driver information has been updated.", // Use result.message from backend
+      });
+
+      // CRUCIAL: Re-fetch drivers to update the UI
+      // because the backend only returns a message, not the full updated driver object.
+      await getDriversByAgencyId(token).then(setDrivers);
+      // --- END MODIFICATIONS FOR handleEditDriver ---
+
+    } catch (error: any) {
+      console.error("Failed to update driver:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update driver. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDeleteDriver = (driverId: string) => {
-    setDrivers(drivers.filter(driver => driver.id !== driverId));
-    setEditDriverOpen(false);
-    toast({
-      title: "Driver Deleted",
-      description: "The driver has been removed from the system.",
-      variant: "destructive"
-    });
+  const handleDeleteDriver = async (driverId: string) => {
+    if (!token) {
+      toast({
+        title: "Authentication Error",
+        description: "You are not logged in. Please log in again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await deleteDriver(token, driverId);
+      setDrivers(prev => prev.filter(driver => driver.id !== driverId));
+      setEditDriverOpen(false);
+      toast({
+        title: "Driver Deleted",
+        description: "The driver has been removed from the system.",
+        variant: "destructive"
+      });
+    } catch (error: any) {
+      console.error("Failed to delete driver:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete driver. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleAddVehicle = (vehicleData: any) => {
-    const newId = `V${String(vehicles.length + 1).padStart(3, '0')}`;
-    const newVehicle = {
-      id: newId,
-      ...vehicleData
-    };
-    
-    setVehicles([...vehicles, newVehicle]);
-    setAddVehicleOpen(false);
-    toast({
-      title: "Vehicle Added",
-      description: `Vehicle ${vehicleData.carNumber} has been added successfully.`
-    });
+  const handleAddVehicle = async (formData: VehicleFormFields) => {
+    if (!token || !user?.agencyId) {
+      toast({
+        title: "Authentication Error",
+        description: "You are not logged in or agency ID is missing. Please log in again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const payload = {
+        plate_number: formData.plate_number,
+        capacity: formData.capacity,
+        description: formData.description,
+        // Backend handles registration_date, agency_id, is_reserved, status, current_trip on add
+      };
+
+      const result = await addBus(token, payload); // Use the addBus API function
+
+      setAddVehicleOpen(false);
+      toast({
+        title: "Vehicle Added",
+        description: result.message || `Vehicle ${formData.plate_number} has been added successfully.`,
+      });
+      await getBusesByAgencyId(token).then(setBuses); // Re-fetch buses to update the list
+    } catch (error: any) {
+      console.error("Failed to add vehicle:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add vehicle. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleEditVehicle = (vehicleData: any) => {
-    setVehicles(vehicles.map(vehicle => 
-      vehicle.id === vehicleData.id ? vehicleData : vehicle
-    ));
-    setEditVehicleOpen(false);
-    toast({
-      title: "Vehicle Updated",
-      description: `Vehicle ${vehicleData.carNumber}'s information has been updated.`
-    });
+  const handleEditVehicle = async (formData: VehicleFormFields) => {
+    if (!token || !currentVehicle?.id) { // Ensure currentVehicle.id is present for editing
+      toast({
+        title: "Error",
+        description: "Authentication token or vehicle ID is missing.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Send only updated fields as partial payload
+      const payload: Partial<BackendBusType> = {
+        plate_number: formData.plate_number,
+        capacity: formData.capacity,
+        description: formData.description,
+        status: formData.status,
+        is_reserved: formData.is_reserved,
+        // current_trip is not directly editable via form
+      };
+
+      const result = await updateBus(token, currentVehicle.id, payload);
+
+      setEditVehicleOpen(false);
+      toast({
+        title: "Vehicle Updated",
+        description: result.message || `Vehicle ${formData.plate_number}'s information has been updated.`,
+      });
+      await getBusesByAgencyId(token).then(setBuses); // Re-fetch buses
+    } catch (error: any) {
+      console.error("Failed to update vehicle:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update vehicle. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDeleteVehicle = (vehicleId: string) => {
-    setVehicles(vehicles.filter(vehicle => vehicle.id !== vehicleId));
-    setEditVehicleOpen(false);
-    toast({
-      title: "Vehicle Deleted",
-      description: "The vehicle has been removed from the system.",
-      variant: "destructive"
-    });
+  const handleDeleteVehicle = async (busId: string) => {
+    if (!token) {
+      toast({
+        title: "Authentication Error",
+        description: "You are not logged in. Please log in again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await deleteBus(token, busId);
+      await getBusesByAgencyId(token).then(setBuses); // Re-fetch buses to update state
+      setEditVehicleOpen(false);
+      toast({
+        title: "Vehicle Deleted",
+        description: "The vehicle has been removed from the system.",
+        variant: "destructive"
+      });
+    } catch (error: any) {
+      console.error("Failed to delete vehicle:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete vehicle. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleAddDestination = (data: any) => {
     const newDestination = {
       id: `D${destinations.length + 1}`,
-      ...data
+      name: data.name
     };
     setDestinations([...destinations, newDestination]);
     setAddDestinationOpen(false);
@@ -246,7 +483,7 @@ const Fleet: React.FC = () => {
 
   const handleEditDestination = (data: any) => {
     setDestinations(destinations.map(destination =>
-      destination.id === data.id ? data : destination
+      destination.id === data.id ? { id: data.id, name: data.name } : destination
     ));
     setEditDestinationOpen(false);
     toast({
@@ -265,17 +502,6 @@ const Fleet: React.FC = () => {
     });
   };
 
-  const getDriverStatusColor = (status: string) => {
-    switch (status) {
-      case "Active":
-        return "bg-green-500";
-      case "On Leave":
-        return "bg-amber-500";
-      default:
-        return "bg-gray-500";
-    }
-  };
-
   const getVehicleStatusColor = (status: string) => {
     switch (status) {
       case "Available":
@@ -289,13 +515,29 @@ const Fleet: React.FC = () => {
     }
   };
 
-  const openEditDriverModal = (driver: any) => {
-    setCurrentDriver(driver);
+  // Maps the API Driver object to the form's expected `DriverFormFields` format
+  const openEditDriverModal = (driver: Driver) => {
+    const formInitialData: DriverFormFields = {
+      id: driver.id,
+      firstName: driver.first_name, // Map firstName from API to firstName for form
+      lastName: driver.last_name,   // Map lastName from API to lastName for form
+      sex: driver.sex,
+      // Date conversion: Go's time.Time is ISO 8601. You need YYYY-MM-DD for HTML date input.
+      dateOfBirth: driver.date_of_birth ? new Date(driver.date_of_birth).toISOString().split('T')[0] : '',
+      email: driver.email,
+      phone: driver.phone,
+      photo: driver.photo,
+      password: '', // Never pre-fill password for editing
+      // license and vehicle are not part of backend Driver struct, so we provide dummy values
+      license: "N/A",
+      vehicle: "Unassigned",
+    };
+    setCurrentDriver(formInitialData);
     setEditDriverOpen(true);
   };
 
-  const openEditVehicleModal = (vehicle: any) => {
-    setCurrentVehicle(vehicle);
+  const openEditVehicleModal = (bus: BackendBusType) => {
+    setCurrentVehicle(bus); // Pass the bus object directly as it should conform to initialData type
     setEditVehicleOpen(true);
   };
 
@@ -308,8 +550,8 @@ const Fleet: React.FC = () => {
     if (sortConfig?.key !== columnName) {
       return null;
     }
-    return sortConfig.direction === 'ascending' ? 
-      <ArrowDownAZ className="inline w-4 h-4 ml-1" /> : 
+    return sortConfig.direction === 'ascending' ?
+      <ArrowDownAZ className="inline w-4 h-4 ml-1" /> :
       <ArrowUpZA className="inline w-4 h-4 ml-1" />;
   };
 
@@ -332,7 +574,7 @@ const Fleet: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => (
+          {stats.map((stat, index) => ( // This now uses the dynamically generated 'stats'
             <Card key={index} className="shadow-sm border-gray-200">
               <CardContent className="p-6">
                 <div className="flex justify-between items-center mb-3 text-gray-500 text-sm">
@@ -349,20 +591,20 @@ const Fleet: React.FC = () => {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="flex items-center justify-between">
               <TabsList className="bg-transparent p-0 h-auto">
-                <TabsTrigger 
-                  value="drivers" 
+                <TabsTrigger
+                  value="drivers"
                   className={`px-1 py-2 text-base rounded-none ${activeTab === 'drivers' ? 'border-b-2 border-[#F35B04] text-[#F35B04]' : 'text-gray-500'}`}
                 >
                   Drivers
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="vehicles" 
+                <TabsTrigger
+                  value="vehicles"
                   className={`px-1 py-2 text-base rounded-none ml-8 ${activeTab === 'vehicles' ? 'border-b-2 border-[#F35B04] text-[#F35B04]' : 'text-gray-500'}`}
                 >
                   Vehicles
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="destination" 
+                <TabsTrigger
+                  value="destination"
                   className={`px-1 py-2 text-base rounded-none ml-8 ${activeTab === 'destination' ? 'border-b-2 border-[#F35B04] text-[#F35B04]' : 'text-gray-500'}`}
                 >
                   Destination
@@ -395,44 +637,61 @@ const Fleet: React.FC = () => {
                 <Table>
                   <TableHeader className="bg-gray-50">
                     <TableRow className="border-gray-200">
+                      {/* REPLACED: Driver ID TableHead with Photo TableHead */}
                       <TableHead className="text-gray-500 font-medium text-sm">
-                        <div className="flex items-center gap-2">
-                          Driver ID
-                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M4.66667 10.6665V2.6665M4.66667 2.6665L2 5.33317M4.66667 2.6665L7.33333 5.33317M11.3333 5.33317V13.3332M11.3333 13.3332L14 10.6665M11.3333 13.3332L8.66667 10.6665" stroke="black"/>
-                          </svg>
-                        </div>
+                        Photo
                       </TableHead>
-                      <TableHead className="text-gray-500 font-medium text-sm">Full Name</TableHead>
+                      {/* Ensure these match your API response fields */}
+                      <TableHead className="text-gray-500 font-medium text-sm">First Name</TableHead>
+                      <TableHead className="text-gray-500 font-medium text-sm">Last Name</TableHead>
                       <TableHead className="text-gray-500 font-medium text-sm">Phone Number</TableHead>
-                      <TableHead className="text-gray-500 font-medium text-sm">License Number</TableHead>
-                      <TableHead className="text-gray-500 font-medium text-sm">Assigned Vehicle</TableHead>
-                      <TableHead className="text-gray-500 font-medium text-sm">Status</TableHead>
+                      <TableHead className="text-gray-500 font-medium text-sm">Email</TableHead>
                       <TableHead className="text-gray-500 font-medium text-sm">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredDrivers.map((driver) => (
-                      <TableRow key={driver.id} className="border-gray-200">
-                        <TableCell className="font-medium">{driver.id}</TableCell>
-                        <TableCell>{driver.name}</TableCell>
-                        <TableCell>{driver.phone}</TableCell>
-                        <TableCell>{driver.license}</TableCell>
-                        <TableCell>{driver.vehicle}</TableCell>
-                        <TableCell>
-                          <span className={`px-3 py-1 rounded-full text-xs text-white ${getDriverStatusColor(driver.status)}`}>
-                            {driver.status}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-3">
-                            <button onClick={() => openEditDriverModal(driver)}>
-                              <Edit className="h-5 w-5 text-blue-600" />
-                            </button>
-                          </div>
+                    {isLoadingDrivers ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8">
+                          Loading drivers...
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ) : filteredDrivers.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                          No drivers found.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredDrivers.map((driver) => (
+                        <TableRow key={driver.id} className="border-gray-200">
+                          {/* NEW: TableCell for Driver Photo */}
+                          <TableCell className="font-medium">
+                            {driver.photo ? (
+                              <img
+                                src={typeof driver.photo === "string" ? driver.photo : driver.photo ? URL.createObjectURL(driver.photo) : ""}
+                                alt={`${driver.first_name || driver.first_name}'s photo`} // Use first_name if available, fallback to firstName
+                                className="h-10 w-10 rounded-full object-cover" // Tailwind for small circular avatar
+                              />
+                            ) : (
+                              <User className="h-10 w-10 text-gray-400" /> // Placeholder icon if no photo
+                            )}
+                          </TableCell>
+                          {/* Ensure these match your API response fields, e.g., driver.first_name */}
+                          <TableCell>{driver.first_name || driver.first_name}</TableCell> {/* Use driver.first_name if available, fallback to driver.firstName */}
+                          <TableCell>{driver.last_name || driver.last_name}</TableCell>  {/* Use driver.last_name if available, fallback to driver.lastName */}
+                          <TableCell>{driver.phone}</TableCell>
+                          <TableCell>{driver.email}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-3">
+                              <button onClick={() => openEditDriverModal(driver)}>
+                                <Edit className="h-5 w-5 text-blue-600" />
+                              </button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </div>
@@ -443,25 +702,16 @@ const Fleet: React.FC = () => {
                 <Table>
                   <TableHeader className="bg-gray-50">
                     <TableRow className="border-gray-200">
-                      <TableHead 
+                      <TableHead
                         className="text-gray-500 font-medium text-sm cursor-pointer"
-                        onClick={() => requestSort('id')}
+                        onClick={() => requestSort('plate_number')}
                       >
                         <div className="flex items-center gap-2">
-                          Vehicle ID
-                          {getSortIcon('id')}
+                          Plate Number
+                          {getSortIcon('plate_number')}
                         </div>
                       </TableHead>
-                      <TableHead 
-                        className="text-gray-500 font-medium text-sm cursor-pointer"
-                        onClick={() => requestSort('carNumber')}
-                      >
-                        <div className="flex items-center gap-2">
-                          Car Number
-                          {getSortIcon('carNumber')}
-                        </div>
-                      </TableHead>
-                      <TableHead 
+                      <TableHead
                         className="text-gray-500 font-medium text-sm cursor-pointer"
                         onClick={() => requestSort('capacity')}
                       >
@@ -470,16 +720,7 @@ const Fleet: React.FC = () => {
                           {getSortIcon('capacity')}
                         </div>
                       </TableHead>
-                      <TableHead 
-                        className="text-gray-500 font-medium text-sm cursor-pointer"
-                        onClick={() => requestSort('assignedDriver')}
-                      >
-                        <div className="flex items-center gap-2">
-                          Assigned Driver
-                          {getSortIcon('assignedDriver')}
-                        </div>
-                      </TableHead>
-                      <TableHead 
+                      <TableHead
                         className="text-gray-500 font-medium text-sm cursor-pointer"
                         onClick={() => requestSort('status')}
                       >
@@ -492,26 +733,40 @@ const Fleet: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {sortedVehicles.map((vehicle) => (
-                      <TableRow key={vehicle.id} className="border-gray-200">
-                        <TableCell className="font-medium">{vehicle.id}</TableCell>
-                        <TableCell>{vehicle.carNumber}</TableCell>
-                        <TableCell>{vehicle.capacity}</TableCell>
-                        <TableCell>{vehicle.assignedDriver}</TableCell>
-                        <TableCell>
-                          <span className={`font-medium ${getVehicleStatusColor(vehicle.status)}`}>
-                            {vehicle.status}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-3">
-                            <button onClick={() => openEditVehicleModal(vehicle)}>
-                              <Edit className="h-5 w-5 text-blue-600" />
-                            </button>
-                          </div>
+                    {/* --- MODIFIED TABLE CONTENT FOR VEHICLES --- */}
+                    {isLoadingBuses ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center py-8">
+                          Loading vehicles...
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ) : sortedVehicles.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                          No vehicles found.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      sortedVehicles.map((bus) => (
+                        <TableRow key={bus.id} className="border-gray-200">
+                          <TableCell className="font-medium">{bus.plate_number}</TableCell>
+                          <TableCell>{bus.capacity} seats</TableCell>
+                          <TableCell>
+                            <span className={`font-medium ${getVehicleStatusColor(bus.status)}`}>
+                              {bus.status}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-3">
+                              <button onClick={() => openEditVehicleModal(bus)}>
+                                <Edit className="h-5 w-5 text-blue-600" />
+                              </button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                    {/* --- END MODIFIED TABLE CONTENT FOR VEHICLES --- */}
                   </TableBody>
                 </Table>
               </div>
@@ -530,7 +785,6 @@ const Fleet: React.FC = () => {
                   <TableHeader className="bg-gray-50">
                     <TableRow className="border-gray-200">
                       <TableHead className="text-gray-500 font-medium text-sm">Destination Name</TableHead>
-                      <TableHead className="text-gray-500 font-medium text-sm">Departure Terminals</TableHead>
                       <TableHead className="text-gray-500 font-medium text-sm text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -538,7 +792,6 @@ const Fleet: React.FC = () => {
                     {filteredDestinations.map((destination) => (
                       <TableRow key={destination.id} className="border-gray-200">
                         <TableCell className="font-medium">{destination.name}</TableCell>
-                        <TableCell>{destination.terminals.join(", ")}</TableCell>
                         <TableCell>
                           <div className="flex justify-end gap-3">
                             <button onClick={() => {
@@ -559,28 +812,32 @@ const Fleet: React.FC = () => {
         </div>
       </div>
 
+      {/* Add Driver Dialog */}
       <Dialog open={addDriverOpen} onOpenChange={setAddDriverOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        {/* Added overflow-y-auto and max-h-[85vh] classes */}
+        <DialogContent className="sm:max-w-[425px] overflow-y-auto max-h-[85vh]">
           <DialogHeader>
             <DialogTitle>Add New Driver</DialogTitle>
           </DialogHeader>
-          <DriverForm 
-            onSubmit={handleAddDriver} 
-            onCancel={() => setAddDriverOpen(false)} 
+          <DriverForm
+            onSubmit={handleAddDriver}
+            onCancel={() => setAddDriverOpen(false)}
             isAdd={true}
           />
         </DialogContent>
       </Dialog>
 
+      {/* Edit Driver Dialog */}
       <Dialog open={editDriverOpen} onOpenChange={setEditDriverOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        {/* Added overflow-y-auto and max-h-[85vh] classes */}
+        <DialogContent className="sm:max-w-[425px] overflow-y-auto max-h-[85vh]">
           <DialogHeader>
             <DialogTitle>Edit Driver</DialogTitle>
           </DialogHeader>
           {currentDriver && (
-            <DriverForm 
-              driver={currentDriver}
-              onSubmit={handleEditDriver} 
+            <DriverForm
+              initialData={currentDriver}
+              onSubmit={handleEditDriver}
               onCancel={() => setEditDriverOpen(false)}
               onDelete={handleDeleteDriver}
               isAdd={false}
@@ -589,28 +846,30 @@ const Fleet: React.FC = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Vehicle and Destination Dialogs (kept as is) */}
       <Dialog open={addVehicleOpen} onOpenChange={setAddVehicleOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Add New Vehicle</DialogTitle>
           </DialogHeader>
-          <VehicleForm 
-            onSubmit={handleAddVehicle} 
-            onCancel={() => setAddVehicleOpen(false)} 
+          <VehicleForm
+            onSubmit={handleAddVehicle} // Use the new handleAddVehicle
+            onCancel={() => setAddVehicleOpen(false)}
             isAdd={true}
           />
         </DialogContent>
       </Dialog>
 
+      {/* Edit Vehicle Dialog - now uses VehicleForm (MODIFIED) */}
       <Dialog open={editVehicleOpen} onOpenChange={setEditVehicleOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Edit Vehicle</DialogTitle>
           </DialogHeader>
           {currentVehicle && (
-            <VehicleForm 
-              vehicle={currentVehicle}
-              onSubmit={handleEditVehicle} 
+            <VehicleForm
+              initialData={currentVehicle} // Pass the BackendBusType directly
+              onSubmit={handleEditVehicle}
               onCancel={() => setEditVehicleOpen(false)}
               onDelete={handleDeleteVehicle}
               isAdd={false}

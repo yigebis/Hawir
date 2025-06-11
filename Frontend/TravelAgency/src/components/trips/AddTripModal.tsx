@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useContext } from "react";
-import { Calendar as CalendarIcon, ChevronDown, X } from "lucide-react";
+import { Calendar as CalendarIcon, Check, ChevronDown, Loader2, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { Destination, getAllDestinations } from "@/lib/api/destination";
 import { createNewTrip, CreateTripPayload, updateTrip, UpdateTripPayload, deleteTrip } from "@/lib/api/trip";
-import { AuthContext, AuthContextType } from "@/contexts/AuthContext";
+import { AuthContext, AuthContextType, useAuth } from "@/contexts/AuthContext";
 import { TravelEventType } from "@/components/travels/TravelEvent";
 import {
   AlertDialog,
@@ -29,21 +29,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "../ui/input";
-
-// Mock data for select fields
-const DRIVERS = [
-  { id: "1", name: "Shiferaw Fogera" },
-  { id: "2", name: "Abebe Bekele" },
-  { id: "3", name: "Kebede Alemu" },
-  { id: "4", name: "Meseret Tadesse" }
-];
-
-const BUS_REFERENCES = [
-  { id: "1", ref: "ET-2312" },
-  { id: "2", ref: "ET-4567" },
-  { id: "3", ref: "ET-7890" },
-  { id: "4", ref: "ET-1234" }
-];
+import {
+  validateDepartureDate,
+  validateDepartureTime,
+  validateArrivalDate,
+  validateArrivalTime,
+  validatePrice,
+  validatePassengerCount,
+  validateBusRef,
+  validateDepartureCity,
+  validateDestinationCity,
+} from "@/components/trips/validation";
+import { Bus, getBusesByAgencyId } from "@/lib/api/vehicle";
+import { Driver, getDriversByAgencyId } from "@/lib/api/driver";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@radix-ui/react-checkbox";
 
 const TERMINALS = [
   { id: "1", name: "Main Terminal" },
@@ -83,25 +83,44 @@ const AddTripModal: React.FC<AddTripModalProps> = ({
   const [discount, setDiscount] = useState("0");
   const [departureCity, setDepartureCity] = useState("");
   const [destinationCity, setDestinationCity] = useState("");
-  const [busRef, setBusRef] = useState("");
+  const [selectedBusRef, setSelectedBusRef] = useState("");
+  const [selectedDriverId, setSelectedDriverId] = useState("");
   const [driverName, setDriverName] = useState("");
   const [busType, setBusType] = useState("");
   const [terminals, setTerminals] = useState<string[]>([]); // Initialize with empty array
-  const [newTerminalInput, setNewTerminalInput] = useState(""); 
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [loadingDestinations, setLoadingDestinations] = useState(true);
   const [errorDestinations, setErrorDestinations] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [departureDateError, setDepartureDateError] = useState<string | null>(null);
+  const [departureTimeError, setDepartureTimeError] = useState<string | null>(null);
+  const [arrivalDateError, setArrivalDateError] = useState<string | null>(null);
+  const [arrivalTimeError, setArrivalTimeError] = useState<string | null>(null);
+  const [priceError, setPriceError] = useState<string | null>(null);
+  const [passengerCountError, setPassengerCountError] = useState<string | null>(null);
+  const [busRefError, setBusRefError] = useState<string | null>(null);
+  const [departureCityError, setDepartureCityError] = useState<string | null>(null);
+  const [destinationCityError, setDestinationCityError] = useState<string | null>(null);
+  const [terminalsError, setTerminalsError] = useState<string | null>(null);
+  const { token, user, isAuthenticated } = useAuth();
 
-  // Fetch destinations on component mount
+  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [loadingDrivers, setLoadingDrivers] = useState(true);
+  const [errorDrivers, setErrorDrivers] = useState<string | null>(null);
+
+  const [buses, setBuses] = useState<Bus[]>([]);
+  const [loadingBuses, setLoadingBuses] = useState(true);
+  const [errorBuses, setErrorBuses] = useState<string | null>(null);
+
   useEffect(() => {
-    const fetchDestinations = async () => {
+    const fetchData = async () => {
+      // Fetch Destinations
       setLoadingDestinations(true);
       setErrorDestinations(null);
       try {
-        const data = await getAllDestinations();
-        setDestinations(data || []); // Ensure data is always an array
+        const destData = await getAllDestinations();
+        setDestinations(destData || []);
       } catch (error: any) {
         console.error("Failed to fetch destinations:", error);
         setErrorDestinations(error.message || "Failed to load destinations");
@@ -110,14 +129,55 @@ const AddTripModal: React.FC<AddTripModalProps> = ({
           description: error.message || "Could not fetch the list of cities.",
           variant: "destructive",
         });
-        setDestinations([]); // Set empty array on error
+        setDestinations([]);
       } finally {
         setLoadingDestinations(false);
       }
+
+      // Fetch Drivers
+      setLoadingDrivers(true);
+      setErrorDrivers(null);
+      try {
+        const driverData = await getDriversByAgencyId(token); // Pass token to API call
+        setDrivers(driverData || []);
+      } catch (error: any) {
+        console.error("Failed to fetch drivers:", error);
+        setErrorDrivers(error.message || "Failed to load drivers");
+        toast({
+          title: "Error loading drivers",
+          description: error.message || "Could not fetch the list of drivers.",
+          variant: "destructive",
+        });
+        setDrivers([]);
+      } finally {
+        setLoadingDrivers(false);
+      }
+
+      // Fetch Buses
+      setLoadingBuses(true);
+      setErrorBuses(null);
+      try {
+        const busData = await getBusesByAgencyId(token); // Pass token to API call
+        setBuses(busData || []);
+      } catch (error: any) {
+        console.error("Failed to fetch buses:", error);
+        setErrorBuses(error.message || "Failed to load buses.");
+        toast({
+          title: "Error loading buses",
+          description: error.message || "Could not fetch the list of buses.",
+          variant: "destructive",
+        });
+        setBuses([]);
+      } finally {
+        setLoadingBuses(false);
+      }
     };
 
-    fetchDestinations();
-  }, []);
+    if (isAuthenticated && token) { // Only fetch if authenticated and token is available
+      fetchData();
+    }
+  }, [isAuthenticated, token]); // Dependency on isAuthenticated and token
+
 
   // Update fields when initialDate or initialTime changes
   useEffect(() => {
@@ -148,6 +208,17 @@ const AddTripModal: React.FC<AddTripModalProps> = ({
   // Populate form with trip data when in edit mode
   useEffect(() => {
     if (editMode && tripToEdit) {
+      setDepartureDateError(null);
+      setDepartureTimeError(null);
+      setArrivalDateError(null);
+      setArrivalTimeError(null);
+      setPriceError(null);
+      setPassengerCountError(null);
+      setBusRefError(null);
+      setDepartureCityError(null);
+      setDestinationCityError(null);
+      setTerminalsError(null);
+
       // Set departure and arrival date/time
       setTerminals(tripToEdit.terminals || []); // Ensure terminals is always an array
       setDepartureDate(tripToEdit.start);
@@ -165,8 +236,14 @@ const AddTripModal: React.FC<AddTripModalProps> = ({
       if (tripToEdit.totalSeats !== undefined) setPassengerCount(tripToEdit.totalSeats);
 
       // Bus reference and driver
-      if (tripToEdit.busRef) setBusRef(tripToEdit.busRef);
-      if (tripToEdit.driverName) setDriverName(tripToEdit.driverName);
+      if (tripToEdit.driverId) {
+        setSelectedDriverId(tripToEdit.driverId);
+        const driver = drivers.find(d => d.id === tripToEdit.driverId);
+        if (driver) setDriverName(`${driver.first_name} ${driver.last_name}`);
+      }
+      if (tripToEdit.busRef) {
+        setSelectedBusRef(tripToEdit.busRef);
+      }
 
       // Set default frequency if not available
       setFrequency("Does not repeat");
@@ -175,79 +252,185 @@ const AddTripModal: React.FC<AddTripModalProps> = ({
       // Set booked seats - this would come from API in a real implementation
       setBookedSeats(Math.floor(tripToEdit.totalSeats ? tripToEdit.totalSeats * 0.7 : 0));
     }
-  }, [editMode, tripToEdit]);
-
-  const handleAddTerminal = () => {
-    if (newTerminalInput && !terminals.includes(newTerminalInput)) {
-      setTerminals([...terminals, newTerminalInput]);
-      setNewTerminalInput("");
-    } else if (newTerminalInput && terminals.includes(newTerminalInput)) {
-      toast({
-        title: "Duplicate Terminal",
-        description: "This terminal has already been added.",
-        variant: "destructive",
-      });
-    }
-  };
+  }, [editMode, tripToEdit, drivers, buses]);
 
   const handleRemoveTerminal = (terminalToRemove: string) => {
     setTerminals(terminals.filter((terminal) => terminal !== terminalToRemove));
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewTerminalInput(e.target.value);
+  const handleTerminalCheckboxChange = (station: string, isChecked: boolean) => {
+    setTerminalsError(null);
+    if (isChecked) {
+      setTerminals((prev) => [...prev, station]);
+    } else {
+      setTerminals((prev) => prev.filter((t) => t !== station));
+    }
+  };
+
+  const handleDepartureDateChange = (date) => {
+    setDepartureDate(date);
+    setDepartureDateError('');
+    validateDateTime(date, arrivalDate, departureTime, arrivalTime);
+  };
+
+  const handleDepartureTimeChange = (e) => {
+    const time = e.target.value;
+    setDepartureTime(time);
+    setDepartureTimeError('');
+    validateDateTime(departureDate, arrivalDate, time, arrivalTime);
+  };
+
+  const handleArrivalDateChange = (date) => {
+    setArrivalDate(date);
+    setArrivalDateError('');
+    validateDateTime(departureDate, date, departureTime, arrivalTime);
+  };
+
+  const handleArrivalTimeChange = (e) => {
+    const time = e.target.value;
+    setArrivalTime(time);
+    setArrivalTimeError('');
+    validateDateTime(departureDate, arrivalDate, departureTime, time);
+  };
+
+  const parseDateTime = (date: Date | string, time: string): Date => {
+    // Format the date to a readable MM/DD/YYYY string if it's a Date object
+    const dateString = typeof date === 'string'
+      ? new Date(date).toLocaleDateString('en-US')
+      : date.toLocaleDateString('en-US');
+
+    // Combine date and time with AM/PM
+    const dateTimeString = `${dateString} ${time}`;
+    return new Date(dateTimeString);
+  };
+
+  const validateDateTime = (
+    departureDate: Date | string,
+    arrivalDate: Date | string,
+    departureTime: string,
+    arrivalTime: string
+  ): string | null => {
+
+    setDepartureDateError('');
+    setDepartureTimeError('');
+    setArrivalDateError('');
+    setArrivalTimeError('');
+
+    if (departureDate && arrivalDate && departureTime && arrivalTime) {
+      const departureDateTime = parseDateTime(departureDate, departureTime);
+      const arrivalDateTime = parseDateTime(arrivalDate, arrivalTime);
+
+      if (arrivalDateTime <= departureDateTime) {
+        setArrivalTimeError('Arrival time must be later than departure time.');
+        setArrivalDateError('Arrival date cannot be earlier than departure date.');
+        return 'Invalid date or time';
+      }
+    } else if (arrivalDate && departureDate) {
+      const dep = new Date(departureDate);
+      const arr = new Date(arrivalDate);
+      if (arr < dep) {
+        setArrivalDateError('Arrival date cannot be earlier than departure date.');
+        return 'Invalid date';
+      }
+    }
+
+    return null; // Return null if no errors are found
+  };
+
+
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPrice(e.target.value);
+    setPriceError(validatePrice(e.target.value));
+  };
+
+  const handlePassengerCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassengerCount(parseInt(e.target.value) || 0);
+    setPassengerCountError(validatePassengerCount(parseInt(e.target.value) || 0));
+  };
+
+  const handleDriverChange = (driverId: string) => {
+    setSelectedDriverId(driverId);
+    const driver = drivers.find(d => d.id === driverId);
+    if (driver) {
+      setDriverName(`${driver.first_name} ${driver.last_name}`);
+    } else {
+      setDriverName("");
+    }
+  };
+
+  const handleBusChange = (busRefValue: string) => {
+    setSelectedBusRef(busRefValue);
+    setBusRefError(validateBusRef(busRefValue));
+
+    const selectedBus = buses.find(bus => bus.plate_number === busRefValue);
+    if (selectedBus && selectedBus.capacity !== undefined) { // Check if capacity exists
+      setBusType(selectedBus.description);
+      setPassengerCount(selectedBus.capacity);
+      setPassengerCountError(null);
+    } else {
+      setPassengerCount(0);
+    }
+  };
+
+  const handleDepartureCityChange = (value: string) => {
+    setDepartureCity(value);
+    setDepartureCityError(validateDepartureCity(value, destinationCity));
+    // Also re-validate destination in case they become equal
+    setDestinationCityError(validateDestinationCity(destinationCity, value));
+  };
+
+  const handleDestinationCityChange = (value: string) => {
+    setDestinationCity(value);
+    setDestinationCityError(validateDestinationCity(value, departureCity));
+    // Also re-validate departure in case they become equal
+    setDepartureCityError(validateDepartureCity(departureCity, value));
   };
 
   const handleSave = async () => {
-    if (!departureDate) {
-      toast({
-        title: "Missing information",
-        description: "Please select a departure date",
-        variant: "destructive",
-      });
-      return;
-    }
+    const departureDateError = validateDepartureDate(departureDate);
+    const departureTimeError = validateDepartureTime(departureTime);
+    const arrivalDateError = validateArrivalDate(arrivalDate);
+    const arrivalTimeError = validateArrivalTime(arrivalTime);
+    const dateTimeValidationError = validateDateTime(departureDate, arrivalDate, departureTime, arrivalTime);
+    const priceError = validatePrice(price);
+    const passengerCountError = validatePassengerCount(passengerCount);
+    const busRefValidationError = validateBusRef(selectedBusRef);
+    const departureCityValidationError = validateDepartureCity(departureCity, destinationCity);
+    const destinationCityValidationError = validateDestinationCity(destinationCity, departureCity);
+    const terminalsValidationError = terminals.length === 0 ? "Please select at least one terminal." : null;
+    const driverSelectionError = !selectedDriverId ? "Please select a driver." : null;
 
-    if (!departureTime) {
-      toast({
-        title: "Missing information",
-        description: "Please enter departure time",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Set errors in state
+    setDepartureDateError(departureDateError);
+    setDepartureTimeError(departureTimeError);
+    setArrivalDateError(arrivalDateError || (dateTimeValidationError?.includes("date") ? dateTimeValidationError : ""));
+    setArrivalTimeError(arrivalTimeError || (dateTimeValidationError?.includes("time") ? dateTimeValidationError : ""));
+    setPriceError(priceError);
+    setPassengerCountError(passengerCountError);
+    setBusRefError(busRefValidationError);
+    setDepartureCityError(departureCityValidationError);
+    setDestinationCityError(destinationCityValidationError);
+    setTerminalsError(terminalsValidationError);
 
-    if (!arrivalDate) {
-      toast({
-        title: "Missing information",
-        description: "Please select an arrival date",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Check validity
+    const hasErrors =
+      departureDateError ||
+      departureTimeError ||
+      arrivalDateError ||
+      arrivalTimeError ||
+      dateTimeValidationError ||
+      priceError ||
+      passengerCountError ||
+      busRefValidationError ||
+      departureCityValidationError ||
+      destinationCityValidationError ||
+      terminalsError ||
+      driverSelectionError;
 
-    if (!arrivalTime) {
+    if (hasErrors) {
       toast({
-        title: "Missing information",
-        description: "Please enter arrival time",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!departureCity || !destinationCity) {
-      toast({
-        title: "Missing information",
-        description: "Please select departure and destination cities",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!busRef) {
-      toast({
-        title: "Missing information",
-        description: "Please enter the bus reference number",
+        title: "Validation Error",
+        description: "Please correct the highlighted fields.",
         variant: "destructive",
       });
       return;
@@ -265,7 +448,7 @@ const AddTripModal: React.FC<AddTripModalProps> = ({
       arrivalDateTime.setHours(arrivalHours, arrivalMinutes);
 
       const tripData: { [key: string]: any } = {
-        agency_id: agency?.id,
+        agency_id: agency?.unique_id,
         start_location: departureCity,
         pickup_locations: terminals, // Adjust based on your UI for pickup locations
         destination: destinationCity,
@@ -273,26 +456,29 @@ const AddTripModal: React.FC<AddTripModalProps> = ({
         est_arrival_time: arrivalDateTime.toISOString(),
         price: parseFloat(price),
         total_seats: passengerCount,
-        bus_ref: busRef,
-        driver_name: driverName,
+        bus_ref: selectedBusRef,
+        driver_id: selectedDriverId,
         status: "upcoming",
-        // Add other relevant fields you want to update
         bus_type: busType, // Assuming you want to send this
         discount: parseFloat(discount), // Assuming you want to send this
-        // status will be determined on the backend (unless you have UI to change it)
       };
+
+      console.log(tripData);
 
       let response;
       if (editMode && tripToEdit) {
-        response = await updateTrip({
+        response = await updateTrip(token, {
           ...tripData,
           id: tripToEdit.id,
         } as UpdateTripPayload);
       } else {
-        response = await createNewTrip(tripData as CreateTripPayload);
+        response = await createNewTrip(token, tripData as CreateTripPayload);
       }
 
-      if (response.ok) {
+      console.log("RESPONSE: ", response);
+      console.log(response.ok, "\n");
+
+      if (response.message === "travel created successfully" || response.message === "travel edited successfully") {
         toast({
           title: `Trip ${editMode ? 'updated' : 'saved'}`,
           description: `Your trip has been ${editMode ? 'updated' : 'added'} successfully`,
@@ -326,9 +512,9 @@ const AddTripModal: React.FC<AddTripModalProps> = ({
 
     try {
       setIsSaving(true);
-      const response = await deleteTrip(tripToEdit.id);
-
-      if (response.ok) {
+      const response = await deleteTrip(token, tripToEdit.id);
+      console.log(response, "\n");
+      if (response.message === "travel cancelled successfully") {
         toast({
           title: "Trip deleted",
           description: "The trip has been deleted successfully",
@@ -361,6 +547,11 @@ const AddTripModal: React.FC<AddTripModalProps> = ({
   // Calculate final price after discount
   const finalPrice = parseFloat(price) * (1 - (parseFloat(discount) / 100));
 
+  const selectedDepartureCityObj = destinations.find(d => d.name === departureCity);
+  const availableStations = selectedDepartureCityObj ? selectedDepartureCityObj.stations : [];
+  console.log("Statinos\n");
+  console.log(availableStations);
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -387,16 +578,19 @@ const AddTripModal: React.FC<AddTripModalProps> = ({
                   <label className="text-sm text-gray-600 font-medium">Beginning Location *</label>
                   <div className="relative">
                     {loadingDestinations ? (
-                      <select className="h-[50px] border border-[#E5E9F0] rounded px-3 text-base text-gray-500 w-full pr-10 appearance-none bg-white" disabled>
+                      <select
+                        className={cn("h-[50px] border border-[#E5E9F0] rounded px-3 text-base text-gray-500 w-full pr-10 appearance-none bg-white", departureCityError && "border-red-500")}
+                        disabled
+                      >
                         <option>Loading cities...</option>
                       </select>
                     ) : errorDestinations ? (
                       <div className="text-red-500">{errorDestinations}</div>
                     ) : (
                       <select
-                        className="h-[50px] border border-[#E5E9F0] rounded px-3 text-base text-black w-full pr-10 appearance-none bg-white"
+                        className={cn("h-[50px] border border-[#E5E9F0] rounded px-3 text-base text-black w-full pr-10 appearance-none bg-white", departureCityError && "border-red-500")}
                         value={departureCity}
-                        onChange={(e) => setDepartureCity(e.target.value)}
+                        onChange={(e) => handleDepartureCityChange(e.target.value)}
                       >
                         <option value="" disabled>Select departure city</option>
                         {destinations && destinations.map((dest) => (
@@ -406,22 +600,26 @@ const AddTripModal: React.FC<AddTripModalProps> = ({
                     )}
                     <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none" size={16} />
                   </div>
+                  {departureCityError && <p className="text-red-500 text-xs mt-1">{departureCityError}</p>}
                 </div>
 
                 <div className="flex flex-col gap-2">
                   <label className="text-sm text-gray-600 font-medium">Destination *</label>
                   <div className="relative">
                     {loadingDestinations ? (
-                      <select className="h-[50px] border border-[#E5E9F0] rounded px-3 text-base text-gray-500 w-full pr-10 appearance-none bg-white" disabled>
+                      <select
+                        className={cn("h-[50px] border border-[#E5E9F0] rounded px-3 text-base text-gray-500 w-full pr-10 appearance-none bg-white", destinationCityError && "border-red-500")}
+                        disabled
+                      >
                         <option>Loading cities...</option>
                       </select>
                     ) : errorDestinations ? (
                       <div className="text-red-500">{errorDestinations}</div>
                     ) : (
                       <select
-                        className="h-[50px] border border-[#E5E9F0] rounded px-3 text-base text-black w-full pr-10 appearance-none bg-white"
+                        className={cn("h-[50px] border border-[#E5E9F0] rounded px-3 text-base text-black w-full pr-10 appearance-none bg-white", destinationCityError && "border-red-500")}
                         value={destinationCity}
-                        onChange={(e) => setDestinationCity(e.target.value)}
+                        onChange={(e) => handleDestinationCityChange(e.target.value)}
                       >
                         <option value="" disabled>Select destination city</option>
                         {destinations && destinations.map((dest) => (
@@ -431,6 +629,7 @@ const AddTripModal: React.FC<AddTripModalProps> = ({
                     )}
                     <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none" size={16} />
                   </div>
+                  {destinationCityError && <p className="text-red-500 text-xs mt-1">{destinationCityError}</p>}
                 </div>
 
                 <div className="flex flex-col gap-2">
@@ -440,7 +639,10 @@ const AddTripModal: React.FC<AddTripModalProps> = ({
                       <Popover>
                         <PopoverTrigger asChild>
                           <button
-                            className="h-[50px] border border-[#E5E9F0] rounded px-3 text-base text-black w-full flex items-center justify-between"
+                            className={cn(
+                              "h-[50px] border border-[#E5E9F0] rounded px-3 text-base text-black w-full flex items-center justify-between",
+                              departureDateError && "border-red-500"
+                            )}
                             type="button"
                           >
                             {departureDate ? format(departureDate, "MM/dd/yyyy") : "mm/dd/yyyy"}
@@ -451,20 +653,25 @@ const AddTripModal: React.FC<AddTripModalProps> = ({
                           <Calendar
                             mode="single"
                             selected={departureDate}
-                            onSelect={setDepartureDate}
+                            onSelect={handleDepartureDateChange}
                             initialFocus
                             className={cn("p-3")}
                           />
                         </PopoverContent>
                       </Popover>
+                      {departureDateError && <p className="text-red-500 text-xs mt-1">{departureDateError}</p>}
                     </div>
                     <div className="relative flex-1">
                       <input
                         type="time"
-                        className="h-[50px] border border-[#E5E9F0] rounded px-3 text-base text-black w-full"
+                        className={cn(
+                          "h-[50px] border border-[#E5E9F0] rounded px-3 text-base text-black w-full",
+                          departureTimeError && "border-red-500"
+                        )}
                         value={departureTime}
-                        onChange={(e) => setDepartureTime(e.target.value)}
+                        onChange={handleDepartureTimeChange}
                       />
+                      {departureTimeError && <p className="text-red-500 text-xs mt-1">{departureTimeError}</p>}
                     </div>
                   </div>
                 </div>
@@ -476,7 +683,10 @@ const AddTripModal: React.FC<AddTripModalProps> = ({
                       <Popover>
                         <PopoverTrigger asChild>
                           <button
-                            className="h-[50px] border border-[#E5E9F0] rounded px-3 text-base text-black w-full flex items-center justify-between"
+                            className={cn(
+                              "h-[50px] border border-[#E5E9F0] rounded px-3 text-base text-black w-full flex items-center justify-between",
+                              arrivalDateError && "border-red-500"
+                            )}
                             type="button"
                           >
                             {arrivalDate ? format(arrivalDate, "MM/dd/yyyy") : "mm/dd/yyyy"}
@@ -487,24 +697,33 @@ const AddTripModal: React.FC<AddTripModalProps> = ({
                           <Calendar
                             mode="single"
                             selected={arrivalDate}
-                            onSelect={setArrivalDate}
+                            onSelect={handleArrivalDateChange}
                             initialFocus
                             className={cn("p-3")}
                           />
                         </PopoverContent>
                       </Popover>
+                      {arrivalDateError && <p className="text-red-500 text-xs mt-1">{arrivalDateError}</p>}
                     </div>
                     <div className="relative flex-1">
                       <input
                         type="time"
-                        className="h-[50px] border border-[#E5E9F0] rounded px-3 text-base text-black w-full"
+                        className={cn(
+                          "h-[50px] border border-[#E5E9F0] rounded px-3 text-base text-black w-full",
+                          arrivalTimeError && "border-red-500"
+                        )}
                         value={arrivalTime}
-                        onChange={(e) => setArrivalTime(e.target.value)}
+                        onChange={handleArrivalTimeChange}
                       />
+                      {arrivalTimeError && <p className="text-red-500 text-xs mt-1">{arrivalTimeError}</p>}
                     </div>
                   </div>
                 </div>
+              </div>
 
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 pb-6 border-b border-[#E5E9F0]">
+                {/* Frequency field */}
                 <div className="flex flex-col gap-2">
                   <label className="text-sm text-gray-600 font-medium">Frequency *</label>
                   <div className="relative">
@@ -526,175 +745,250 @@ const AddTripModal: React.FC<AddTripModalProps> = ({
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2 mb-6 pb-6 border-b border-[#E5E9F0]">
-                  <label className="text-sm text-gray-600 font-medium">Terminals</label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="text"
-                      placeholder="Enter terminal and press Enter"
-                      value={newTerminalInput}
-                      onChange={handleInputChange}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && newTerminalInput) {
-                          handleAddTerminal();
-                        }
-                      }}
-                      className="h-[50px] border border-[#E5E9F0] rounded px-3 text-base text-black w-full"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddTerminal}
-                      className="h-[50px] px-4 rounded bg-[#F35B04] text-white text-base font-medium"
-                    >
-                      Add
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {terminals && terminals.map((terminal) => (
-                      <div key={terminal} className="bg-gray-200 rounded-full px-3 py-1 flex items-center gap-1 text-sm">
+                {/* Terminals field */}
+                <div className="mt-6">
+                  <label className="text-sm text-gray-600 font-medium">Terminals *</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "h-[50px] justify-between text-left font-normal border border-[#E5E9F0] rounded w-full",
+                          terminalsError && "border-red-500",
+                          terminals.length === 0 && "text-muted-foreground"
+                        )}
+                        disabled={isSaving || !departureCity}
+                      >
+                        <span>
+                          {terminals.length > 0
+                            ? `${terminals.length} terminal(s) selected`
+                            : "Select terminals"}
+                        </span>
+                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                      <div className="max-h-60 overflow-y-auto">
+                        {loadingDestinations ? (
+                          <div className="p-4 text-center text-sm text-gray-500 flex items-center justify-center">
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading stations...
+                          </div>
+                        ) : errorDestinations ? (
+                          <div className="p-4 text-center text-sm text-red-500">Error loading stations.</div>
+                        ) : !departureCity ? (
+                          <div className="p-4 text-center text-sm text-gray-500">Select a departure city first to see available terminals.</div>
+                        ) : availableStations.length === 0 ? (
+                          <div className="p-4 text-center text-sm text-gray-500">No terminals found for {departureCity}.</div>
+                        ) : (
+                          <div className="flex flex-col p-2">
+                            {availableStations.map((station, index) => (
+                              <div key={index} className="flex items-center justify-between space-x-2 p-2 hover:bg-gray-50 rounded-md"> {/* ADDED justify-between */}
+                                <div className="flex items-center space-x-2 flex-grow"> {/* Group checkbox and label */}
+                                  <Checkbox
+                                    id={`terminal-${index}`}
+                                    checked={terminals.includes(station)}
+                                    onCheckedChange={(checked) =>
+                                      handleTerminalCheckboxChange(station, !!checked)
+                                    }
+                                    disabled={isSaving}
+                                  />
+                                  <label
+                                    htmlFor={`terminal-${index}`}
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                  >
+                                    {station}
+                                  </label>
+                                </div>
+                                {terminals.includes(station) && ( // CONDITIONAL RENDERING OF TICK
+                                  <Check className="ml-2 h-4 w-4 text-green-500" />
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  {terminalsError && <p className="text-red-500 text-sm mt-1">{terminalsError}</p>}
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {terminals.map((terminal, index) => (
+                      <span
+                        key={index}
+                        className="flex items-center bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm"
+                      >
                         {terminal}
                         <button
                           type="button"
                           onClick={() => handleRemoveTerminal(terminal)}
-                          className="text-gray-500 hover:text-gray-700"
+                          className="ml-2 text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                          disabled={isSaving}
                         >
-                          <X className="w-4 h-4" />
+                          <X size={14} />
                         </button>
-                      </div>
+                      </span>
                     ))}
                   </div>
-                </div>
-              </div>
+                </div>              </div>
             </div>
+          </div>
 
-            {/* Driver & Vehicle Information */}
-            <div className="mb-6 pb-6 border-b border-[#E5E9F0]">
-              <div className="flex items-center mb-6">
-                <h2 className="text-lg font-semibold text-black">Driver & Vehicle Information</h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm text-gray-600 font-medium">Driver Name</label>
-                  <Select value={driverName} onValueChange={setDriverName}>
-                    <SelectTrigger className="h-[50px] border border-[#E5E9F0] rounded px-3">
+          {/* Driver & Vehicle Information */}
+          <div className="mb-6 pb-6 border-b border-[#E5E9F0]">
+            <div className="flex items-center mb-6">
+              <h2 className="text-lg font-semibold text-black">Driver & Vehicle Information</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex flex-col gap-2">
+                <label className="text-sm text-gray-600 font-medium">Driver Name *</label>
+                {/* UPDATED: Select value is now selectedDriverId, onValueChange maps to ID */}
+                <Select value={selectedDriverId} onValueChange={handleDriverChange} disabled={isSaving || loadingDrivers}> {/* ADDED disabled prop */}
+                  <SelectTrigger className="h-[50px] border border-[#E5E9F0] rounded px-3">
+                    {loadingDrivers ? (
+                      <span className="flex items-center"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading drivers...</span>
+                    ) : errorDrivers ? (
+                      <span className="text-red-500">{errorDrivers}</span>
+                    ) : drivers.length === 0 ? (
+                      <span className="text-muted-foreground">No drivers available</span>
+                    ) : (
                       <SelectValue placeholder="Select driver" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DRIVERS.map((driver) => (
-                        <SelectItem key={driver.id} value={driver.name}>
-                          {driver.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                    )}
+                  </SelectTrigger>
+                  <SelectContent>
+                    {drivers.map((driver) => (
+                      <SelectItem key={driver.id} value={driver.id}> {/* Value is driver ID */}
+                        {`${driver.first_name} ${driver.last_name}`} {/* Display full name */}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {!selectedDriverId && <p className="text-red-500 text-sm">Please select a driver.</p>} {/* NEW: Validation message for driver */}
+              </div>
 
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm text-gray-600 font-medium">Bus Reference *</label>
-                  <Select value={busRef} onValueChange={setBusRef}>
-                    <SelectTrigger className="h-[50px] border border-[#E5E9F0] rounded px-3">
+              <div className="flex flex-col gap-2">
+                <label className="text-sm text-gray-600 font-medium">Bus Reference *</label>
+                {/* UPDATED: Select value is now selectedBusRef, onValueChange maps to bus_ref */}
+                <Select value={selectedBusRef} onValueChange={handleBusChange} disabled={isSaving || loadingBuses}> {/* ADDED disabled prop */}
+                  <SelectTrigger className={cn("h-[50px] border border-[#E5E9F0] rounded px-3",
+                    busRefError && "border-red-500"
+                  )}>
+                    {loadingBuses ? (
+                      <span className="flex items-center"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading buses...</span>
+                    ) : errorBuses ? (
+                      <span className="text-red-500">{errorBuses}</span>
+                    ) : buses.length === 0 ? (
+                      <span className="text-muted-foreground">No buses available</span>
+                    ) : (
                       <SelectValue placeholder="Select bus reference" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {BUS_REFERENCES.map((bus) => (
-                        <SelectItem key={bus.id} value={bus.ref}>
-                          {bus.ref}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                    )}
+                  </SelectTrigger>
+                  <SelectContent>
+                    {buses.map((bus) => (
+                      <SelectItem key={bus.id} value={bus.plate_number}> {/* Value is bus_ref */}
+                        {bus.plate_number} {/* Display bus_ref */}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {busRefError && <p className="text-red-500 text-sm">{busRefError}</p>}
               </div>
             </div>
+          </div>
 
-            {/* Pricing & Capacity Section */}
-            <div className="mb-6 pb-6 border-b border-[#E5E9F0]">
-              <div className="flex items-center mb-6">
-                <h2 className="text-lg font-semibold text-black">Pricing & Capacity</h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm text-gray-600 font-medium">Price (ETB) *</label>
-                  <input
-                    type="number"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    placeholder="Enter price"
-                    className="h-[50px] border border-[#E5E9F0] rounded px-3 text-base text-black w-full"
-                  />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm text-gray-600 font-medium">Total Seats *</label>
-                  <input
-                    type="number"
-                    value={passengerCount}
-                    onChange={(e) => setPassengerCount(parseInt(e.target.value) || 0)}
-                    placeholder="Enter total seats"
-                    className="h-[50px] border border-[#E5E9F0] rounded px-3 text-base text-black w-full"
-                  />
-                </div>
-
-                {editMode && (
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm text-gray-600 font-medium">Booked Seats</label>
-                    <input
-                      type="text"
-                      value={bookedSeats}
-                      readOnly
-                      className="h-[50px] border border-[#E5E9F0] rounded px-3 text-base text-gray-500 bg-gray-100 w-full"
-                    />
-                  </div>
-                )}
-              </div>
+          {/* Pricing & Capacity Section */}
+          <div className="mb-6 pb-6 border-b border-[#E5E9F0]">
+            <div className="flex items-center mb-6">
+              <h2 className="text-lg font-semibold text-black">Pricing & Capacity</h2>
             </div>
-
-            {/* Status Section - Only show in edit mode */}
-            {editMode && tripToEdit?.status && (
-              <div className="mb-6 pb-6 border-b border-[#E5E9F0]">
-                <div className="flex items-center mb-6">
-                  <h2 className="text-lg font-semibold text-black">Trip Status</h2>
-                </div>
-                <div className="flex">
-                  <div className={`px-4 py-2 rounded-md flex items-center gap-2 ${tripToEdit.status === 'ongoing' ? 'bg-green-500 text-white' :
-                    tripToEdit.status === 'upcoming' ? 'bg-blue-500 text-white' :
-                      'bg-orange-500 text-white'
-                    }`}>
-                    <div className="w-2 h-2 rounded-full bg-white"></div>
-                    <span className="capitalize">{tripToEdit.status}</span>
-                  </div>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="flex flex-col gap-2">
+                <label className="text-sm text-gray-600 font-medium">Price (ETB) *</label>
+                <input
+                  type="number"
+                  value={price}
+                  onChange={(e) => handlePriceChange(e)}
+                  placeholder="Enter price"
+                  className={cn(
+                    "h-[50px] border border-[#E5E9F0] rounded px-3 text-base text-black w-full",
+                    priceError && "border-red-500"
+                  )}
+                />
+                {priceError && <p className="text-red-500 text-xs mt-1">{priceError}</p>}
               </div>
-            )}
 
-            {/* Footer */}
-            <div className="flex justify-end gap-4 pt-6">
-              <button
-                className="h-[42px] px-4 border border-[#E5E9F0] rounded bg-white text-gray-600 text-base cursor-pointer"
-                onClick={onClose}
-                disabled={isSaving}
-              >
-                Cancel
-              </button>
+              <div className="flex flex-col gap-2">
+                <label className="text-sm text-gray-600 font-medium">Total Seats *</label>
+                <input
+                  type="number"
+                  value={passengerCount}
+                  onChange={(e) => handlePassengerCountChange(e)}
+                  placeholder="Enter total seats"
+                  className={cn(
+                    "h-[50px] border border-[#E5E9F0] rounded px-3 text-base text-black w-full",
+                    passengerCountError && "border-red-500"
+                  )}
+                />
+                {passengerCountError && <p className="text-red-500 text-xs mt-1">{passengerCountError}</p>}
+              </div>
 
               {editMode && (
-                <button
-                  className="h-[42px] px-6 bg-[#EF4444] border-none rounded text-white text-base cursor-pointer"
-                  onClick={() => setShowDeleteConfirm(true)}
-                  disabled={isSaving}
-                >
-                  Delete Trip
-                </button>
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm text-gray-600 font-medium">Booked Seats</label>
+                  <input
+                    type="text"
+                    value={bookedSeats}
+                    readOnly
+                    className="h-[50px] border border-[#E5E9F0] rounded px-3 text-base text-gray-500 bg-gray-100 w-full"
+                  />
+                </div>
               )}
+            </div>
+          </div>
 
+          {/* Status Section - Only show in edit mode */}
+          {editMode && tripToEdit?.status && (
+            <div className="mb-6 pb-6 border-b border-[#E5E9F0]">
+              <div className="flex items-center mb-6">
+                <h2 className="text-lg font-semibold text-black">Trip Status</h2>
+              </div>
+              <div className="flex">
+                <div className={`px-4 py-2 rounded-md flex items-center gap-2 ${tripToEdit.status === 'ongoing' ? 'bg-green-500 text-white' :
+                  tripToEdit.status === 'upcoming' ? 'bg-blue-500 text-white' :
+                    'bg-orange-500 text-white'
+                  }`}>
+                  <div className="w-2 h-2 rounded-full bg-white"></div>
+                  <span className="capitalize">{tripToEdit.status}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Footer */}
+          <div className="flex justify-end gap-4 pt-6">
+            <button
+              className="h-[42px] px-4 border border-[#E5E9F0] rounded bg-white text-gray-600 text-base cursor-pointer"
+              onClick={onClose}
+              disabled={isSaving}
+            >
+              Cancel
+            </button>
+
+            {editMode && (
               <button
-                className="h-[42px] px-6 bg-[#F35B04] border-none rounded text-white text-base cursor-pointer"
-                onClick={handleSave}
+                className="h-[42px] px-6 bg-[#EF4444] border-none rounded text-white text-base cursor-pointer"
+                onClick={() => setShowDeleteConfirm(true)}
                 disabled={isSaving}
               >
-                {isSaving ? 'Saving...' : editMode ? 'Update Trip' : 'Save Trip'}
+                Delete Trip
               </button>
-            </div>
+            )}
+
+            <button
+              className="h-[42px] px-6 bg-[#F35B04] border-none rounded text-white text-base cursor-pointer"
+              onClick={handleSave}
+              disabled={isSaving}
+            >
+              {isSaving ? 'Saving...' : editMode ? 'Update Trip' : 'Save Trip'}
+            </button>
           </div>
         </DialogContent>
       </Dialog>
