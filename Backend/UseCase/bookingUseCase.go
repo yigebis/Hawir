@@ -152,6 +152,23 @@ func (buc *BookingUseCase) Book(booking *Domain.Booking) (*Domain.Booking, int, 
 		return nil, statusCode, err
 	}
 
+	// check if the traveler names is used before!!
+	var bookings *[]Domain.Booking
+	bookings, err = buc.BookingRepo.CheckTravelersNameInTravel(booking.TravelID, booking.TravelerID)
+	if err != nil {
+		// Return nil booking on error
+		statusCode, err := buc.ErrorService.InternalServer()
+		return nil, statusCode, err
+	}
+
+	for _, bk := range *bookings {
+		if booking.FirstName == bk.FirstName && booking.LastName == bk.LastName {
+			buc.BookingRepo.FreeSeat(booking.TravelID, booking.SeatNo - 1)
+			statusCode, err := buc.ErrorService.UserExists()
+			return nil, statusCode, err
+		}
+	}
+
 	// reserve it for some minutes
 	bookReservationSpan, err := strconv.Atoi(os.Getenv("BOOK_RESERVATION_SPAN"))
 	if err != nil {

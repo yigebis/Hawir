@@ -486,3 +486,33 @@ func (b *BookingRepository) MarkNotificationSent(ctx context.Context, bookingID 
 
 	return nil // Return nil on successful update
 }
+
+func (b *BookingRepository) CheckTravelersNameInTravel(travelId, travelerId string) (*[]Domain.Booking, error) {
+	filter := bson.M{
+		"travel_id":   travelId,
+		"traveler_id": travelerId,
+	}
+
+	var bookings []Domain.Booking
+	cursor, err := b.BookingCollection.Find(b.DbCtx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	defer cursor.Close(b.DbCtx)
+	for cursor.Next(b.DbCtx) {
+		var booking Domain.Booking
+		err := cursor.Decode(&booking)
+		if err != nil {
+			return nil, err
+		}
+
+		bookings = append(bookings, booking)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return &bookings, nil
+}
