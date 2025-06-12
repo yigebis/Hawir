@@ -15,7 +15,7 @@ import (
 	"os"
 
 	firebase "firebase.google.com/go/v4"
-	"google.golang.org/api/option"
+	// "google.golang.org/api/option"
 
 	// comment it for production
 	"github.com/joho/godotenv"
@@ -45,9 +45,9 @@ func initializeFirebaseApp() *firebase.App {
 
 func main() {
 	//comment it for production
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("error loading .env file")
-	}
+	// if err := godotenv.Load(); err != nil {
+	// 	log.Fatal("error loading .env file")
+	// }
 
 	firebaseApp = initializeFirebaseApp() // Initialize Firebase
 
