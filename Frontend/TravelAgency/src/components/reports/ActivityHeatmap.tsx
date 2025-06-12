@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -13,8 +12,8 @@ interface HeatmapData {
 }
 
 interface ActivityHeatmapProps {
-  tripsData: HeatmapData[];
-  bookingsData: HeatmapData[];
+  tripsData: HeatmapData[]; // Now this will be the processed real data for trips
+  bookingsData: HeatmapData[]; // This already was for processed real data for bookings
   year: string;
   onYearChange: (year: string) => void;
 }
@@ -33,9 +32,10 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
   // Calculate color intensity based on value (GitHub style)
   const getColorIntensity = (value: number) => {
     if (value === 0) return 'bg-gray-100';
-    const intensity = value / maxValue;
+    // Ensure maxValue is not zero to prevent division by zero
+    const intensity = maxValue > 0 ? value / maxValue : 0;
     const baseColor = activeView === 'trips' ? 'bg-blue-500' : 'bg-[#F35B04]';
-    
+
     if (intensity <= 0.25) return `${baseColor} bg-opacity-25`;
     if (intensity <= 0.5) return `${baseColor} bg-opacity-50`;
     if (intensity <= 0.75) return `${baseColor} bg-opacity-75`;
@@ -43,65 +43,54 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
   };
 
   // Generate GitHub-style grid layout with proper date ordering
-  const generateGridData = () => {
+  // This function processes the `HeatmapData[]` which is already prepared in Reports.tsx
+  const generateGridData = (dataToProcess: HeatmapData[]) => {
     const weeks: HeatmapData[][] = [];
     const weeksInYear = 53; // Approximate weeks in a year
     const currentYear = parseInt(year);
-    
+
     // Start from January 1st of the selected year
     const startOfYear = new Date(currentYear, 0, 1);
     const startDayOfWeek = startOfYear.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    
-    // Initialize weeks array
+
+    // Initialize weeks array with default empty cells
     for (let w = 0; w < weeksInYear; w++) {
       weeks[w] = [];
       for (let d = 0; d < 7; d++) {
-        weeks[w][d] = { date: new Date(), value: 0, dayOfWeek: d, week: w };
+        // Default cell for a specific dayOfWeek and week
+        const cellDate = new Date(startOfYear);
+        cellDate.setDate(startOfYear.getDate() + (w * 7) + d - startDayOfWeek);
+        weeks[w][d] = { date: new Date(cellDate), value: 0, dayOfWeek: d, week: w };
       }
     }
 
-    // Calculate the correct date for each cell
-    for (let week = 0; week < weeksInYear; week++) {
-      for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
-        // Calculate the actual date for this cell
-        const daysFromStart = (week * 7) + dayOfWeek - startDayOfWeek;
-        const cellDate = new Date(startOfYear);
-        cellDate.setDate(startOfYear.getDate() + daysFromStart);
-        
-        // Only include dates that are actually in the selected year
-        if (cellDate.getFullYear() === currentYear) {
-          // Find corresponding data for this date
-          const dataForDate = currentData.find(item => 
-            item.date.toDateString() === cellDate.toDateString()
-          );
-          
-          weeks[week][dayOfWeek] = {
-            date: new Date(cellDate),
-            value: dataForDate ? dataForDate.value : 0,
-            dayOfWeek: dayOfWeek,
-            week: week
-          };
-        } else {
-          // Empty cell for dates outside the year
-          weeks[week][dayOfWeek] = {
-            date: new Date(cellDate),
-            value: 0,
-            dayOfWeek: dayOfWeek,
-            week: week
+    // Populate grid with actual data
+    dataToProcess.forEach(item => {
+      if (item.date.getFullYear() === currentYear) { // Ensure data belongs to the current year
+        const daysFromStart = Math.floor((item.date.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
+        const weekIndex = Math.floor((daysFromStart + startDayOfWeek) / 7);
+        const dayOfWeekIndex = item.date.getDay();
+
+        if (weekIndex < weeksInYear && dayOfWeekIndex < 7) {
+          weeks[weekIndex][dayOfWeekIndex] = {
+            date: item.date,
+            value: item.value,
+            dayOfWeek: dayOfWeekIndex,
+            week: weekIndex
           };
         }
       }
-    }
+    });
 
     return weeks;
   };
 
-  const gridData = generateGridData();
+  const gridData = generateGridData(currentData); // Pass currentData (tripsData or bookingsData)
   const years = ['2023', '2024', '2025'];
 
   const formatTooltip = (item: HeatmapData) => {
-    const dateStr = item.date.toLocaleDateString('en-US', { 
-      month: 'short', 
+    const dateStr = item.date.toLocaleDateString('en-US', {
+      month: 'short',
       day: 'numeric',
       year: 'numeric'
     });
@@ -112,24 +101,24 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
   const getMonthLabels = () => {
     const monthLabels: { month: string; weekIndex: number }[] = [];
     const currentYear = parseInt(year);
-    
+
     for (let month = 0; month < 12; month++) {
       const firstOfMonth = new Date(currentYear, month, 1);
       const startOfYear = new Date(currentYear, 0, 1);
       const startDayOfWeek = startOfYear.getDay();
-      
+
       // Calculate which week this month starts in
       const daysDifference = Math.floor((firstOfMonth.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
       const weekIndex = Math.floor((daysDifference + startDayOfWeek) / 7);
-      
-      if (weekIndex < 53 && weekIndex >= 0) {
+
+      if (weekIndex < 53 && weekIndex >= 0 && !monthLabels.some(label => label.month === firstOfMonth.toLocaleDateString('en-US', { month: 'short' }))) {
         monthLabels.push({
           month: firstOfMonth.toLocaleDateString('en-US', { month: 'short' }),
           weekIndex: weekIndex
         });
       }
     }
-    
+
     return monthLabels;
   };
 
@@ -204,7 +193,7 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
                   <span className="text-xs text-gray-500 w-6">Sat</span>
                 </div>
               </div>
-              
+
               {/* Heatmap grid with month labels */}
               <div className="flex flex-col">
                 {/* Month labels row - properly aligned with weeks */}
@@ -213,8 +202,9 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
                     const monthLabel = monthLabels.find(m => m.weekIndex === weekIndex);
                     return (
                       <div key={weekIndex} className="w-3 flex items-center justify-center">
+                        {/* Only render if it's the start of a month */}
                         {monthLabel && (
-                          <span className="text-xs text-gray-500 whitespace-nowrap">
+                          <span className="text-xs text-gray-500 whitespace-nowrap" style={{ transform: 'translateX(-50%)' }}>
                             {monthLabel.month}
                           </span>
                         )}
@@ -222,7 +212,7 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
                     );
                   })}
                 </div>
-                
+
                 {/* Grid data */}
                 <div className="flex space-x-1">
                   {gridData.map((week, weekIndex) => (
@@ -253,7 +243,7 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
                 <div className={`w-3 h-3 rounded-sm border border-gray-200 ${activeView === 'trips' ? 'bg-blue-500 bg-opacity-25' : 'bg-[#F35B04] bg-opacity-25'}`}></div>
                 <div className={`w-3 h-3 rounded-sm border border-gray-200 ${activeView === 'trips' ? 'bg-blue-500 bg-opacity-50' : 'bg-[#F35B04] bg-opacity-50'}`}></div>
                 <div className={`w-3 h-3 rounded-sm border border-gray-200 ${activeView === 'trips' ? 'bg-blue-500 bg-opacity-75' : 'bg-[#F35B04] bg-opacity-75'}`}></div>
-                <div className={`w-3 h-3 rounded-sm border border-gray-200 ${activeView === 'trips' ? 'bg-blue-500' : 'bg-[#F35B04]'}`}></div>
+                <div className="w-3 h-3 rounded-sm border border-gray-200 bg-blue-500"></div> {/* Simplified for clarity */}
               </div>
               <span>More</span>
             </div>
