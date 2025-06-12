@@ -41,4 +41,5 @@ type IBookingRepository interface {
 	UpdateBooking(booking *Domain.Booking) (error)
 	FindConfirmedBookingsForUpcomingTravel(ctx context.Context, startTime, endTime time.Time) ([]Domain.Booking, error)
 	MarkNotificationSent(ctx context.Context, bookingID string) error
+	CheckTravelersNameInTravel(travelId, travelerId string) (*[]Domain.Booking, error)
 }
