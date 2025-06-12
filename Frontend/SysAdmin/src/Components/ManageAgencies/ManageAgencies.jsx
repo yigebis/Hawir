@@ -96,12 +96,8 @@ const ManageAgencies = () => {
 
   const handleEditAgency = async (updatedAgency) => {
     try {
-      const editedAgency = await editAgency(updatedAgency.id, updatedAgency);
-      setAgencies((prev) =>
-        prev.map((agency) =>
-          agency.id === updatedAgency.id ? editedAgency : agency
-        )
-      );
+      await editAgency(updatedAgency.id, updatedAgency);
+      fetchAgencies(); // Refetch the list after editing
       setShowEditModal(false);
     } catch (error) {
       console.error("Error editing agency:", error);
