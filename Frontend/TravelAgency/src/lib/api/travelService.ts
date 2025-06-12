@@ -41,6 +41,13 @@ export interface Vehicle {
     status: 'Available' | 'In Service' | 'Maintenance';
 }
 
+export interface BackendDestination {
+    id: string; // primitive.ObjectID comes as string in JSON
+    name: string;
+    stations: string[];
+    image: string;
+}
+
 export interface TravelRating {
     id?: string; // Maps to Go's primitive.ObjectID
     travel_id: string;
@@ -438,5 +445,232 @@ export const chooseSeat = async (seatData: Seat, token: string): Promise<{ messa
     } catch (error: any) {
         console.error("Caught error choosing seat:", error);
         throw new Error(error.message || "Failed to choose seat.");
+    }
+};
+
+/**
+ * Fetches booking heatmap data (daily counts) for the current year from the backend.
+ * The backend returns an array of integers, where each index corresponds to a day
+ * from January 1st of the current year (e.g., 2025).
+ *
+ * @param agencyId The ID of the agency.
+ * @param token The JWT authentication token.
+ * @returns A promise that resolves to an array of numbers (booking counts per day).
+ */
+export const fetchBookingHeatmap = async (agencyId: string, token: string): Promise<number[]> => {
+    try {
+        if (!agencyId) {
+            console.warn("fetchBookingHeatmap: agencyId is missing. Returning empty array.");
+            return [];
+        }
+        if (!token) {
+            console.warn("fetchBookingHeatmap: authentication token is missing. Returning empty array.");
+            return [];
+        }
+
+        const response = await fetch(`${API_BASE_URL}/agency/reports/book_heatmap`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            let errorMessage = `HTTP error! status: ${response.status}`;
+            try {
+                const errorData = JSON.parse(errorText);
+                errorMessage = errorData.message || errorData.error || errorMessage;
+            } catch (e) {
+                errorMessage = errorText || errorMessage;
+            }
+            console.error(`Error fetching booking heatmap for agency ${agencyId}: ${errorMessage}`);
+            throw new Error(errorMessage);
+        }
+
+        const data: number[] = await response.json();
+        // Ensure the response is an array of numbers, even if empty or unexpected
+        if (!Array.isArray(data) || !data.every(item => typeof item === 'number')) {
+            console.warn("fetchBookingHeatmap: API returned non-array or non-numeric data. Returning empty array.");
+            return [];
+        }
+
+        console.log("Fetched booking heatmap data:", data);
+        return data;
+
+    } catch (error: any) {
+        console.error("Failed to fetch booking heatmap:", error);
+        return []; // Return empty array on any error to prevent crashes
+    }
+};
+
+/**
+ * Fetches trip heatmap data (daily counts) for the current year from the backend.
+ * The backend returns an array of integers, where each index corresponds to a day
+ * from January 1st of the current year (e.g., 2025).
+ *
+ * @param agencyId The ID of the agency.
+ * @param token The JWT authentication token.
+ * @returns A promise that resolves to an array of numbers (trip counts per day).
+ */
+export const fetchTripHeatmap = async (agencyId: string, token: string): Promise<number[]> => {
+    try {
+        if (!agencyId) {
+            console.warn("fetchTripHeatmap: agencyId is missing. Returning empty array.");
+            return [];
+        }
+        if (!token) {
+            console.warn("fetchTripHeatmap: authentication token is missing. Returning empty array.");
+            return [];
+        }
+
+        const response = await fetch(`${API_BASE_URL}/agency/reports/trip_heatmap`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            let errorMessage = `HTTP error! status: ${response.status}`;
+            try {
+                const errorData = JSON.parse(errorText);
+                errorMessage = errorData.message || errorData.error || errorMessage;
+            } catch (e) {
+                errorMessage = errorText || errorMessage;
+            }
+            console.error(`Error fetching trip heatmap for agency ${agencyId}: ${errorMessage}`);
+            throw new Error(errorMessage);
+        }
+
+        const data: number[] = await response.json();
+        // Ensure the response is an array of numbers, even if empty or unexpected
+        if (!Array.isArray(data) || !data.every(item => typeof item === 'number')) {
+            console.warn("fetchTripHeatmap: API returned non-array or non-numeric data. Returning empty array.");
+            return [];
+        }
+
+        console.log("Fetched trip heatmap data:", data);
+        return data;
+
+    } catch (error: any) {
+        console.error("Failed to fetch trip heatmap:", error);
+        return []; // Return empty array on any error to prevent crashes
+    }
+};
+
+/**
+ * Fetches total revenue data (daily amounts) for the current year from the backend.
+ * The backend returns an array of integers, where each index corresponds to a day
+ * from January 1st of the current year (e.g., 2025).
+ *
+ * @param agencyId The ID of the agency.
+ * @param token The JWT authentication token.
+ * @returns A promise that resolves to an array of numbers (daily revenue amounts).
+ */
+export const fetchRevenueReport = async (agencyId: string, token: string): Promise<number[]> => {
+    try {
+        if (!agencyId) {
+            console.warn("fetchRevenueReport: agencyId is missing. Returning empty array.");
+            return [];
+        }
+        if (!token) {
+            console.warn("fetchRevenueReport: authentication token is missing. Returning empty array.");
+            return [];
+        }
+
+        const response = await fetch(`${API_BASE_URL}/agency/reports/revenue`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            let errorMessage = `HTTP error! status: ${response.status}`;
+            try {
+                const errorData = JSON.parse(errorText);
+                errorMessage = errorData.message || errorData.error || errorMessage;
+            } catch (e) {
+                errorMessage = errorText || errorMessage;
+            }
+            console.error(`Error fetching revenue report for agency ${agencyId}: ${errorMessage}`);
+            throw new Error(errorMessage);
+        }
+
+        const data: number[] = await response.json();
+        // Ensure the response is an array of numbers, even if empty or unexpected
+        if (!Array.isArray(data) || !data.every(item => typeof item === 'number')) {
+            console.warn("fetchRevenueReport: API returned non-array or non-numeric data. Returning empty array.");
+            return [];
+        }
+
+        console.log("Fetched revenue report data:", data);
+        return data;
+
+    } catch (error: any) {
+        console.error("Failed to fetch revenue report:", error);
+        return []; // Return empty array on any error to prevent crashes
+    }
+};
+
+/**
+ * Fetches the top five destinations for the agency.
+ * The backend returns an array of BackendDestination objects.
+ *
+ * @param agencyId The ID of the agency.
+ * @param token The JWT authentication token.
+ * @returns A promise that resolves to an array of BackendDestination.
+ */
+export const fetchTopFiveDestinations = async (agencyId: string, token: string): Promise<BackendDestination[]> => {
+    try {
+        if (!agencyId) {
+            console.warn("fetchTopFiveDestinations: agencyId is missing. Returning empty array.");
+            return [];
+        }
+        if (!token) {
+            console.warn("fetchTopFiveDestinations: authentication token is missing. Returning empty array.");
+            return [];
+        }
+
+        const response = await fetch(`${API_BASE_URL}/agency/reports/top_five_destinations`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            let errorMessage = `HTTP error! status: ${response.status}`;
+            try {
+                const errorData = JSON.parse(errorText);
+                errorMessage = errorData.message || errorData.error || errorMessage;
+            } catch (e) {
+                errorMessage = errorText || errorMessage;
+            }
+            console.error(`Error fetching top five destinations for agency ${agencyId}: ${errorMessage}`);
+            throw new Error(errorMessage);
+        }
+
+        const data: BackendDestination[] = await response.json();
+        // Ensure the response is an array of BackendDestination objects
+        if (!Array.isArray(data) || !data.every(item => typeof item === 'object' && item !== null && 'name' in item)) {
+            console.warn("fetchTopFiveDestinations: API returned unexpected data format. Returning empty array.");
+            return [];
+        }
+
+        console.log("Fetched top five destinations data:", data);
+        return data;
+
+    } catch (error: any) {
+        console.error("Failed to fetch top five destinations:", error);
+        return []; // Return empty array on any error to prevent crashes
     }
 };

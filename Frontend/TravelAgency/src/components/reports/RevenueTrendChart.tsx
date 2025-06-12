@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -35,24 +34,26 @@ const RevenueTrendChart: React.FC<RevenueTrendChartProps> = ({
   onMonthSelect,
   onBackToMonthly
 }) => {
+  // Updated currency symbol to ETB
   const formatTooltipValue = (value: number) => {
-    return `$${value.toLocaleString()}`;
+    return `ETB ${value.toLocaleString()}`;
   };
 
+  // Updated currency symbol to ETB
   const formatYAxisValue = (value: number) => {
     if (value >= 1000000) {
-      return `$${(value / 1000000).toFixed(1)}M`;
+      return `ETB ${(value / 1000000).toFixed(1)}M`;
     } else if (value >= 1000) {
-      return `$${(value / 1000).toFixed(1)}k`;
+      return `ETB ${(value / 1000).toFixed(1)}k`;
     }
-    return `$${value}`;
+    return `ETB ${value}`;
   };
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       const displayDate = data.fullDate || label;
-      
+
       return (
         <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
           <p className="font-medium text-gray-700">{displayDate}</p>
@@ -71,12 +72,12 @@ const RevenueTrendChart: React.FC<RevenueTrendChartProps> = ({
   // Custom dot component for clickable monthly data points
   const CustomDot = (props: any) => {
     const { cx, cy, payload } = props;
-    
+
     const handleClick = (e: React.MouseEvent) => {
       e.stopPropagation();
       if (period === 'monthly' && onMonthSelect && payload.monthIndex !== undefined) {
-        const months = ['January', 'February', 'March', 'April', 'May', 'June', 
-                       'July', 'August', 'September', 'October', 'November', 'December'];
+        const months = ['January', 'February', 'March', 'April', 'May', 'June',
+          'July', 'August', 'September', 'October', 'November', 'December'];
         onMonthSelect(months[payload.monthIndex]);
       }
     };
@@ -89,7 +90,7 @@ const RevenueTrendChart: React.FC<RevenueTrendChartProps> = ({
         fill="#F35B04"
         stroke="#fff"
         strokeWidth={2}
-        style={{ 
+        style={{
           cursor: period === 'monthly' ? 'pointer' : 'default',
           transition: 'all 0.2s ease'
         }}
@@ -128,9 +129,9 @@ const RevenueTrendChart: React.FC<RevenueTrendChartProps> = ({
             {getChartTitle()}
           </CardTitle>
           {period === 'daily' && selectedMonth && onBackToMonthly && (
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={onBackToMonthly}
               className="ml-4 hover:bg-[#F35B04] hover:text-white transition-colors"
             >
@@ -177,15 +178,15 @@ const RevenueTrendChart: React.FC<RevenueTrendChartProps> = ({
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis 
-                dataKey="period" 
+              <XAxis
+                dataKey="period"
                 stroke="#666"
                 fontSize={12}
                 angle={period === 'daily' ? -45 : 0}
                 textAnchor={period === 'daily' ? 'end' : 'middle'}
                 height={period === 'daily' ? 60 : 30}
               />
-              <YAxis 
+              <YAxis
                 stroke="#666"
                 fontSize={12}
                 tickFormatter={formatYAxisValue}
@@ -197,9 +198,9 @@ const RevenueTrendChart: React.FC<RevenueTrendChartProps> = ({
                 stroke="#F35B04"
                 strokeWidth={3}
                 dot={<CustomDot />}
-                activeDot={{ 
-                  r: 8, 
-                  stroke: "#F35B04", 
+                activeDot={{
+                  r: 8,
+                  stroke: "#F35B04",
                   strokeWidth: 2,
                   fill: "#F35B04",
                   filter: 'drop-shadow(0 2px 4px rgba(243, 91, 4, 0.3))'

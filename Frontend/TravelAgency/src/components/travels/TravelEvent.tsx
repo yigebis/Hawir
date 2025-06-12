@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Edit, Users } from "lucide-react";
 import { format, parseISO } from "date-fns";
@@ -23,6 +22,7 @@ import { fetchTravelBookings } from '@/lib/api/travelService';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+// Re-defining TravelEventType as it's used in this file
 export interface TravelEventType {
   id: string;
   start_location: string;
@@ -51,7 +51,7 @@ const TravelEvent: React.FC<TravelEventProps> = ({ event, onClick, onEdit }) => 
   const [travelers, setTravelers] = useState<TravelBooking[] | null>(null);
   const [loadingTravelers, setLoadingTravelers] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [paymentFilter, setPaymentFilter] = useState<"All" | "Paid" | "Pending">("All");
+  const [paymentFilter, setPaymentFilter] = useState<"All" | "confirmed" | "pending">("All");
   const [showPaymentDropdown, setShowPaymentDropdown] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -77,7 +77,7 @@ const TravelEvent: React.FC<TravelEventProps> = ({ event, onClick, onEdit }) => 
     setShowTravelersDialog(true);
     setLoadingTravelers(true);
     setError(null);
-    
+
     try {
       const bookings = await fetchTravelBookings(event.id);
       setTravelers(bookings || []); // Ensure we always set an array, even if the API returns null
@@ -102,7 +102,7 @@ const TravelEvent: React.FC<TravelEventProps> = ({ event, onClick, onEdit }) => 
     if (!travelers || travelers.length === 0) {
       return; // Don't try to export if no data
     }
-    
+
     console.log("clicked export to pdf");
     const doc = new jsPDF();
     const title = `Travelers for ${event.start_location} -> ${event.destination}`;
@@ -158,6 +158,7 @@ const TravelEvent: React.FC<TravelEventProps> = ({ event, onClick, onEdit }) => 
         case 'ongoing': return 'bg-green-500';
         case 'upcoming': return 'bg-blue-500';
         case 'completed': return 'bg-orange-500';
+        case 'cancelled': return 'bg-red-500'; // Added cancelled color
         default: return `bg-${event.color}-500`;
       }
     }
@@ -221,7 +222,9 @@ const TravelEvent: React.FC<TravelEventProps> = ({ event, onClick, onEdit }) => 
           }
         }}
       >
-        <DialogContent className="max-w-[90vw] md:max-w-[80vw] w-auto max-w-4xl">
+        <DialogContent
+          className="max-w-[90vw] md:max-w-[80vw] w-auto max-w-4xl h-[90vh] overflow-y-auto p-6" // <-- CRITICAL CHANGES HERE
+        >
           <DialogHeader>
             <DialogTitle className="text-lg">
               Back to <span className="text-[#F35B04]">Manage Travels</span>
@@ -284,7 +287,7 @@ const TravelEvent: React.FC<TravelEventProps> = ({ event, onClick, onEdit }) => 
                         <div
                           className="p-2 hover:bg-gray-100 cursor-pointer"
                           onClick={() => {
-                            setPaymentFilter("Paid");
+                            setPaymentFilter("confirmed");
                             setShowPaymentDropdown(false);
                           }}
                         >
@@ -293,7 +296,7 @@ const TravelEvent: React.FC<TravelEventProps> = ({ event, onClick, onEdit }) => 
                         <div
                           className="p-2 hover:bg-gray-100 cursor-pointer"
                           onClick={() => {
-                            setPaymentFilter("Pending");
+                            setPaymentFilter("pending");
                             setShowPaymentDropdown(false);
                           }}
                         >
@@ -315,7 +318,8 @@ const TravelEvent: React.FC<TravelEventProps> = ({ event, onClick, onEdit }) => 
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
+              {/* Table Container - Removed overflow-x-auto from here as it's now on DialogContent */}
+              <div className="overflow-x-auto"> {/* Keep this for horizontal scrolling if needed */}
                 <Table>
                   <TableHeader>
                     <TableRow className="border border-[#E5E7EB]">
@@ -327,6 +331,7 @@ const TravelEvent: React.FC<TravelEventProps> = ({ event, onClick, onEdit }) => 
                       <TableHead className="text-[#374151] font-bold text-base">Book Time</TableHead>
                       <TableHead className="text-[#374151] font-bold text-base">Book Timelimit</TableHead>
                       <TableHead className="text-[#374151] font-bold text-base">Payment Status</TableHead>
+                      <TableHead className="text-[#374151] font-bold text-base">Payment Type</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -339,12 +344,13 @@ const TravelEvent: React.FC<TravelEventProps> = ({ event, onClick, onEdit }) => 
                         <TableCell className="p-4">{traveler.email}</TableCell>
                         <TableCell className="p-4">{formatDateAndTimeLocal(traveler.book_time)}</TableCell>
                         <TableCell className="p-4">{formatDateAndTimeLocal(traveler.book_time_limit)}</TableCell>
-                        <TableCell className={`p-4 ${traveler.pay_status === "Paid"
+                        <TableCell className={`p-4 ${traveler.pay_status === "confirmed"
                           ? "text-[#10B981]"
                           : "text-[#EF4444]"
                           }`}>
                           {traveler.pay_status}
                         </TableCell>
+                        <TableCell className="p-4">{traveler.payment_type}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

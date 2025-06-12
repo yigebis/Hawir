@@ -1,13 +1,21 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Image, X, CheckCircle } from "lucide-react";
+import { Upload, Image, X, CheckCircle, Loader2, Trash2 } from "lucide-react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  getCloudinaryUploadPreset,
+  uploadImageToCloudinary,
+  addAdvertisement,
+  FetchedAdvertisement,
+  fetchAdvertisements,
+  deleteAdvertisement
+} from "@/lib/api/advertisementService";
 
 interface FormData {
   title: string;
@@ -21,16 +29,10 @@ interface FormErrors {
   image: string;
 }
 
-interface Advertisement {
-  id: string;
-  title: string;
-  description: string;
-  imageUrl: string;
-  uploadDate: string;
-}
-
-const Advertisement: React.FC = () => {
+const AdvertisementPage: React.FC = () => {
   const { toast } = useToast();
+  const { agency, token } = useAuth();
+
   const [formData, setFormData] = useState<FormData>({
     title: "",
     description: "",
@@ -45,23 +47,48 @@ const Advertisement: React.FC = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  // Mock data for previous advertisements - in real app this would come from API
-  const [previousAds] = useState<Advertisement[]>([
-    {
-      id: "1",
-      title: "Discover Ethiopia's Hidden Gems",
-      description: "Join us on an unforgettable journey through the ancient rock churches of Lalibela, the stunning landscapes of the Simien Mountains, and the vibrant culture of Addis Ababa.",
-      imageUrl: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&h=228&fit=crop",
-      uploadDate: "2024-06-10"
-    },
-    {
-      id: "2",
-      title: "Cultural Heritage Tours",
-      description: "Experience the rich history and traditions of Ethiopia with our expert guides.",
-      imageUrl: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=800&h=228&fit=crop",
-      uploadDate: "2024-06-08"
+  const [previousAds, setPreviousAds] = useState<FetchedAdvertisement[]>([]);
+  const [loadingPreviousAds, setLoadingPreviousAds] = useState(true);
+  const [errorPreviousAds, setErrorPreviousAds] = useState<string | null>(null);
+
+  // Fetch previous advertisements on component mount and after add/delete
+  const loadPreviousAds = useCallback(async () => {
+    if (!agency?.unique_id) {
+      setLoadingPreviousAds(false);
+      setErrorPreviousAds("Agency ID not available to fetch previous ads. Please log in.");
+      setPreviousAds([]);
+      return;
     }
-  ]);
+    setLoadingPreviousAds(true);
+    setErrorPreviousAds(null);
+    try {
+      const fetchedAds = await fetchAdvertisements(agency.unique_id);
+
+      // Sort by uploadDate (descending)
+      const sortedAds = fetchedAds.sort((a, b) => {
+        const dateA = new Date(a.uploadDate).getTime();
+        const dateB = new Date(b.uploadDate).getTime();
+        return dateB - dateA;
+      });
+
+      setPreviousAds(sortedAds);
+    } catch (err: any) {
+      console.error("Failed to fetch previous advertisements:", err);
+      setErrorPreviousAds(err.message || "Failed to load previous advertisements.");
+      setPreviousAds([]);
+      toast({
+        title: "Error Loading Previous Ads",
+        description: err.message || "Could not fetch your previously posted advertisements.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingPreviousAds(false);
+    }
+  }, [agency?.unique_id, toast]);
+
+  useEffect(() => {
+    loadPreviousAds();
+  }, [loadPreviousAds]);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {
@@ -70,29 +97,32 @@ const Advertisement: React.FC = () => {
       image: "",
     };
 
-    // Title validation
     if (!formData.title.trim()) {
       newErrors.title = "Title is required";
-    } else if (formData.title.length > 100) {
-      newErrors.title = "Title must be 100 characters or less";
+    } else if (formData.title.length < 3) {
+      newErrors.title = "Title must be at least 3 characters";
+    } else if (formData.title.length > 50) {
+      newErrors.title = "Title must be 50 characters or less";
     }
 
-    // Description validation (optional but limited)
-    if (formData.description.length > 500) {
-      newErrors.description = "Description must be 500 characters or less";
+    if (!formData.description.trim()) {
+      newErrors.description = "Description is required";
+    } else if (formData.description.length < 10) {
+      newErrors.description = "Description must be at least 10 characters";
+    } else if (formData.description.length > 700) {
+      newErrors.description = "Description must be 700 characters or less";
     }
 
-    // Image validation
     if (!formData.image) {
       newErrors.image = "Image file is required";
     } else {
       const allowedFormats = ['.jpg', '.jpeg', '.png'];
       const fileName = formData.image.name.toLowerCase();
       const isValidFormat = allowedFormats.some(format => fileName.endsWith(format));
-      
+
       if (!isValidFormat) {
         newErrors.image = "Only .jpg, .jpeg, and .png formats are allowed";
-      } else if (formData.image.size > 2 * 1024 * 1024) { // 2MB in bytes
+      } else if (formData.image.size > 2 * 1024 * 1024) {
         newErrors.image = "Image file must be 2MB or less";
       }
     }
@@ -111,7 +141,7 @@ const Advertisement: React.FC = () => {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] || null;
     setFormData(prev => ({ ...prev, image: file }));
-    
+
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -121,7 +151,7 @@ const Advertisement: React.FC = () => {
     } else {
       setImagePreview(null);
     }
-    
+
     if (errors.image) {
       setErrors(prev => ({ ...prev, image: "" }));
     }
@@ -132,15 +162,27 @@ const Advertisement: React.FC = () => {
     setImagePreview(null);
     const fileInput = document.getElementById('image-upload') as HTMLInputElement;
     if (fileInput) fileInput.value = '';
+    if (errors.image) {
+      setErrors(prev => ({ ...prev, image: "" }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       toast({
         title: "Validation Error",
-        description: "Please fix the errors in the form",
+        description: "Please fix the errors in the form.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!agency?.unique_id || !token) {
+      toast({
+        title: "Authentication Error",
+        description: "Agency information or authentication token is missing. Please log in again.",
         variant: "destructive",
       });
       return;
@@ -149,47 +191,76 @@ const Advertisement: React.FC = () => {
     setIsUploading(true);
     setUploadProgress(0);
 
-    try {
-      // Simulate upload progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return prev;
-          }
-          return prev + Math.random() * 15;
-        });
-      }, 500);
+    let cloudinarySecureUrl: string | null = null;
 
-      // Create FormData for file upload
-      const uploadData = new FormData();
-      uploadData.append('title', formData.title);
-      uploadData.append('description', formData.description);
-      if (formData.image) {
-        uploadData.append('image', formData.image);
+    try {
+      toast({
+        title: "Starting Upload",
+        description: "Retrieving Cloudinary credentials...",
+        variant: "default",
+      });
+      const { cloud_name, upload_preset } = await getCloudinaryUploadPreset(token);
+      console.log("Cloudinary credentials received:", { cloud_name, upload_preset });
+
+      if (!formData.image) {
+        throw new Error("No image file selected for upload.");
       }
 
-      // Simulate API call (replace with actual API endpoint)
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      toast({
+        title: "Uploading Image",
+        description: "Please wait while your image is being uploaded.",
+        variant: "default",
+      });
+      const cloudinaryResponse = await uploadImageToCloudinary(
+        formData.image,
+        cloud_name,
+        upload_preset,
+        (progress) => setUploadProgress(progress)
+      );
+      cloudinarySecureUrl = cloudinaryResponse.secure_url;
+      console.log("Image uploaded to Cloudinary:", cloudinarySecureUrl);
 
-      setUploadProgress(100);
-      clearInterval(progressInterval);
+      if (!cloudinarySecureUrl) {
+        throw new Error("Cloudinary secure URL not obtained.");
+      }
+
+      const advertisementPayload = {
+        title: formData.title,
+        description: formData.description,
+        media_url: cloudinarySecureUrl,
+        agency_id: agency.unique_id,
+      };
+
+      toast({
+        title: "Saving Advertisement",
+        description: "Finalizing advertisement details...",
+        variant: "default",
+      });
+      const backendResponse = await addAdvertisement(advertisementPayload, token);
+      console.log("Advertisement added to backend:", backendResponse);
 
       toast({
         title: "Success!",
-        description: "Advertisement image uploaded successfully",
+        description: (
+          <div className="flex items-center">
+            <CheckCircle className="mr-2 h-5 w-5 text-green-500" />
+            Advertisement uploaded successfully!
+          </div>
+        ),
+        variant: "default",
       });
 
-      // Reset form
       setFormData({ title: "", description: "", image: null });
       setImagePreview(null);
       const fileInput = document.getElementById('image-upload') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
+      loadPreviousAds(); // Refresh the list
 
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Advertisement upload process failed:", error);
       toast({
         title: "Upload Failed",
-        description: "Failed to upload advertisement image. Please try again.",
+        description: error.message || "Failed to upload advertisement. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -198,12 +269,60 @@ const Advertisement: React.FC = () => {
     }
   };
 
+  const handleDeleteAdvertisement = useCallback(async (adId: string) => {
+    if (!token) {
+      toast({
+        title: "Authentication Error",
+        description: "Authentication token is missing. Please log in again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!window.confirm("Are you sure you want to delete this advertisement? This action cannot be undone.")) {
+      return;
+    }
+
+    toast({
+      title: "Deleting Advertisement",
+      description: "Removing advertisement from your posts...",
+      variant: "default",
+    });
+
+    try {
+      await deleteAdvertisement(adId, token);
+      toast({
+        title: "Advertisement Deleted!",
+        description: (
+          <div className="flex items-center">
+            <CheckCircle className="mr-2 h-5 w-5 text-green-500" />
+            Advertisement successfully removed.
+          </div>
+        ),
+        variant: "default",
+      });
+      loadPreviousAds(); // Refresh the list after successful deletion
+    } catch (error: any) {
+      console.error(`Failed to delete advertisement ${adId}:`, error);
+      toast({
+        title: "Deletion Failed",
+        description: error.message || "Could not delete advertisement. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [token, loadPreviousAds, toast]);
+
+
   return (
     <DashboardLayout>
       <div className="p-6 max-w-4xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Advertisement</h1>
-          <p className="text-gray-600 mt-2">
+          {/* Applying the desired styles from the dialog title text */}
+          <h1 className="text-[#F35B04] text-lg font-bold tracking-[2.4px] uppercase">
+            ADVERTISEMENT
+          </h1>
+          {/* Applying styles to match DialogDescription, which is typically text-gray-600 and text-sm */}
+          <p className="text-gray-600 mt-2 text-sm">
             Upload promotional images to showcase your travel agency's services and destinations
           </p>
         </div>
@@ -228,32 +347,32 @@ const Advertisement: React.FC = () => {
                   value={formData.title}
                   onChange={(e) => handleInputChange('title', e.target.value)}
                   className={errors.title ? 'border-red-500' : ''}
-                  maxLength={100}
+                  maxLength={50}
                 />
                 {errors.title && (
                   <p className="text-red-500 text-sm">{errors.title}</p>
                 )}
                 <p className="text-gray-500 text-sm">
-                  {formData.title.length}/100 characters
+                  {formData.title.length}/50 characters
                 </p>
               </div>
 
               {/* Description Field */}
               <div className="space-y-2">
-                <Label htmlFor="description">Description (Optional)</Label>
+                <Label htmlFor="description">Description *</Label>
                 <Textarea
                   id="description"
                   placeholder="Describe your advertisement content"
                   value={formData.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
                   className={`min-h-[120px] ${errors.description ? 'border-red-500' : ''}`}
-                  maxLength={500}
+                  maxLength={700}
                 />
                 {errors.description && (
                   <p className="text-red-500 text-sm">{errors.description}</p>
                 )}
                 <p className="text-gray-500 text-sm">
-                  {formData.description.length}/500 characters
+                  {formData.description.length}/700 characters
                 </p>
               </div>
 
@@ -284,6 +403,7 @@ const Advertisement: React.FC = () => {
                         variant="outline"
                         className="mt-4"
                         onClick={() => document.getElementById('image-upload')?.click()}
+                        disabled={isUploading}
                       >
                         Select Image File
                       </Button>
@@ -305,12 +425,13 @@ const Advertisement: React.FC = () => {
                             size="sm"
                             onClick={removeImage}
                             className="absolute top-2 right-2 bg-white/80 hover:bg-white text-red-600 hover:text-red-800"
+                            disabled={isUploading}
                           >
                             <X className="w-4 h-4" />
                           </Button>
                         </div>
                       )}
-                      
+
                       <div className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
                         <div className="flex items-center gap-3">
                           <Image className="w-8 h-8 text-blue-600" />
@@ -329,6 +450,7 @@ const Advertisement: React.FC = () => {
                           size="sm"
                           onClick={removeImage}
                           className="text-red-600 hover:text-red-800"
+                          disabled={isUploading}
                         >
                           Remove
                         </Button>
@@ -366,7 +488,7 @@ const Advertisement: React.FC = () => {
                 >
                   {isUploading ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
                       Uploading...
                     </>
                   ) : (
@@ -390,10 +512,22 @@ const Advertisement: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {previousAds.length === 0 ? (
+            {loadingPreviousAds ? (
+              <div className="flex justify-center items-center h-48">
+                <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+                <p className="ml-3 text-gray-600">Loading previous advertisements...</p>
+              </div>
+            ) : errorPreviousAds ? (
+              <div className="text-center py-8 text-red-600 bg-red-50 border border-red-200 rounded-lg">
+                <p>Failed to load your advertisements.</p>
+                <p className="text-sm mt-2">Details: {errorPreviousAds}</p>
+                <p className="text-sm mt-1">Please ensure you are logged in and try again.</p>
+                <Button onClick={loadPreviousAds} className="mt-4 bg-[#F35B04] hover:bg-[#F35B04]/90">Try Again</Button>
+              </div>
+            ) : previousAds.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <Image className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                <p>No advertisements posted yet.</p>
+                <p>No advertisements posted yet. Start by uploading one above!</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -414,6 +548,15 @@ const Advertisement: React.FC = () => {
                         Uploaded on {new Date(ad.uploadDate).toLocaleDateString()}
                       </p>
                     </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-red-600 hover:text-red-800 ml-auto flex-shrink-0"
+                      onClick={() => handleDeleteAdvertisement(ad.id)}
+                      title="Delete advertisement"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -425,4 +568,4 @@ const Advertisement: React.FC = () => {
   );
 };
 
-export default Advertisement;
+export default AdvertisementPage;
