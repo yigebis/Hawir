@@ -2,6 +2,7 @@ package UseCase
 
 import (
 	"Hawir/Domain"
+	"fmt"
 	"time"
 )
 
@@ -30,7 +31,7 @@ func (ru *ReportUseCase) GetBookHeatMap(agencyID string) (*[]int, int, error) {
 		return nil, code, err
 	}
 
-	result := make([]int, 0, totalDays)
+	result := make([]int, totalDays)
 	for i := 0; i < totalDays; i++ {
 		current := startDate.AddDate(0, 0, i).Format("2006-01-02")
 		if _, exists := (*dateCounts)[current]; !exists {
@@ -77,7 +78,7 @@ func (ru *ReportUseCase) GetTripHeatMap(agencyID string) (*[]int, int, error) {
 	currentDate := time.Now().UTC()
 	totalDays := int(currentDate.Sub(startDate).Hours()/24) + 1
 
-	result := make([]int, 0, totalDays)
+	result := make([]int, totalDays)
 	for i := 0; i < totalDays; i++ {
 		current := startDate.AddDate(0, 0, i).Format("2006-01-02")
 		if _, exists := (*tripCounts)[current]; !exists {
@@ -92,6 +93,7 @@ func (ru *ReportUseCase) GetTripHeatMap(agencyID string) (*[]int, int, error) {
 
 func (ru *ReportUseCase) GetRevenueReport(agencyID string) (*[]int, int, error) {
 	revenueCounts, err := ru.ReportRepository.GetRevenueReport(agencyID)
+	fmt.Println(revenueCounts)
 	if err != nil {
 		code, err := ru.ErrorService.InternalServer()
 		return nil, code, err
@@ -103,16 +105,18 @@ func (ru *ReportUseCase) GetRevenueReport(agencyID string) (*[]int, int, error) 
 	currentDate := time.Now().UTC()
 	totalDays := int(currentDate.Sub(startDate).Hours()/24) + 1
 
-	result := make([]int, 0, totalDays)
+	result := make([]int, totalDays)
 	for i := 0; i < totalDays; i++ {
 		current := startDate.AddDate(0, 0, i).Format("2006-01-02")
 		if _, exists := (*revenueCounts)[current]; !exists {
 			(*revenueCounts)[current] = 0
 		}
 		result[i] = (*revenueCounts)[current]
+		fmt.Println(result[i])
 	}
 
 	code, err := ru.ErrorService.NoError()
+	fmt.Println(result)
 	return &result, code, err
 }
 
