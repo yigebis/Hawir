@@ -138,7 +138,7 @@ func (btc *BusTrackingController) StopBusTracking(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
-	tripID := c.Query("tripID")
+	tripID := c.Param("tripID")
 	if tripID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Trip ID is required"})
 		return
