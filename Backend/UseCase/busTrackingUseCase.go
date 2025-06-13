@@ -55,6 +55,7 @@ func (btuc *BusTrackingUseCase) StartBusTracking(tripID string, driverID string)
 	}
 
 	travel.ActualStartTime = time.Now()
+	travel.Status = "ongoing"
 	err = btuc.TravelRepository.EditTravel(travel)
 	if err != nil {
 		return btuc.ErrorService.InternalServer()
