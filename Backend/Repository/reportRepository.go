@@ -172,10 +172,10 @@ func (rr *ReportRepository) GetActiveTravelersCount(agencyID string) (*Domain.Ac
 
     // Defensive checks for initialized collections
     if rr.BookingCollection == nil {
-        return nil, fmt.Errorf("ReportRepository.BookingCollection is nil. It must be initialized correctly.")
+        return nil, fmt.Errorf("ReportRepository BookingCollection is nil It must be initialized correctly")
     }
     if rr.TravelCollection == nil {
-        return nil, fmt.Errorf("ReportRepository.TravelCollection is nil. It must be initialized correctly.")
+        return nil, fmt.Errorf("ReportRepository TravelCollection is nil It must be initialized correctly")
     }
 
     cursor, err := rr.BookingCollection.Aggregate(rr.Context, pipeline)
