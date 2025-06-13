@@ -74,7 +74,7 @@ func (btuc *BusTrackingUseCase) StopBusTracking(tripID string, driverID string) 
 	isTripValid := false
 	for _, trip := range driver.CurrentTrips {
 		if trip == tripID {
-			isTripValid = false
+			isTripValid = true
 			break
 		}
 	}
