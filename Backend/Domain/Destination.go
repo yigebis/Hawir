@@ -44,3 +44,8 @@ type TouristAttraction struct {
 type AddStationsRequest struct {
 	Stations []string `json:"stations" bson:"stations,omitempty"`
 }
+
+type TopDestinationReportItem struct {
+    DestinationName string `bson:"_id" json:"destination"` // The destination name from the _id of the group
+    TotalTravelers  int64  `bson:"totalTravelers" json:"totalTravelers"` // The sum of travelers
+}

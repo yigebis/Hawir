@@ -24,4 +24,5 @@ func (rr *ReportRouter) Run(router *gin.Engine, jwt_string string) {
 	router.GET("/agency/reports/trip_heatmap", Infrastructure.AgencyMiddleWare(jwt_string), rr.ReportController.GetTripHeatMap)
 	router.GET("/agency/reports/revenue", Infrastructure.AgencyMiddleWare(jwt_string), rr.ReportController.GetRevenueReport)
 	router.GET("/agency/reports/new_customers", Infrastructure.AgencyMiddleWare(jwt_string), rr.ReportController.GetNewCustomersReport)
+	router.GET("/agency/reports/total_customers_count", Infrastructure.AgencyMiddleWare(jwt_string), rr.ReportController.GetTotalCustomersCount)
 }

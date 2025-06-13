@@ -131,3 +131,21 @@ func (rc *ReportController) GetNewCustomersReport(ctx *gin.Context) {
 
 	ctx.JSON(200, newCustomersReport)
 }
+
+func (rc *ReportController) GetTotalCustomersCount(ctx *gin.Context) {
+    claims, exists := ctx.Get("agency")
+    mapClaims := getClaims(claims, exists)
+    if mapClaims == nil {
+        ctx.JSON(401, gin.H{"error": "Unauthorized"})
+        return
+    }
+
+    agencyID := mapClaims["agency_id"].(string)
+    totalCustomersCount, code, err := rc.ReportUseCase.GetTotalCustomersCount(agencyID)
+    if err != nil {
+        ctx.JSON(code, gin.H{"error": "Failed to retrieve total customers count"})
+        return
+    }
+
+    ctx.JSON(200, totalCustomersCount)
+}
