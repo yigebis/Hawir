@@ -53,7 +53,8 @@ func (ru *ReportUseCase) GetActiveTravelersCount(agencyID string) (*Domain.Activ
 	return result, code, err
 }
 
-func (ru *ReportUseCase) GetTopFiveDestinations(agencyID string) (*[]Domain.Destination, int, error) {
+func (ru *ReportUseCase) GetTopFiveDestinations(agencyID string) (*[]Domain.TopDestinationReportItem, int, error) { // CHANGED RETURN TYPE
+    // Call the repository method, which now returns *[]Repository.TopDestinationReportItem
 	result, err := ru.ReportRepository.GetTopFiveDestinations(agencyID)
 	if err != nil {
 		code, err := ru.ErrorService.InternalServer()
@@ -93,7 +94,6 @@ func (ru *ReportUseCase) GetTripHeatMap(agencyID string) (*[]int, int, error) {
 
 func (ru *ReportUseCase) GetRevenueReport(agencyID string) (*[]int, int, error) {
 	revenueCounts, err := ru.ReportRepository.GetRevenueReport(agencyID)
-	fmt.Println(revenueCounts)
 	if err != nil {
 		code, err := ru.ErrorService.InternalServer()
 		return nil, code, err
@@ -116,32 +116,48 @@ func (ru *ReportUseCase) GetRevenueReport(agencyID string) (*[]int, int, error) 
 	}
 
 	code, err := ru.ErrorService.NoError()
-	fmt.Println(result)
 	return &result, code, err
 }
 
 func (ru *ReportUseCase) GetNewCustomersReport(agencyID string) (*[]int, int, error) {
-	newCustomersCounts, err := ru.ReportRepository.GetNewCustomersReport(agencyID)
+	newCustomersCountsMap, err := ru.ReportRepository.GetNewCustomersReport(agencyID)
 	if err != nil {
 		code, err := ru.ErrorService.InternalServer()
 		return nil, code, err
 	}
 
-	// start date is Jan 1st of 2025
-	startDate := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
-	// total days is current date minus start date plus 1
+	// Calculate total days from Jan 1st of the current year up to the current date
+	currentYear := time.Now().Year()
+	startDate := time.Date(currentYear, time.January, 1, 0, 0, 0, 0, time.UTC)
 	currentDate := time.Now().UTC()
+    // Add 1 because Sub() counts difference, we need inclusive days
 	totalDays := int(currentDate.Sub(startDate).Hours()/24) + 1
 
-	result := make([]int, 0, totalDays)
+	// Initialize the result slice with zeros for all days
+	result := make([]int, totalDays) // FIX: Initialize slice with correct length
+
+	// Populate the result slice using data from the map
+	// Iterate through the days of the year, filling in counts from the map
 	for i := 0; i < totalDays; i++ {
-		current := startDate.AddDate(0, 0, i).Format("2006-01-02")
-		if _, exists := (*newCustomersCounts)[current]; !exists {
-			(*newCustomersCounts)[current] = 0
+		date := startDate.AddDate(0, 0, i).Format("2006-01-02")
+		// Check if the date exists in the map
+		if count, exists := (*newCustomersCountsMap)[date]; exists {
+			result[i] = count // Assign the count if found
 		}
-		result[i] = (*newCustomersCounts)[current]
+		// If not found, it remains 0 due to `make([]int, totalDays)` initialization
 	}
+    fmt.Printf("UseCase New Customers Result array: %v\n", result) // Debug print
 
 	code, err := ru.ErrorService.NoError()
 	return &result, code, err
+}
+
+func (ru *ReportUseCase) GetTotalCustomersCount(agencyID string) (*Domain.ActiveTravelersCount, int, error) {
+	result, err := ru.ReportRepository.GetTotalCustomersCount(agencyID)
+	if err != nil {
+		code, err := ru.ErrorService.InternalServer()
+		return nil, code, err
+	}
+	code, err := ru.ErrorService.NoError()
+	return result, code, err
 }

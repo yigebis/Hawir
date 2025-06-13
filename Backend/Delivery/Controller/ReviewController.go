@@ -10,18 +10,18 @@ import (
 )
 
 type ReviewController struct {
-	ReviewUseCase           UseCase.IReviewUseCase
-	TravelRatingUseCase     UseCase.ITravelRatingUseCase
-	AgencyStatisticsUseCase UseCase.IAgencyRatingUseCase
-	V                       *validator.Validate
+	ReviewUseCase       UseCase.IReviewUseCase
+	TravelRatingUseCase UseCase.ITravelRatingUseCase
+	AgencyRatingUseCase UseCase.IAgencyRatingUseCase
+	V                   *validator.Validate
 }
 
-func NewReviewController(rvu UseCase.IReviewUseCase, travelRatingUseCase UseCase.ITravelRatingUseCase, agencyStatisticsUseCase UseCase.IAgencyRatingUseCase) *ReviewController {
+func NewReviewController(rvu UseCase.IReviewUseCase, travelRatingUseCase UseCase.ITravelRatingUseCase, AgencyRatingUseCase UseCase.IAgencyRatingUseCase) *ReviewController {
 	return &ReviewController{
-		ReviewUseCase:           rvu,
-		V:                       validator.New(),
-		TravelRatingUseCase:     travelRatingUseCase,
-		AgencyStatisticsUseCase: agencyStatisticsUseCase,
+		ReviewUseCase:       rvu,
+		V:                   validator.New(),
+		TravelRatingUseCase: travelRatingUseCase,
+		AgencyRatingUseCase: AgencyRatingUseCase,
 	}
 }
 
@@ -39,7 +39,7 @@ func (rvc *ReviewController) PostReview(ctx *gin.Context) {
 		ctx.JSON(400, gin.H{"error": "invalid request payload"})
 		return
 	}
-	
+
 	statusCode, err := rvc.ReviewUseCase.PostReview(&review)
 	if err != nil {
 		ctx.JSON(statusCode, gin.H{"error": err.Error()})
@@ -88,7 +88,7 @@ func (rvu *ReviewController) GetAgencyRating(ctx *gin.Context) {
 		return
 	}
 
-	agencyRating, statusCode, err := rvu.AgencyStatisticsUseCase.GetAgencyRating(agencyId)
+	agencyRating, statusCode, err := rvu.AgencyRatingUseCase.GetAgencyRating(agencyId)
 	if err != nil {
 		ctx.JSON(statusCode, gin.H{"error": err.Error()})
 		return
