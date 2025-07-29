@@ -9,7 +9,7 @@ type IErrorService interface {
 	InvalidToken() (int, error)
 	UserNotFound() (int, error)
 	InvalidEmailPassword() (int, error)
-	InvalidUserNamePassword() (int, error)
+	// InvalidUserNamePassword() (int, error)
 	InvalidEmailRefresher() (int, error)
 	NotVerified() (int, error)
 	SamePassword() (int, error)
@@ -17,4 +17,45 @@ type IErrorService interface {
 	PasswordTooShort() (int, error)
 	MissingValidPasswordChar() (int, error)
 	InvalidPhoneNumber() (int, error)
+	InvalidName() (int, error)
+	UnableToOpenFile() (int, error)
+	UnableToCreateFile() (int, error)
+	UnableToSeekFile() (int, error)
+	UnableToCopyFile() (int, error)
+	UnableToUploadFile() (int, error)
+	// UnableToDeleteFile() (int, error)
+
+	// agency user errors
+	InvalidEmailAgencyIDPassword() (int, error)
+	IncorrectPlateNo() (int, error)
+
+	// Travel errors
+	TravelNotFound() (int, error)
+	InvalidStartLocation() (int, error)
+	InvalidPlannedStartTime() (int, error)
+	InvalidEstArrivalTime() (int, error)
+	InvalidPrice() (int, error)
+	DriverBusy() (int, error)
+	DriverNotFound() (int, error)
+
+	// Agency errors
+	AgencyNotFound() (int, error)
+	BusNotFound() (int, error)
+	BusBusy() (int, error)
+
+	// Booking errors
+	BookingNotFound() (int, error)
+	SeatReserved() (int, error)
+	TravelerAlreadyBooked() (int, error)
+	SeatNotChosen() (int, error)
+	IncorrectSeatNumber() (int, error)
+	SeatsNotFound() (int, error)
+
+	// Destination errors
+	DestinationNotFound() (int, error)
+	DestinationAlreadyExists() (int, error)
+
+	// Event errors
+	InvalidEventDate() (int, error)
+	EventNotFound() (int, error)
 }

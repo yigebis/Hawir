@@ -3,6 +3,8 @@ package Infrastructure
 import (
 	"Hawir/Error"
 	"Hawir/UseCase"
+	"crypto/rand"
+	"fmt"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -17,11 +19,12 @@ func NewTokenService(jwtSecret string) UseCase.ITokenService {
 }
 
 // GenerateToken implements UseCase.ITokenService.
-func (ts *TokenService) GenerateToken(id string, firstName string, expiryDuration int64) (string, error) {
+func (ts *TokenService) GenerateToken(id string, firstName string, role string, expiryDuration int64) (string, error) {
 	claims := jwt.MapClaims{
 		"id":         id,
 		"first_name": firstName,
-		"exp":        expiryDuration,
+		"role":       role,
+		"exp":        time.Now().Add(time.Duration(expiryDuration) * time.Second).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -34,10 +37,29 @@ func (ts *TokenService) GenerateToken(id string, firstName string, expiryDuratio
 	return jwtToken, nil
 }
 
-func (ts *TokenService) GenerateEmailToken(email string, expiryDuration int64) (string, error) {
+func (ts *TokenService) GenerateEmailToken(email string, expiryDuration int64, role string) (string, error) {
 	claims := jwt.MapClaims{
+		"role":  role,
 		"email": email,
-		"exp":   expiryDuration,
+		"exp":   time.Now().Add(time.Duration(expiryDuration) * time.Second).Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	jwtToken, err := token.SignedString([]byte(ts.JwtSecret))
+	if err != nil {
+		return "", err
+	}
+
+	return jwtToken, nil
+}
+
+func (ts *TokenService) GenerateAgencyToken(email string, role string, agencyID string, admin_role string, expiryDuration int64) (string, error) {
+	claims := jwt.MapClaims{
+		"email":     email,
+		"exp":       time.Now().Add(time.Duration(expiryDuration) * time.Second).Unix(),
+		"role":      role,
+		"agency_id": agencyID,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -74,4 +96,14 @@ func (ts *TokenService) ValidateToken(tokenString string) (map[string]interface{
 	}
 
 	return claimsMap, nil
+}
+
+func (ts *TokenService) GenerateCode() (string, error) {
+	code := make([]byte, 6)
+	_, err := rand.Read(code)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%x", code), nil
 }
