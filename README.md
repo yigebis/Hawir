@@ -16,11 +16,11 @@ Hawir is a **mobile and web platform** that connects Ethiopian people with trave
 
 ---
 
-## 🏗️ System Subsystems
+## 🏗️ System
 
 Hawir has **Main functionalities**:
 
-1. **Authentication Subsystem**
+1. **Authentication**
 
    * Registration, login (email, phone, OAuth2)
    * Token management (JWT with access & refresh tokens)
@@ -144,3 +144,4 @@ Contributions are welcome! Please fork the repository and submit a pull request.
 * **Yohannes Belay** - Backend Developer
 * **Yodahe Gosa** - Web Application Developer
 * **Newal Yimam** - Web Application Developer
+
